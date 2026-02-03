@@ -2,5 +2,5 @@ name: oauth-sheriff
 pages-reference: OAuth-Sheriff
 sonar-project-key: cuioss_OAuth-Sheriff
 release:
-  current-version: 0.2.0
+  current-version: 0.3.0
   next-version: 1.0.0-SNAPSHOT
