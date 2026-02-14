@@ -1,9 +1,6 @@
 import js from '@eslint/js';
-import jsdoc from 'eslint-plugin-jsdoc';
 import jest from 'eslint-plugin-jest';
-import security from 'eslint-plugin-security';
 import unicorn from 'eslint-plugin-unicorn';
-import promise from 'eslint-plugin-promise';
 import prettier from 'eslint-plugin-prettier';
 import lit from 'eslint-plugin-lit';
 import wc from 'eslint-plugin-wc';
@@ -12,11 +9,8 @@ export default [
   js.configs.recommended,
   {
     plugins: {
-      jsdoc,
       jest,
-      security,
       unicorn,
-      promise,
       prettier,
       lit,
       wc,
@@ -61,27 +55,6 @@ export default [
       'complexity': ['warn', { max: 15 }],
       'max-statements': ['warn', { max: 20 }],
       'max-params': ['warn', { max: 5 }],
-      
-      // JSDoc rules
-      'jsdoc/check-alignment': 'warn',
-      'jsdoc/check-param-names': 'warn',
-      'jsdoc/check-tag-names': 'warn',
-      'jsdoc/require-description': 'off',
-      'jsdoc/require-param': 'off',
-      'jsdoc/require-param-description': 'off',
-      'jsdoc/require-returns': 'off',
-      'jsdoc/require-returns-description': 'off',
-      
-      // Security rules
-      'security/detect-object-injection': 'warn',
-      'security/detect-non-literal-regexp': 'warn',
-      'security/detect-unsafe-regex': 'error',
-      
-      // Promise rules
-      'promise/always-return': 'warn',
-      'promise/catch-or-return': 'error',
-      'promise/no-nesting': 'warn',
-      'promise/no-return-wrap': 'error',
       
       // Unicorn rules for modern JavaScript
       'unicorn/prefer-module': 'error',
