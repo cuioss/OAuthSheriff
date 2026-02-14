@@ -99,7 +99,7 @@ public class PrometheusModuleDispatcher implements ModuleDispatcherElement {
     public Optional<MockResponse> handleGet(RecordedRequest recordedRequest) {
         callCounter++;
 
-        String path = recordedRequest.getPath();
+        String path = recordedRequest.getUrl() != null ? recordedRequest.getUrl().encodedPath() : null;
         if (path == null || !path.startsWith(PROMETHEUS_QUERY_RANGE_PATH)) {
             return Optional.empty();
         }
@@ -138,29 +138,29 @@ public class PrometheusModuleDispatcher implements ModuleDispatcherElement {
 
         // Fallback response with real data structure
         return """
-        {
-          "status": "success",
-          "data": {
-            "resultType": "matrix",
-            "result": [
-              {
-                "metric": {
-                  "__name__": "process_cpu_usage",
-                  "instance": "oauth-sheriff-integration-tests:8443",
-                  "job": "quarkus-benchmark"
-                },
-                "values": [
-                  [1758909906, "0.678181818181818"],
-                  [1758909908, "0.833653061224490"],
-                  [1758909910, "0.999"],
-                  [1758909912, "1.0"],
-                  [1758909914, "0.999"]
-                ]
-              }
-            ]
-          }
-        }
-        """;
+                {
+                  "status": "success",
+                  "data": {
+                    "resultType": "matrix",
+                    "result": [
+                      {
+                        "metric": {
+                          "__name__": "process_cpu_usage",
+                          "instance": "oauth-sheriff-integration-tests:8443",
+                          "job": "quarkus-benchmark"
+                        },
+                        "values": [
+                          [1758909906, "0.678181818181818"],
+                          [1758909908, "0.833653061224490"],
+                          [1758909910, "0.999"],
+                          [1758909912, "1.0"],
+                          [1758909914, "0.999"]
+                        ]
+                      }
+                    ]
+                  }
+                }
+                """;
     }
 
     /**
@@ -168,14 +168,14 @@ public class PrometheusModuleDispatcher implements ModuleDispatcherElement {
      */
     public String getEmptyResultResponse() {
         return """
-        {
-          "status": "success",
-          "data": {
-            "resultType": "matrix",
-            "result": []
-          }
-        }
-        """;
+                {
+                  "status": "success",
+                  "data": {
+                    "resultType": "matrix",
+                    "result": []
+                  }
+                }
+                """;
     }
 
     /**
@@ -183,11 +183,11 @@ public class PrometheusModuleDispatcher implements ModuleDispatcherElement {
      */
     public String getErrorResponse() {
         return """
-        {
-          "status": "error",
-          "error": "invalid parameter 'query': parse error at char 1: no expression found in input"
-        }
-        """;
+                {
+                  "status": "error",
+                  "error": "invalid parameter 'query': parse error at char 1: no expression found in input"
+                }
+                """;
     }
 
     @Override
