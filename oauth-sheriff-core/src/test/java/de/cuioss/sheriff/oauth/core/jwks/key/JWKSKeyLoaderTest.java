@@ -284,18 +284,18 @@ class JWKSKeyLoaderTest {
         @DisplayName("Should handle JWK with missing kty field")
         void shouldHandleJwkWithMissingKty() {
             String jwksMissingKty = """
-                {
-                    "keys": [
-                        {
-                            "kid": "test-kid",
-                            "use": "sig",
-                            "alg": "RS256",
-                            "n": "test-modulus",
-                            "e": "AQAB"
-                        }
-                    ]
-                }
-                """;
+                    {
+                        "keys": [
+                            {
+                                "kid": "test-kid",
+                                "use": "sig",
+                                "alg": "RS256",
+                                "n": "test-modulus",
+                                "e": "AQAB"
+                            }
+                        ]
+                    }
+                    """;
 
             JWKSKeyLoader loader = JWKSKeyLoader.builder()
                     .jwksContent(jwksMissingKty)
@@ -312,17 +312,17 @@ class JWKSKeyLoaderTest {
         @DisplayName("Should handle JWK with unsupported key type")
         void shouldHandleJwkWithUnsupportedKeyType() {
             String jwksUnsupportedType = """
-                {
-                    "keys": [
-                        {
-                            "kty": "UNKNOWN",
-                            "kid": "test-kid",
-                            "use": "sig",
-                            "alg": "RS256"
-                        }
-                    ]
-                }
-                """;
+                    {
+                        "keys": [
+                            {
+                                "kty": "UNKNOWN",
+                                "kid": "test-kid",
+                                "use": "sig",
+                                "alg": "RS256"
+                            }
+                        ]
+                    }
+                    """;
 
             JWKSKeyLoader loader = JWKSKeyLoader.builder()
                     .jwksContent(jwksUnsupportedType)
@@ -340,19 +340,19 @@ class JWKSKeyLoaderTest {
         void shouldHandleJwkWithKeyIdExceedingMaxLength() {
             String longKid = "k".repeat(300); // Exceeds typical max length
             String jwksLongKid = """
-                {
-                    "keys": [
-                        {
-                            "kty": "RSA",
-                            "kid": "%s",
-                            "use": "sig",
-                            "alg": "RS256",
-                            "n": "test-modulus",
-                            "e": "AQAB"
-                        }
-                    ]
-                }
-                """.formatted(longKid);
+                    {
+                        "keys": [
+                            {
+                                "kty": "RSA",
+                                "kid": "%s",
+                                "use": "sig",
+                                "alg": "RS256",
+                                "n": "test-modulus",
+                                "e": "AQAB"
+                            }
+                        ]
+                    }
+                    """.formatted(longKid);
 
             JWKSKeyLoader loader = JWKSKeyLoader.builder()
                     .jwksContent(jwksLongKid)
@@ -369,18 +369,18 @@ class JWKSKeyLoaderTest {
         @DisplayName("Should handle EC key parse failure")
         void shouldHandleEcKeyParseFailure() {
             String invalidEcJwks = """
-                {
-                    "keys": [
-                        {
-                            "kty": "EC",
-                            "kid": "test-kid",
-                            "use": "sig",
-                            "alg": "ES256",
-                            "crv": "P-256"
-                        }
-                    ]
-                }
-                """;
+                    {
+                        "keys": [
+                            {
+                                "kty": "EC",
+                                "kid": "test-kid",
+                                "use": "sig",
+                                "alg": "ES256",
+                                "crv": "P-256"
+                            }
+                        ]
+                    }
+                    """;
 
             JWKSKeyLoader loader = JWKSKeyLoader.builder()
                     .jwksContent(invalidEcJwks)

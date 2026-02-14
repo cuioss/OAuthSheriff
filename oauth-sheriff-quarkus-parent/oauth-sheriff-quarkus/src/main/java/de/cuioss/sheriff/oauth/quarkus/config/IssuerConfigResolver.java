@@ -17,6 +17,7 @@ package de.cuioss.sheriff.oauth.quarkus.config;
 
 import de.cuioss.http.client.adapter.RetryConfig;
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
+import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.sheriff.oauth.core.security.SignatureAlgorithmPreferences;
 import de.cuioss.sheriff.oauth.quarkus.mapper.ClaimMapperRegistry;
@@ -59,6 +60,7 @@ public class IssuerConfigResolver {
     private final Config config;
     private final RetryConfig retryConfig;
     private final @Nullable ClaimMapperRegistry claimMapperRegistry;
+    private final @Nullable ParserConfig parserConfig;
 
     /**
      * Creates a new IssuerConfigResolver with the specified configuration.
@@ -70,7 +72,7 @@ public class IssuerConfigResolver {
      * @param config the configuration instance to use for property resolution
      */
     public IssuerConfigResolver(Config config) {
-        this(config, RetryConfig.defaults(), null);
+        this(config, RetryConfig.defaults(), null, null);
     }
 
     /**
@@ -84,7 +86,7 @@ public class IssuerConfigResolver {
      * @param retryConfig the retry configuration to use for HTTP operations
      */
     public IssuerConfigResolver(Config config, RetryConfig retryConfig) {
-        this(config, retryConfig, null);
+        this(config, retryConfig, null, null);
     }
 
     /**
@@ -96,9 +98,29 @@ public class IssuerConfigResolver {
      * @param claimMapperRegistry the registry of CDI-discovered claim mappers, may be {@code null}
      */
     public IssuerConfigResolver(Config config, RetryConfig retryConfig, @Nullable ClaimMapperRegistry claimMapperRegistry) {
+        this(config, retryConfig, claimMapperRegistry, null);
+    }
+
+    /**
+     * Creates a new IssuerConfigResolver with the specified configuration, retry config,
+     * claim mapper registry, and pre-initialized parser configuration.
+     * <p>
+     * The parserConfig is pre-initialized on the caller's thread to ensure the correct
+     * classloader is used for ServiceLoader discovery, avoiding issues when JWKS loading
+     * runs on ForkJoinPool threads with a different classloader context.
+     * </p>
+     *
+     * @param config the configuration instance to use for property resolution
+     * @param retryConfig the retry configuration to use for HTTP operations
+     * @param claimMapperRegistry the registry of CDI-discovered claim mappers, may be {@code null}
+     * @param parserConfig the pre-initialized parser configuration, may be {@code null}
+     */
+    public IssuerConfigResolver(Config config, RetryConfig retryConfig,
+            @Nullable ClaimMapperRegistry claimMapperRegistry, @Nullable ParserConfig parserConfig) {
         this.config = config;
         this.retryConfig = retryConfig;
         this.claimMapperRegistry = claimMapperRegistry;
+        this.parserConfig = parserConfig;
     }
 
     /**
@@ -433,6 +455,11 @@ public class IssuerConfigResolver {
 
         // Set the retry configuration
         builder.retryConfig(retryConfig);
+
+        // Forward pre-initialized ParserConfig if available
+        if (parserConfig != null) {
+            builder.parserConfig(parserConfig);
+        }
 
         // Let the builder validate and create the instance
         return builder.build();

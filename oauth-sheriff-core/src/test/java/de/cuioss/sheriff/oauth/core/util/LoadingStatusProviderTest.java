@@ -74,7 +74,7 @@ class LoadingStatusProviderTest {
 
     @Test
     @DisplayName("Should handle thread safety")
-    void shouldHandleThreadSafety() throws InterruptedException {
+    void shouldHandleThreadSafety() throws Exception {
         LoadingStatusProvider provider = new TestHealthyProvider();
 
         Thread[] threads = new Thread[10];

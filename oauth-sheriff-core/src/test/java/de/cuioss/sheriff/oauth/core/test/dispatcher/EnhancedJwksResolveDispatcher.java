@@ -133,7 +133,7 @@ public class EnhancedJwksResolveDispatcher extends JwksResolveDispatcher {
             default ->
                 // Use parent class behavior for other cases
                 // Note: We don't call super.handleGet() because it would increment the counter again
-                    createDefaultResponse();
+                createDefaultResponse();
         };
     }
 

@@ -115,16 +115,16 @@ class HttpJwksLoaderFailureTest {
         try {
             // Setup mock to return symmetric key JWKS
             moduleDispatcher.setCustomResponse("""
-                {
-                    "keys": [{
-                        "kty": "oct",
-                        "use": "sig",
-                        "kid": "symmetric-key-1",
-                        "k": "GawgguFyGrWKav7AX4VKUg",
-                        "alg": "HS256"
-                    }]
-                }
-                """);
+                    {
+                        "keys": [{
+                            "kty": "oct",
+                            "use": "sig",
+                            "kid": "symmetric-key-1",
+                            "k": "GawgguFyGrWKav7AX4VKUg",
+                            "alg": "HS256"
+                        }]
+                    }
+                    """);
 
             String jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
             HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()

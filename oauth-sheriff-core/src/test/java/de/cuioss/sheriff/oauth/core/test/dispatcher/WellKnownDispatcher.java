@@ -130,8 +130,8 @@ public class WellKnownDispatcher implements ModuleDispatcherElement {
      */
     private String determineIssuerUrl(RecordedRequest request) {
         // Extract the base URL from the request
-        assert request.getRequestUrl() != null;
-        String requestUrl = request.getRequestUrl().toString();
+        assert request.getUrl() != null;
+        String requestUrl = request.getUrl().toString();
         // Remove the path part to get the base URL
         return requestUrl.substring(0, requestUrl.indexOf(LOCAL_PATH));
     }
@@ -144,8 +144,8 @@ public class WellKnownDispatcher implements ModuleDispatcherElement {
      */
     private String determineJwksUrl(RecordedRequest request) {
         // Extract the base URL from the request
-        assert request.getRequestUrl() != null;
-        String requestUrl = request.getRequestUrl().toString();
+        assert request.getUrl() != null;
+        String requestUrl = request.getUrl().toString();
         // Remove the path part to get the base URL
         String baseUrl = requestUrl.substring(0, requestUrl.indexOf(LOCAL_PATH));
         return baseUrl + "/oidc/jwks.json";

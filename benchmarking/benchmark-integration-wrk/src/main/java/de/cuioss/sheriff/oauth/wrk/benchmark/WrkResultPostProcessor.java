@@ -67,9 +67,9 @@ public class WrkResultPostProcessor {
     private final Map<String, BenchmarkMetadata> benchmarkMetadataMap = new HashMap<>();
 
     /**
-         * Holds metadata for a benchmark execution.
-         */
-        private record BenchmarkMetadata(String name, Instant startTime, Instant endTime) {
+     * Holds metadata for a benchmark execution.
+     */
+    private record BenchmarkMetadata(String name, Instant startTime, Instant endTime) {
     }
 
     /**

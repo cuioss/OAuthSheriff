@@ -59,7 +59,7 @@ class IssuerConfigResolverSynchronizationTest {
     @Test
     @Timeout(value = 15, unit = TimeUnit.SECONDS)
     @DisplayName("Measure performance during warmup phase")
-    void measuresWarmupPhasePerformance() throws InterruptedException {
+    void measuresWarmupPhasePerformance() throws Exception {
         // Create multiple IssuerConfigResolver instances to test warmup phase
         List<IssuerConfigResolver> resolvers = new ArrayList<>();
         List<String> issuerIds = new ArrayList<>();
@@ -121,7 +121,7 @@ class IssuerConfigResolverSynchronizationTest {
     @Test
     @Timeout(value = 10, unit = TimeUnit.SECONDS)
     @DisplayName("Measure post-warmup throughput for optimized cache")
-    void measuresPostWarmupThroughput() throws InterruptedException {
+    void measuresPostWarmupThroughput() throws Exception {
         // Pre-warm the resolver by doing a single resolution
         IssuerConfig warmupResult = issuerConfigResolver.resolveConfig(issuerIdentifier);
         assertNotNull(warmupResult);

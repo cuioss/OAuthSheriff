@@ -55,7 +55,7 @@ class PrometheusClientTest {
     }
 
     @Test
-    void shouldQuerySingleMetricSuccessfully() throws PrometheusClient.PrometheusException {
+    void shouldQuerySingleMetricSuccessfully() throws Exception {
         // Given
         List<String> metricNames = List.of("process_cpu_usage");
 
@@ -88,7 +88,7 @@ class PrometheusClientTest {
     }
 
     @Test
-    void shouldQueryMultipleMetricsSuccessfully() throws PrometheusClient.PrometheusException {
+    void shouldQueryMultipleMetricsSuccessfully() throws Exception {
         // Given
         List<String> metricNames = List.of("process_cpu_usage", "system_cpu_usage", "jvm_memory_used_bytes");
 
@@ -113,7 +113,7 @@ class PrometheusClientTest {
     }
 
     @Test
-    void shouldHandleEmptyResultGracefully() throws PrometheusClient.PrometheusException {
+    void shouldHandleEmptyResultGracefully() throws Exception {
         // Given
         moduleDispatcher.setCustomResponse(moduleDispatcher.getEmptyResultResponse());
         List<String> metricNames = List.of("non_existent_metric");
@@ -215,7 +215,7 @@ class PrometheusClientTest {
     }
 
     @Test
-    void shouldConstructUrlCorrectly(URIBuilder uriBuilder) throws PrometheusClient.PrometheusException {
+    void shouldConstructUrlCorrectly(URIBuilder uriBuilder) throws Exception {
         // Given
         String baseUrl = uriBuilder.buildAsString();
         PrometheusClient client = new PrometheusClient(baseUrl + "/");  // Test trailing slash removal
@@ -257,32 +257,32 @@ class PrometheusClientTest {
     }
 
     @Test
-    void shouldHandleComplexMetricWithLabels() throws PrometheusClient.PrometheusException {
+    void shouldHandleComplexMetricWithLabels() throws Exception {
         // Given - Using real JWT validation metrics from actual test data
         String complexResponse = """
-        {
-          "status": "success",
-          "data": {
-            "resultType": "matrix",
-            "result": [
-              {
-                "metric": {
-                  "__name__": "sheriff_oauth_validation_success_operations_total",
-                  "instance": "oauth-sheriff-integration-tests:8443",
-                  "job": "quarkus-benchmark",
-                  "event_type": "ACCESS_TOKEN_CREATED",
-                  "result": "success"
-                },
-                "values": [
-                  [1758909906, "10960018"],
-                  [1758909908, "10960018"],
-                  [1758909910, "10960018"]
-                ]
-              }
-            ]
-          }
-        }
-        """;
+                {
+                  "status": "success",
+                  "data": {
+                    "resultType": "matrix",
+                    "result": [
+                      {
+                        "metric": {
+                          "__name__": "sheriff_oauth_validation_success_operations_total",
+                          "instance": "oauth-sheriff-integration-tests:8443",
+                          "job": "quarkus-benchmark",
+                          "event_type": "ACCESS_TOKEN_CREATED",
+                          "result": "success"
+                        },
+                        "values": [
+                          [1758909906, "10960018"],
+                          [1758909908, "10960018"],
+                          [1758909910, "10960018"]
+                        ]
+                      }
+                    ]
+                  }
+                }
+                """;
         moduleDispatcher.setCustomResponse(complexResponse);
         List<String> metricNames = List.of("sheriff_oauth_validation_success_operations_total");
 

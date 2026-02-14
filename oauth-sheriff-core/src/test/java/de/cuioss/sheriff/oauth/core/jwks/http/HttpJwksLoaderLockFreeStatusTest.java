@@ -50,7 +50,7 @@ class HttpJwksLoaderLockFreeStatusTest {
 
     @Test
     @DisplayName("getLoaderStatus should be lock-free under high contention")
-    void getLoaderStatusShouldBeLockFreeUnderHighContention(URIBuilder uriBuilder) throws InterruptedException {
+    void getLoaderStatusShouldBeLockFreeUnderHighContention(URIBuilder uriBuilder) throws Exception {
         String jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
                 .jwksUrl(jwksEndpoint)
@@ -123,7 +123,7 @@ class HttpJwksLoaderLockFreeStatusTest {
 
     @Test
     @DisplayName("Status transitions should be atomic and consistent")
-    void statusTransitionsShouldBeAtomicAndConsistent(URIBuilder uriBuilder) throws InterruptedException {
+    void statusTransitionsShouldBeAtomicAndConsistent(URIBuilder uriBuilder) throws Exception {
         String jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
                 .jwksUrl(jwksEndpoint)
@@ -218,7 +218,7 @@ class HttpJwksLoaderLockFreeStatusTest {
 
     @Test
     @DisplayName("Concurrent status checks during multiple initializations should be safe")
-    void concurrentStatusChecksDuringMultipleInitializationsShouldBeSafe(URIBuilder uriBuilder) throws InterruptedException {
+    void concurrentStatusChecksDuringMultipleInitializationsShouldBeSafe(URIBuilder uriBuilder) throws Exception {
         String jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
                 .jwksUrl(jwksEndpoint)

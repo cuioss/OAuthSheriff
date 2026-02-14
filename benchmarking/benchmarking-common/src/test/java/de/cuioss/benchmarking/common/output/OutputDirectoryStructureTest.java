@@ -18,7 +18,6 @@ package de.cuioss.benchmarking.common.output;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -30,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class OutputDirectoryStructureTest {
 
     @Test
-    void constructorShouldSetAllPaths(@TempDir Path tempDir) throws IOException {
+    void constructorShouldSetAllPaths(@TempDir Path tempDir) throws Exception {
         Path benchmarkResultsDir = tempDir.resolve("benchmark-results");
         OutputDirectoryStructure structure = new OutputDirectoryStructure(benchmarkResultsDir);
 
@@ -51,7 +50,7 @@ class OutputDirectoryStructureTest {
     }
 
     @Test
-    void ensureDirectoriesShouldCreateDeploymentDirectories(@TempDir Path tempDir) throws IOException {
+    void ensureDirectoriesShouldCreateDeploymentDirectories(@TempDir Path tempDir) throws Exception {
         Path benchmarkResultsDir = tempDir.resolve("benchmark-results");
         OutputDirectoryStructure structure = new OutputDirectoryStructure(benchmarkResultsDir);
 
@@ -76,7 +75,7 @@ class OutputDirectoryStructureTest {
     }
 
     @Test
-    void ensureDirectoriesShouldNotCreateNonDeploymentDirectories(@TempDir Path tempDir) throws IOException {
+    void ensureDirectoriesShouldNotCreateNonDeploymentDirectories(@TempDir Path tempDir) throws Exception {
         Path benchmarkResultsDir = tempDir.resolve("benchmark-results");
         OutputDirectoryStructure structure = new OutputDirectoryStructure(benchmarkResultsDir);
 
@@ -111,7 +110,7 @@ class OutputDirectoryStructureTest {
     }
 
     @Test
-    void ensureDirectoriesShouldBeIdempotent(@TempDir Path tempDir) throws IOException {
+    void ensureDirectoriesShouldBeIdempotent(@TempDir Path tempDir) throws Exception {
         Path benchmarkResultsDir = tempDir.resolve("benchmark-results");
         OutputDirectoryStructure structure = new OutputDirectoryStructure(benchmarkResultsDir);
 
@@ -135,7 +134,7 @@ class OutputDirectoryStructureTest {
     }
 
     @Test
-    void isDeploymentDirectoryExistsShouldReturnCorrectStatus(@TempDir Path tempDir) throws IOException {
+    void isDeploymentDirectoryExistsShouldReturnCorrectStatus(@TempDir Path tempDir) throws Exception {
         Path benchmarkResultsDir = tempDir.resolve("benchmark-results");
         OutputDirectoryStructure structure = new OutputDirectoryStructure(benchmarkResultsDir);
 
@@ -148,7 +147,7 @@ class OutputDirectoryStructureTest {
     }
 
     @Test
-    void cleanDeploymentDirectoryShouldRemoveAndRecreate(@TempDir Path tempDir) throws IOException {
+    void cleanDeploymentDirectoryShouldRemoveAndRecreate(@TempDir Path tempDir) throws Exception {
         Path benchmarkResultsDir = tempDir.resolve("benchmark-results");
         OutputDirectoryStructure structure = new OutputDirectoryStructure(benchmarkResultsDir);
 
@@ -198,7 +197,7 @@ class OutputDirectoryStructureTest {
     }
 
     @Test
-    void cleanDeploymentDirectoryShouldNotAffectNonDeploymentDirectories(@TempDir Path tempDir) throws IOException {
+    void cleanDeploymentDirectoryShouldNotAffectNonDeploymentDirectories(@TempDir Path tempDir) throws Exception {
         Path benchmarkResultsDir = tempDir.resolve("benchmark-results");
         OutputDirectoryStructure structure = new OutputDirectoryStructure(benchmarkResultsDir);
 
@@ -243,7 +242,7 @@ class OutputDirectoryStructureTest {
     }
 
     @Test
-    void ensureDirectoriesShouldHandleDeepPathHierarchy(@TempDir Path tempDir) throws IOException {
+    void ensureDirectoriesShouldHandleDeepPathHierarchy(@TempDir Path tempDir) throws Exception {
         Path deepPath = tempDir.resolve("level1/level2/level3/benchmark-results");
         OutputDirectoryStructure structure = new OutputDirectoryStructure(deepPath);
 
@@ -261,7 +260,7 @@ class OutputDirectoryStructureTest {
     }
 
     @Test
-    void pathResolutionShouldBeConsistent(@TempDir Path tempDir) throws IOException {
+    void pathResolutionShouldBeConsistent(@TempDir Path tempDir) throws Exception {
         Path benchmarkResultsDir = tempDir.resolve("benchmark-results");
         OutputDirectoryStructure structure = new OutputDirectoryStructure(benchmarkResultsDir);
 

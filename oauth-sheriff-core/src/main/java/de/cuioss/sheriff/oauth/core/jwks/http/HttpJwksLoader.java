@@ -192,7 +192,7 @@ public class HttpJwksLoader implements JwksLoader, LoadingStatusProvider, AutoCl
         // Create base adapter with ETag caching
         HttpAdapter<Jwks> baseAdapter = ETagAwareHttpAdapter.<Jwks>builder()
                 .httpHandler(handler)
-                .responseConverter(new JwksHttpContentConverter())
+                .responseConverter(new JwksHttpContentConverter(config.getParserConfig()))
                 .cacheKeyHeaderFilter(CacheKeyHeaderFilter.NONE)  // URI only - public OAuth endpoints
                 .build();
 

@@ -18,7 +18,6 @@ package de.cuioss.benchmarking.common.report;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -33,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class HistoricalDataManagerTest {
 
     @Test
-    void archiveCurrentRun(@TempDir Path tempDir) throws IOException {
+    void archiveCurrentRun(@TempDir Path tempDir) throws Exception {
         HistoricalDataManager manager = new HistoricalDataManager();
 
         Map<String, Object> testData = new HashMap<>();
@@ -65,7 +64,7 @@ class HistoricalDataManagerTest {
     }
 
     @Test
-    void archiveWithNullCommitSha(@TempDir Path tempDir) throws IOException {
+    void archiveWithNullCommitSha(@TempDir Path tempDir) throws Exception {
         HistoricalDataManager manager = new HistoricalDataManager();
 
         Map<String, Object> testData = new HashMap<>();
@@ -82,7 +81,7 @@ class HistoricalDataManagerTest {
     }
 
     @Test
-    void enforceRetentionPolicy(@TempDir Path tempDir) throws IOException {
+    void enforceRetentionPolicy(@TempDir Path tempDir) throws Exception {
         HistoricalDataManager manager = new HistoricalDataManager();
         Path historyDir = tempDir.resolve("history");
         Files.createDirectories(historyDir);
@@ -117,7 +116,7 @@ class HistoricalDataManagerTest {
     }
 
     @Test
-    void getHistoricalFiles(@TempDir Path tempDir) throws IOException {
+    void getHistoricalFiles(@TempDir Path tempDir) throws Exception {
         HistoricalDataManager manager = new HistoricalDataManager();
         Path historyDir = tempDir.resolve("history");
         Files.createDirectories(historyDir);
@@ -138,7 +137,7 @@ class HistoricalDataManagerTest {
     }
 
     @Test
-    void getHistoricalFilesEmptyDirectory(@TempDir Path tempDir) throws IOException {
+    void getHistoricalFilesEmptyDirectory(@TempDir Path tempDir) throws Exception {
         HistoricalDataManager manager = new HistoricalDataManager();
         Path historyDir = tempDir.resolve("history");
         Files.createDirectories(historyDir);
@@ -148,7 +147,7 @@ class HistoricalDataManagerTest {
     }
 
     @Test
-    void getHistoricalFilesNonExistentDirectory(@TempDir Path tempDir) throws IOException {
+    void getHistoricalFilesNonExistentDirectory(@TempDir Path tempDir) throws Exception {
         HistoricalDataManager manager = new HistoricalDataManager();
         Path historyDir = tempDir.resolve("non-existent");
 
@@ -157,7 +156,7 @@ class HistoricalDataManagerTest {
     }
 
     @Test
-    void hasHistoricalData(@TempDir Path tempDir) throws IOException {
+    void hasHistoricalData(@TempDir Path tempDir) throws Exception {
         HistoricalDataManager manager = new HistoricalDataManager();
 
         // Test with no history directory
@@ -174,7 +173,7 @@ class HistoricalDataManagerTest {
     }
 
     @Test
-    void retentionPolicyWithExactlyTenFiles(@TempDir Path tempDir) throws IOException {
+    void retentionPolicyWithExactlyTenFiles(@TempDir Path tempDir) throws Exception {
         HistoricalDataManager manager = new HistoricalDataManager();
         Path historyDir = tempDir.resolve("history");
         Files.createDirectories(historyDir);

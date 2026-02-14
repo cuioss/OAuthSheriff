@@ -43,7 +43,7 @@ class HttpClientFactoryTest {
     }
 
     @Test
-    void concurrentAccess() throws InterruptedException {
+    void concurrentAccess() throws Exception {
         // Test thread safety of factory
         Thread[] threads = new Thread[10];
         HttpClient[] clients = new HttpClient[10];

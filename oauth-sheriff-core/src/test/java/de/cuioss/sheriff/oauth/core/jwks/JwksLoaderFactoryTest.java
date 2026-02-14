@@ -28,7 +28,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -101,7 +100,7 @@ class JwksLoaderFactoryTest {
 
     @Test
     @DisplayName("Should create file loader")
-    void shouldCreateFileLoader(@TempDir Path tempDir) throws IOException {
+    void shouldCreateFileLoader(@TempDir Path tempDir) throws Exception {
 
         Path jwksFile = tempDir.resolve("jwks.json");
         Files.writeString(jwksFile, jwksContent);

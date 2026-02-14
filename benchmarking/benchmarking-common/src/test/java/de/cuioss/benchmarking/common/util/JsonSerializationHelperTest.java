@@ -55,7 +55,7 @@ class JsonSerializationHelperTest {
     }
 
     @Test
-    void writeAndReadJsonFile() throws IOException {
+    void writeAndReadJsonFile() throws Exception {
         // Create test data
         Map<String, Object> testData = new HashMap<>();
         testData.put("name", "test");
@@ -79,7 +79,7 @@ class JsonSerializationHelperTest {
     }
 
     @Test
-    void writeJsonFileCreatesDirectories() throws IOException {
+    void writeJsonFileCreatesDirectories() throws Exception {
         // Create nested path
         Path nestedFile = tempDir.resolve("nested/dir/structure/data.json");
 
@@ -123,7 +123,7 @@ class JsonSerializationHelperTest {
     }
 
     @Test
-    void complexObjectSerialization() throws IOException {
+    void complexObjectSerialization() throws Exception {
         // Create complex object without Instant (causes issues with Gson)
         TestObject obj = new TestObject();
         obj.id = 1;

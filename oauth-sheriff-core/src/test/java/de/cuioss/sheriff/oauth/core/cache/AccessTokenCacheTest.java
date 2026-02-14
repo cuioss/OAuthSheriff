@@ -199,7 +199,7 @@ class AccessTokenCacheTest {
     }
 
     @Test
-    void concurrentAccess() throws InterruptedException {
+    void concurrentAccess() throws Exception {
         // Given
         String token = "concurrent-token";
         AtomicInteger validationCount = new AtomicInteger(0);
@@ -254,7 +254,7 @@ class AccessTokenCacheTest {
     }
 
     @Test
-    void concurrentAccessHighContention() throws InterruptedException {
+    void concurrentAccessHighContention() throws Exception {
         // Test optimistic caching under high contention (issue #131/#132 fix verification)
         // Given
         String token = "high-contention-token";
@@ -322,7 +322,7 @@ class AccessTokenCacheTest {
     }
 
     @Test
-    void concurrentAccessMultipleTokens() throws InterruptedException {
+    void concurrentAccessMultipleTokens() throws Exception {
         // Test that different tokens can be validated in parallel without contention
         // Given
         int tokenCount = 10;
@@ -473,7 +473,7 @@ class AccessTokenCacheTest {
     }
 
     @Test
-    void concurrentCacheEviction() throws InterruptedException {
+    void concurrentCacheEviction() throws Exception {
         // Given - smaller cache to make eviction more likely
         cache.shutdown();
         AccessTokenCacheConfig config = AccessTokenCacheConfig.builder()

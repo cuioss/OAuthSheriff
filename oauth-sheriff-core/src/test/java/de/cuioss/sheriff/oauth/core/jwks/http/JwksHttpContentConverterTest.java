@@ -58,18 +58,18 @@ class JwksHttpContentConverterTest {
     @Test
     void shouldParseValidJwks() {
         String validJwks = """
-            {
-              "keys": [
                 {
-                  "kty": "RSA",
-                  "use": "sig",
-                  "kid": "test-key-1",
-                  "n": "xGOr-H0A-bJYznUBCUb6NmKqTYIbL7tzFKbCH7L0MnJqGzjKsNpBn95aL-dVh7Vk3USW0fvOi8TvvD6ne8tVlL",
-                  "e": "AQAB"
+                  "keys": [
+                    {
+                      "kty": "RSA",
+                      "use": "sig",
+                      "kid": "test-key-1",
+                      "n": "xGOr-H0A-bJYznUBCUb6NmKqTYIbL7tzFKbCH7L0MnJqGzjKsNpBn95aL-dVh7Vk3USW0fvOi8TvvD6ne8tVlL",
+                      "e": "AQAB"
+                    }
+                  ]
                 }
-              ]
-            }
-            """;
+                """;
 
         Optional<Jwks> result = converter.convert(validJwks);
         assertTrue(result.isPresent());
@@ -101,10 +101,10 @@ class JwksHttpContentConverterTest {
     @Test
     void shouldReturnEmptyOptionalForMalformedJwks() {
         String malformedJwks = """
-            {
-              "not_keys": "invalid structure"
-            }
-            """;
+                {
+                  "not_keys": "invalid structure"
+                }
+                """;
         Optional<Jwks> result = converter.convert(malformedJwks);
         // DSL-JSON should still parse this, but keys will be null
         assertTrue(result.isPresent());
@@ -116,10 +116,10 @@ class JwksHttpContentConverterTest {
         // Test case where JSON is syntactically valid but has type mismatches
         // DSL-JSON throws IOException for type mismatches (expecting array, got string)
         String invalidStructure = """
-            {
-              "keys": "this should be an array not a string"
-            }
-            """;
+                {
+                  "keys": "this should be an array not a string"
+                }
+                """;
         Optional<Jwks> result = converter.convert(invalidStructure);
         assertTrue(result.isEmpty());
 
@@ -131,10 +131,10 @@ class JwksHttpContentConverterTest {
     @Test
     void shouldHandleEmptyKeysArray() {
         String emptyKeys = """
-            {
-              "keys": []
-            }
-            """;
+                {
+                  "keys": []
+                }
+                """;
         Optional<Jwks> result = converter.convert(emptyKeys);
         assertTrue(result.isPresent());
         assertNotNull(result.get().keys());

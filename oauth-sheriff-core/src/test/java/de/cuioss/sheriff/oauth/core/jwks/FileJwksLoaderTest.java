@@ -118,7 +118,7 @@ class FileJwksLoaderTest {
 
     @Test
     @DisplayName("Should handle invalid JWKS format")
-    void shouldHandleInvalidJwksFormat() throws IOException {
+    void shouldHandleInvalidJwksFormat() throws Exception {
         Path invalidJwksPath = tempDir.resolve("invalid-jwks.json");
         Files.writeString(invalidJwksPath, InMemoryJWKSFactory.createInvalidJson());
         JwksLoader invalidJwksLoader = JwksLoaderFactory.createFileLoader(invalidJwksPath.toString());
@@ -131,7 +131,7 @@ class FileJwksLoaderTest {
 
     @Test
     @DisplayName("Should handle missing required fields in JWK")
-    void shouldHandleMissingRequiredFieldsInJwk() throws IOException {
+    void shouldHandleMissingRequiredFieldsInJwk() throws Exception {
 
         Path missingFieldsJwksPath = tempDir.resolve("missing-fields-jwks.json");
         String missingFieldsJwksContent = InMemoryJWKSFactory.createJwksWithMissingFields(TEST_KID);
@@ -147,7 +147,7 @@ class FileJwksLoaderTest {
 
     @Test
     @DisplayName("Should refresh keys when file is updated")
-    void shouldRefreshKeysWhenFileIsUpdated() throws IOException {
+    void shouldRefreshKeysWhenFileIsUpdated() throws Exception {
 
         Optional<KeyInfo> initialKeyInfo = fileJwksLoader.getKeyInfo(TEST_KID);
         assertTrue(initialKeyInfo.isPresent(), "Initial key info should be present");

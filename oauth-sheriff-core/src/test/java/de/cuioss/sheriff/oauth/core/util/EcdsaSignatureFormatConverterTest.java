@@ -33,7 +33,7 @@ class EcdsaSignatureFormatConverterTest {
 
     @Test
     @DisplayName("Should convert ES256 IEEE P1363 signature to ASN.1/DER format")
-    void shouldConvertES256Signature() throws SignatureException {
+    void shouldConvertES256Signature() throws Exception {
         // Create test IEEE P1363 signature for ES256 (64 bytes: 32 for R + 32 for S)
         byte[] ieeeP1363Signature = new byte[64];
 
@@ -66,7 +66,7 @@ class EcdsaSignatureFormatConverterTest {
 
     @Test
     @DisplayName("Should convert ES384 IEEE P1363 signature to ASN.1/DER format")
-    void shouldConvertES384Signature() throws SignatureException {
+    void shouldConvertES384Signature() throws Exception {
         // Create test IEEE P1363 signature for ES384 (96 bytes: 48 for R + 48 for S)
         byte[] ieeeP1363Signature = new byte[96];
 
@@ -92,7 +92,7 @@ class EcdsaSignatureFormatConverterTest {
 
     @Test
     @DisplayName("Should convert ES512 IEEE P1363 signature to ASN.1/DER format")
-    void shouldConvertES512Signature() throws SignatureException {
+    void shouldConvertES512Signature() throws Exception {
         // Create test IEEE P1363 signature for ES512 (132 bytes: 66 for R + 66 for S)
         byte[] ieeeP1363Signature = new byte[132];
 
@@ -118,7 +118,7 @@ class EcdsaSignatureFormatConverterTest {
 
     @Test
     @DisplayName("Should handle signatures with leading zeros in R component")
-    void shouldHandleLeadingZerosInR() throws SignatureException {
+    void shouldHandleLeadingZerosInR() throws Exception {
         // Create IEEE P1363 signature with leading zeros in R component
         byte[] ieeeP1363Signature = new byte[64];
 
@@ -141,7 +141,7 @@ class EcdsaSignatureFormatConverterTest {
 
     @Test
     @DisplayName("Should handle signatures with leading zeros in S component")
-    void shouldHandleLeadingZerosInS() throws SignatureException {
+    void shouldHandleLeadingZerosInS() throws Exception {
         // Create IEEE P1363 signature with leading zeros in S component
         byte[] ieeeP1363Signature = new byte[64];
 
@@ -164,7 +164,7 @@ class EcdsaSignatureFormatConverterTest {
 
     @Test
     @DisplayName("Should handle all-zero R or S components")
-    void shouldHandleZeroComponents() throws SignatureException {
+    void shouldHandleZeroComponents() throws Exception {
         // Create signature with zero R component (edge case)
         byte[] ieeeP1363Signature = new byte[64];
 
@@ -185,7 +185,7 @@ class EcdsaSignatureFormatConverterTest {
     @ParameterizedTest
     @ValueSource(strings = {"ES256", "es256", "Es256", "ES384", "es384", "ES512", "es512"})
     @DisplayName("Should handle case-insensitive algorithm names")
-    void shouldHandleCaseInsensitiveAlgorithms(String algorithm) throws SignatureException {
+    void shouldHandleCaseInsensitiveAlgorithms(String algorithm) throws Exception {
         // Determine expected length based on normalized algorithm
         String normalizedAlg = algorithm.toUpperCase();
         int expectedLength = switch (normalizedAlg) {
@@ -279,7 +279,7 @@ class EcdsaSignatureFormatConverterTest {
 
     @Test
     @DisplayName("Should produce deterministic output for same input")
-    void shouldProduceDeterministicOutput() throws SignatureException {
+    void shouldProduceDeterministicOutput() throws Exception {
         byte[] ieeeP1363Signature = new byte[64];
         Arrays.fill(ieeeP1363Signature, 0, 32, (byte) 0x11);
         Arrays.fill(ieeeP1363Signature, 32, 64, (byte) 0x22);

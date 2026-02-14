@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -40,7 +39,7 @@ class JmhBenchmarkConverterTest {
     }
 
     @Test
-    void shouldConvertThroughputBenchmarkWithOpsPerMs() throws IOException {
+    void shouldConvertThroughputBenchmarkWithOpsPerMs() throws Exception {
         // Real data from actual JMH benchmark results
         String jmhResultJson = """
                 [
@@ -130,7 +129,7 @@ class JmhBenchmarkConverterTest {
     }
 
     @Test
-    void shouldConvertLatencyBenchmarkWithMsPerOp() throws IOException {
+    void shouldConvertLatencyBenchmarkWithMsPerOp() throws Exception {
         // Real data from actual JMH benchmark results
         String jmhResultJson = """
                 [
@@ -178,7 +177,7 @@ class JmhBenchmarkConverterTest {
     }
 
     @Test
-    void shouldHandleOpsPerSecondWithoutConversion() throws IOException {
+    void shouldHandleOpsPerSecondWithoutConversion() throws Exception {
         // Test data with ops/s (should remain unchanged)
         String jmhResultJson = """
                 [
@@ -220,7 +219,7 @@ class JmhBenchmarkConverterTest {
     }
 
     @Test
-    void shouldConvertMicrosecondLatencyToMillisecondsInOverview() throws IOException {
+    void shouldConvertMicrosecondLatencyToMillisecondsInOverview() throws Exception {
         // BUG FIX TEST: Verify that latency in us/op is converted to ms/op in the overview
         // This test ensures that the badge generator receives latency in milliseconds
         String jmhResultJson = """
@@ -295,12 +294,12 @@ class JmhBenchmarkConverterTest {
         // If latency was NOT converted (867.4 instead of 0.8674), grade would be F
         assertEquals("A+", overview.getPerformanceGrade(),
                 """
-                Grade should be A+ with correct latency conversion (0.8674 ms). \
-                If F, latency was not converted (867.4 ms).""");
+                        Grade should be A+ with correct latency conversion (0.8674 ms). \
+                        If F, latency was not converted (867.4 ms).""");
     }
 
     @Test
-    void shouldCalculatePerformanceScoreAccordingToDocumentation() throws IOException {
+    void shouldCalculatePerformanceScoreAccordingToDocumentation() throws Exception {
         Path realResultFile = Path.of("src/test/resources/library-benchmark-results/micro-result-scoring-test.json");
         assertTrue(Files.exists(realResultFile), "Real benchmark result file should exist");
 

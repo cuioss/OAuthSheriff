@@ -257,7 +257,7 @@ class IssuerConfigResolverTest {
 
         @Test
         @DisplayName("Handle concurrent access during lazy initialization")
-        void handlesConcurrentAccessDuringLazyInitialization() throws InterruptedException {
+        void handlesConcurrentAccessDuringLazyInitialization() throws Exception {
             IssuerConfig config = tokenHolder1.getIssuerConfig();
             String issuerIdentifier = config.getIssuerIdentifier();
 
@@ -295,7 +295,7 @@ class IssuerConfigResolverTest {
 
         @Test
         @DisplayName("Maintain consistency during concurrent cache optimization")
-        void maintainsConsistencyDuringConcurrentOptimization() throws InterruptedException {
+        void maintainsConsistencyDuringConcurrentOptimization() throws Exception {
             // Create multiple configs
             List<IssuerConfig> configs = new ArrayList<>();
             List<String> issuerIds = new ArrayList<>();
@@ -369,7 +369,7 @@ class IssuerConfigResolverTest {
 
         @Test
         @DisplayName("Handle double-checked locking correctly under high concurrency")
-        void handlesDoubleCheckedLockingCorrectly() throws InterruptedException {
+        void handlesDoubleCheckedLockingCorrectly() throws Exception {
             IssuerConfig config = tokenHolder1.getIssuerConfig();
             String issuerIdentifier = config.getIssuerIdentifier();
 

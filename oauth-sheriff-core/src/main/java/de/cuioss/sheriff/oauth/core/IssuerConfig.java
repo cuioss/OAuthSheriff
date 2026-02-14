@@ -227,8 +227,8 @@ public class IssuerConfig implements LoadingStatusProvider {
         // Fall back to configured issuer identifier (for file-based, in-memory, etc.)
         Preconditions.checkState(issuerIdentifier != null,
                 """
-                issuerIdentifier is null - this indicates a bug in validation logic. \
-                Non-well-known JWKS loaders should have been validated to require issuerIdentifier during initialization.""");
+                        issuerIdentifier is null - this indicates a bug in validation logic. \
+                        Non-well-known JWKS loaders should have been validated to require issuerIdentifier during initialization.""");
         return issuerIdentifier;
     }
 

@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;
-import java.security.NoSuchAlgorithmException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -107,7 +106,7 @@ class WellKnownConfigTest {
 
     @Test
     @DisplayName("Should create config with custom SSL context")
-    void shouldCreateConfigWithCustomSslContext() throws NoSuchAlgorithmException {
+    void shouldCreateConfigWithCustomSslContext() throws Exception {
         // Create a custom SSL context
         SSLContext customSslContext = SSLContext.getDefault();
 
@@ -123,7 +122,7 @@ class WellKnownConfigTest {
 
     @Test
     @DisplayName("Should support sslContext() method in builder API")
-    void shouldSupportSslContextBuilderMethod() throws NoSuchAlgorithmException {
+    void shouldSupportSslContextBuilderMethod() throws Exception {
         // API test: verify sslContext() method exists and returns builder for chaining
         SSLContext sslContext = SSLContext.getDefault();
 
@@ -162,7 +161,7 @@ class WellKnownConfigTest {
 
     @Test
     @DisplayName("Should allow chaining of sslContext() and tlsVersions() methods")
-    void shouldAllowChainingOfSslContextAndTlsVersionsMethods() throws NoSuchAlgorithmException {
+    void shouldAllowChainingOfSslContextAndTlsVersionsMethods() throws Exception {
         // API test: verify both methods can be chained together
         SSLContext sslContext = SSLContext.getDefault();
         SecureSSLContextProvider tlsProvider = new SecureSSLContextProvider(SecureSSLContextProvider.TLS_V1_2);

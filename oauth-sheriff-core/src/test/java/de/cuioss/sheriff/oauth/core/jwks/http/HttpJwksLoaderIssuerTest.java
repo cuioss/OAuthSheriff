@@ -157,7 +157,7 @@ class HttpJwksLoaderIssuerTest {
 
     @Test
     @DisplayName("Should handle concurrent access to issuer identifier")
-    void shouldHandleConcurrentAccessToIssuer(URIBuilder uriBuilder) throws InterruptedException {
+    void shouldHandleConcurrentAccessToIssuer(URIBuilder uriBuilder) throws Exception {
         // Setup dispatcher with valid response
         moduleDispatcher.returnDefault();
 

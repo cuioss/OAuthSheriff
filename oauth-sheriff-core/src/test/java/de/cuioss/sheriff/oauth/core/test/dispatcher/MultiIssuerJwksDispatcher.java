@@ -65,7 +65,7 @@ public class MultiIssuerJwksDispatcher implements ModuleDispatcherElement {
     public Optional<MockResponse> handleGet(@NonNull RecordedRequest request) {
         callCounter++;
 
-        String path = request.getPath();
+        String path = request.getUrl() != null ? request.getUrl().encodedPath() : null;
         if (path == null) {
             return Optional.empty();
         }

@@ -135,6 +135,18 @@ public class HttpJwksLoaderConfig {
     @Getter
     private final int maxRetiredKeySets;
 
+    /**
+     * The parser configuration for JSON parsing (DSL-JSON).
+     * <p>
+     * This is pre-initialized on the caller's thread to ensure the correct
+     * classloader is used for ServiceLoader discovery, avoiding issues with
+     * ForkJoinPool threads that may have a different classloader context
+     * (e.g., in NiFi's NAR classloading model).
+     */
+    @Getter
+    @EqualsAndHashCode.Exclude
+    private final ParserConfig parserConfig;
+
     @SuppressWarnings("java:S107") // ok for builder
     private HttpJwksLoaderConfig(int refreshIntervalSeconds,
             HttpHandler httpHandler,
@@ -143,7 +155,8 @@ public class HttpJwksLoaderConfig {
             ScheduledExecutorService scheduledExecutorService,
             String issuerIdentifier,
             Duration keyRotationGracePeriod,
-            int maxRetiredKeySets) {
+            int maxRetiredKeySets,
+            ParserConfig parserConfig) {
         this.refreshIntervalSeconds = refreshIntervalSeconds;
         this.httpHandler = httpHandler;
         this.wellKnownConfig = wellKnownConfig;
@@ -152,6 +165,7 @@ public class HttpJwksLoaderConfig {
         this.issuerIdentifier = issuerIdentifier;
         this.keyRotationGracePeriod = keyRotationGracePeriod;
         this.maxRetiredKeySets = maxRetiredKeySets;
+        this.parserConfig = parserConfig;
     }
 
     /**
@@ -251,10 +265,14 @@ public class HttpJwksLoaderConfig {
         private final HttpHandler.HttpHandlerBuilder httpHandlerBuilder;
         private RetryConfig retryConfig;
         private ScheduledExecutorService scheduledExecutorService;
-        private WellKnownConfig wellKnownConfig;
         private String issuerIdentifier;
         private Duration keyRotationGracePeriod = DEFAULT_KEY_ROTATION_GRACE_PERIOD;
         private int maxRetiredKeySets = DEFAULT_MAX_RETIRED_KEY_SETS;
+        private ParserConfig parserConfig;
+
+        // Pending well-known values — WellKnownConfig creation is deferred to build()
+        private String pendingWellKnownUrl;
+        private URI pendingWellKnownUri;
 
         // Track which endpoint configuration method was used to ensure mutual exclusivity
         private EndpointSource endpointSource = null;
@@ -301,6 +319,25 @@ public class HttpJwksLoaderConfig {
         public HttpJwksLoaderConfigBuilder maxRetiredKeySets(int maxRetiredKeySets) {
             Preconditions.checkArgument(maxRetiredKeySets > 0, "maxRetiredKeySets must be positive");
             this.maxRetiredKeySets = maxRetiredKeySets;
+            return this;
+        }
+
+        /**
+         * Sets a pre-initialized ParserConfig for JSON parsing.
+         * <p>
+         * When set, this ParserConfig will be used for both JWKS content parsing
+         * and well-known discovery parsing, avoiding ServiceLoader calls on
+         * ForkJoinPool threads that may have the wrong classloader.
+         * </p>
+         * <p>
+         * If not set, a default ParserConfig will be created during {@link #build()}.
+         * </p>
+         *
+         * @param parserConfig the pre-initialized parser configuration
+         * @return this builder instance
+         */
+        public HttpJwksLoaderConfigBuilder parserConfig(ParserConfig parserConfig) {
+            this.parserConfig = parserConfig;
             return this;
         }
 
@@ -359,11 +396,7 @@ public class HttpJwksLoaderConfig {
         public HttpJwksLoaderConfigBuilder wellKnownUrl(String wellKnownUrl) {
             validateEndpointExclusivity(EndpointSource.WELL_KNOWN_URL);
             this.endpointSource = EndpointSource.WELL_KNOWN_URL;
-            this.wellKnownConfig = WellKnownConfig.builder()
-                    .wellKnownUrl(wellKnownUrl)
-                    .retryConfig(RetryConfig.defaults())
-                    .parserConfig(ParserConfig.builder().build())
-                    .build();
+            this.pendingWellKnownUrl = wellKnownUrl;
             return this;
         }
 
@@ -386,11 +419,7 @@ public class HttpJwksLoaderConfig {
         public HttpJwksLoaderConfigBuilder wellKnownUri(URI wellKnownUri) {
             validateEndpointExclusivity(EndpointSource.WELL_KNOWN_URI);
             this.endpointSource = EndpointSource.WELL_KNOWN_URI;
-            this.wellKnownConfig = WellKnownConfig.builder()
-                    .wellKnownUri(wellKnownUri)
-                    .retryConfig(RetryConfig.defaults())
-                    .parserConfig(ParserConfig.builder().build())
-                    .build();
+            this.pendingWellKnownUri = wellKnownUri;
             return this;
         }
 
@@ -528,11 +557,23 @@ public class HttpJwksLoaderConfig {
                 retryConfig = RetryConfig.defaults();
             }
 
+            // Resolve ParserConfig — use provided or create default
+            ParserConfig resolvedParserConfig = this.parserConfig != null
+                    ? this.parserConfig : ParserConfig.builder().build();
+
             HttpHandler jwksHttpHandler = null;
             WellKnownConfig configuredWellKnownConfig = null;
             if (endpointSource == EndpointSource.WELL_KNOWN_URL || endpointSource == EndpointSource.WELL_KNOWN_URI) {
-                // Use WellKnownConfig directly
-                configuredWellKnownConfig = this.wellKnownConfig;
+                // Build WellKnownConfig with the resolved ParserConfig
+                var wkBuilder = WellKnownConfig.builder()
+                        .retryConfig(RetryConfig.defaults())
+                        .parserConfig(resolvedParserConfig);
+                if (pendingWellKnownUrl != null) {
+                    wkBuilder.wellKnownUrl(pendingWellKnownUrl);
+                } else {
+                    wkBuilder.wellKnownUri(pendingWellKnownUri);
+                }
+                configuredWellKnownConfig = wkBuilder.build();
             } else {
                 // Build the HttpHandler for direct URL/URI configuration
                 try {
@@ -575,7 +616,8 @@ public class HttpJwksLoaderConfig {
                     executor,
                     issuerIdentifier,
                     keyRotationGracePeriod,
-                    maxRetiredKeySets);
+                    maxRetiredKeySets,
+                    resolvedParserConfig);
         }
 
     }
