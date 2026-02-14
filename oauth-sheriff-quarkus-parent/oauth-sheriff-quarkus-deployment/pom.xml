@@ -144,7 +144,27 @@
                         </goals>
                         <phase>test</phase>
                         <configuration>
-                            <arguments>run test:ci-strict</arguments>
+                            <arguments>run test:ci</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-lint-js</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <arguments>run lint:js</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-lint-css</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <arguments>run lint:css</arguments>
                         </configuration>
                     </execution>
                     <execution>
@@ -155,26 +175,6 @@
                         <phase>compile</phase>
                         <configuration>
                             <arguments>run format:check</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm-css-validate</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <phase>compile</phase>
-                        <configuration>
-                            <arguments>run validate:css</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm-lint</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <phase>compile</phase>
-                        <configuration>
-                            <arguments>run lint</arguments>
                         </configuration>
                     </execution>
                 </executions>

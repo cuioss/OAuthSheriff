@@ -22,7 +22,7 @@ export default [
       wc,
     },
     languageOptions: {
-      ecmaVersion: 2022,
+      ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
         console: 'readonly',
