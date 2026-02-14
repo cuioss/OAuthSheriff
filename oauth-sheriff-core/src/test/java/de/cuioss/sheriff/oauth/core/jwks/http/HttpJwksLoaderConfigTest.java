@@ -18,6 +18,7 @@ package de.cuioss.sheriff.oauth.core.jwks.http;
 import de.cuioss.http.client.adapter.RetryConfig;
 import de.cuioss.http.client.handler.SecureSSLContextProvider;
 import de.cuioss.sheriff.oauth.core.JWTValidationLogMessages;
+import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.test.juli.LogAsserts;
 import de.cuioss.test.juli.TestLogLevel;
 import de.cuioss.test.juli.junit5.EnableTestLogger;
@@ -426,5 +427,46 @@ class HttpJwksLoaderConfigTest {
         assertNotNull(config.getWellKnownConfig(), "WellKnownConfig must be non-null for well-known configurations");
         // HttpJwksLoaderConfig now implements HttpHandlerProvider, so getHttpHandler() returns the HttpHandler from WellKnownConfig
         assertNotNull(config.getHttpHandler(), "HttpHandler should be accessible via HttpHandlerProvider interface in well-known mode");
+    }
+
+    @Test
+    @DisplayName("Should use custom ParserConfig when provided")
+    void shouldUseCustomParserConfig() {
+        ParserConfig customParserConfig = ParserConfig.builder().build();
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .jwksUrl(VALID_URL)
+                .issuerIdentifier("test-issuer")
+                .parserConfig(customParserConfig)
+                .build();
+
+        assertSame(customParserConfig, config.getParserConfig(),
+                "Custom ParserConfig should be used");
+    }
+
+    @Test
+    @DisplayName("Should create default ParserConfig when not provided")
+    void shouldCreateDefaultParserConfigWhenNotProvided() {
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .jwksUrl(VALID_URL)
+                .issuerIdentifier("test-issuer")
+                .build();
+
+        assertNotNull(config.getParserConfig(),
+                "Default ParserConfig should be created when not provided");
+    }
+
+    @Test
+    @DisplayName("Should use custom ParserConfig in well-known configuration")
+    void shouldUseCustomParserConfigInWellKnownConfig() {
+        ParserConfig customParserConfig = ParserConfig.builder().build();
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .wellKnownUrl("https://example.com/.well-known/openid-configuration")
+                .parserConfig(customParserConfig)
+                .build();
+
+        assertSame(customParserConfig, config.getParserConfig(),
+                "Custom ParserConfig should be used in well-known config");
+        assertNotNull(config.getWellKnownConfig(),
+                "WellKnownConfig should be created with the custom ParserConfig");
     }
 }

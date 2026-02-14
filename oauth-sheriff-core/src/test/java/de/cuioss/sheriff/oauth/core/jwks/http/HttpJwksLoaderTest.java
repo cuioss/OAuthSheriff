@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.oauth.core.jwks.http;
 
 import de.cuioss.sheriff.oauth.core.JWTValidationLogMessages;
+import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.jwks.key.KeyInfo;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.sheriff.oauth.core.test.InMemoryJWKSFactory;
@@ -230,5 +231,30 @@ class HttpJwksLoaderTest {
         // JWKS_KEYS_UPDATED is logged when keys are successfully loaded and updated
         LogAsserts.assertLogMessagePresentContaining(TestLogLevel.INFO,
                 JWTValidationLogMessages.INFO.JWKS_KEYS_UPDATED.resolveIdentifierString());
+    }
+
+    @Test
+    @DisplayName("Should load JWKS successfully with custom ParserConfig")
+    void shouldLoadJwksWithCustomParserConfig(URIBuilder uriBuilder) {
+        String jwksEndpoint = uriBuilder.addPathSegment(JwksResolveDispatcher.LOCAL_PATH).buildAsString();
+
+        // Create a custom ParserConfig (pre-initialized on caller's thread)
+        ParserConfig customParserConfig = ParserConfig.builder().build();
+
+        HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()
+                .jwksUrl(jwksEndpoint)
+                .issuerIdentifier("test-issuer")
+                .parserConfig(customParserConfig)
+                .build();
+
+        try (HttpJwksLoader loader = new HttpJwksLoader(config)) {
+            loader.initJWKSLoader(securityEventCounter).join();
+
+            assertEquals(LoaderStatus.OK, loader.getLoaderStatus(),
+                    "Loader should be OK with custom ParserConfig");
+            Optional<KeyInfo> keyInfo = loader.getKeyInfo(TEST_KID);
+            assertTrue(keyInfo.isPresent(),
+                    "Key info should be present with custom ParserConfig");
+        }
     }
 }

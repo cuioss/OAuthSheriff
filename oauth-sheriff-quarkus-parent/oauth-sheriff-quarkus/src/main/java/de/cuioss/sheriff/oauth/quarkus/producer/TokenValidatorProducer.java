@@ -99,9 +99,14 @@ public class TokenValidatorProducer {
         RetryStrategyConfigResolver retryResolver = new RetryStrategyConfigResolver(config);
         RetryConfig retryConfig = retryResolver.resolveRetryConfig();
 
-        // Resolve issuer configurations using the dedicated resolver
+        // Resolve ParserConfig FIRST — must be created on the caller's thread (correct classloader)
+        // before any async JWKS loading that may run on ForkJoinPool threads
+        ParserConfigResolver parserConfigResolver = new ParserConfigResolver(config);
+        ParserConfig parserConfig = parserConfigResolver.resolveParserConfig();
+
+        // Resolve issuer configurations using the dedicated resolver WITH parserConfig
         // CDI-discovered claim mappers are applied globally via ClaimMapperRegistry
-        IssuerConfigResolver issuerConfigResolver = new IssuerConfigResolver(config, retryConfig, claimMapperRegistry);
+        IssuerConfigResolver issuerConfigResolver = new IssuerConfigResolver(config, retryConfig, claimMapperRegistry, parserConfig);
         issuerConfigs = issuerConfigResolver.resolveIssuerConfigs();
 
         // Create SecurityEventCounter for proper initialization
@@ -111,10 +116,6 @@ public class TokenValidatorProducer {
         for (IssuerConfig issuerConfig : issuerConfigs) {
             issuerConfig.initSecurityEventCounter(eventCounter);
         }
-
-        // Resolve parser config using the dedicated resolver
-        ParserConfigResolver parserConfigResolver = new ParserConfigResolver(config);
-        ParserConfig parserConfig = parserConfigResolver.resolveParserConfig();
 
 
         // Resolve cache config using the dedicated resolver

@@ -15,7 +15,9 @@
  */
 package de.cuioss.sheriff.oauth.quarkus.config;
 
+import de.cuioss.http.client.adapter.RetryConfig;
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
+import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.security.SignatureAlgorithmPreferences;
 import de.cuioss.sheriff.oauth.quarkus.test.TestConfig;
 import de.cuioss.test.juli.TestLogLevel;
@@ -70,6 +72,24 @@ class IssuerConfigResolverTest {
             // Note: The resolver will throw when trying to resolve configs, but construction should succeed
             assertThrows(IllegalStateException.class, resolver::resolveIssuerConfigs,
                     "Should throw when trying to resolve with empty config");
+        }
+
+        @Test
+        @DisplayName("should accept ParserConfig in 4-arg constructor")
+        void shouldAcceptParserConfig() {
+            TestConfig config = new TestConfig(Map.of(
+                    JwtPropertyKeys.ISSUERS.JWKS_URL.formatted(TEST_ISSUER), "https://example.com/jwks"
+            ));
+            ParserConfig parserConfig = ParserConfig.builder().build();
+
+            // Should construct successfully with ParserConfig
+            IssuerConfigResolver resolver = new IssuerConfigResolver(
+                    config, RetryConfig.defaults(), null, parserConfig);
+
+            List<IssuerConfig> result = resolver.resolveIssuerConfigs();
+            assertEquals(1, result.size(), "Should find one issuer");
+            assertNotNull(result.getFirst().getJwksLoader(),
+                    "Should have JWKS loader configured with ParserConfig");
         }
     }
 
