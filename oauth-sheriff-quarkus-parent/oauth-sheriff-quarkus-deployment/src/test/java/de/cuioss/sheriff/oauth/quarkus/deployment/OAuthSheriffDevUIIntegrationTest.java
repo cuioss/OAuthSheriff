@@ -22,7 +22,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Integration test for CUI JWT DevUI components.
@@ -42,14 +43,6 @@ class CuiJwtDevUIIntegrationTest {
     @Test
     @DisplayName("Should register DevUI components successfully")
     void devUIComponentsRegistered() {
-        // This test verifies that the extension builds successfully
-        // and that DevUI components are registered when in development mode
-
-        // Since this is a build-time test, we're primarily checking that
-        // the extension builds without errors and doesn't fail during
-        // the build process when DevUI dependencies are present
-
-        assertTrue(true, "DevUI extension built successfully");
     }
 
     @Test

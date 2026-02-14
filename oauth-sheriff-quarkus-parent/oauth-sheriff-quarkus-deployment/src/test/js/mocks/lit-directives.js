@@ -84,7 +84,6 @@ export const range = jest.fn((startOrEnd, end, step = 1) => {
 export const until = jest.fn((...values) => {
   // Return the last non-promise value or empty string
   for (let i = values.length - 1; i >= 0; i--) {
-    // eslint-disable-next-line security/detect-object-injection
     const value = values[i];
     if (!(value instanceof Promise)) {
       return value;

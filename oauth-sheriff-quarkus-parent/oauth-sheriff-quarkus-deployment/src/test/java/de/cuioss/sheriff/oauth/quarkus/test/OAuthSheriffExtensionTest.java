@@ -21,8 +21,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 /**
  * Test to verify the CUI JWT extension is properly registered and configured.
  * 
@@ -40,8 +38,5 @@ class CuiJwtExtensionTest {
     @Test
     @DisplayName("Should register the extension")
     void shouldRegisterExtension() {
-        // The QuarkusUnitTest will fail if the extension is not properly registered
-        // This is a basic test to ensure the extension is loaded
-        assertTrue(true, "Extension should be registered");
     }
 }

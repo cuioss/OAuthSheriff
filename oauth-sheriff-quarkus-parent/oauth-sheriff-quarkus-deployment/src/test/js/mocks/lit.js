@@ -8,7 +8,6 @@
 // Helper function for template literal processing
 const processTemplateLiteral = (strings, values) => {
   return strings.reduce((result, string, i) => {
-    // eslint-disable-next-line security/detect-object-injection
     const value = values[i] ? values[i] : '';
     return result + string + value;
   }, '');
@@ -169,7 +168,6 @@ export const property = (options = {}) => {
     if (!target.constructor.properties) {
       target.constructor.properties = {};
     }
-    // eslint-disable-next-line security/detect-object-injection
     target.constructor.properties[propertyKey] = options;
 
     // Create getter/setter
