@@ -63,7 +63,7 @@ class WellKnownResultMappingTest {
 
     @Test
     @DisplayName("Should map full JSON to WellKnownResult via Map deserialization")
-    void shouldMapFullJsonToWellKnownConfigurationViaMap() throws IOException {
+    void shouldMapFullJsonToWellKnownConfigurationViaMap() throws Exception {
         // First: Parse JSON to Map using DSL-JSON
         byte[] bytes = VALID_JSON.getBytes();
         Map<String, Object> jsonMap = dslJson.deserialize(Map.class, bytes, bytes.length);
@@ -88,7 +88,7 @@ class WellKnownResultMappingTest {
 
     @Test
     @DisplayName("Should map minimal JSON to WellKnownResult")
-    void shouldMapMinimalJsonToWellKnownConfiguration() throws IOException {
+    void shouldMapMinimalJsonToWellKnownConfiguration() throws Exception {
         byte[] bytes = MINIMAL_JSON.getBytes();
         Map<String, Object> jsonMap = dslJson.deserialize(Map.class, bytes, bytes.length);
 
@@ -111,12 +111,12 @@ class WellKnownResultMappingTest {
 
     @Test
     @DisplayName("Should handle missing required fields gracefully")
-    void shouldHandleMissingRequiredFieldsGracefully() throws IOException {
+    void shouldHandleMissingRequiredFieldsGracefully() throws Exception {
         String invalidJson = """
-            {
-                "issuer": "https://example.com"
-            }
-            """;
+                {
+                    "issuer": "https://example.com"
+                }
+                """;
 
         byte[] bytes = invalidJson.getBytes();
         Map<String, Object> jsonMap = dslJson.deserialize(Map.class, bytes, bytes.length);

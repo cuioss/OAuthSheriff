@@ -57,7 +57,7 @@ class JwkKeyHandlerTest {
     }
 
     @Test
-    void shouldParseValidRsaKey() throws InvalidKeySpecException {
+    void shouldParseValidRsaKey() throws Exception {
         JwkKey jwk = createRsaJwk();
         Key key = JwkKeyHandler.parseRsaKey(jwk);
         assertNotNull(key, "RSA key should not be null");

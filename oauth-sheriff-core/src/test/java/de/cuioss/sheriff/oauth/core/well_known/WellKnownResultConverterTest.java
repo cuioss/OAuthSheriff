@@ -156,10 +156,10 @@ class WellKnownResultConverterTest {
     @DisplayName("Should handle missing required issuer field")
     void shouldHandleMissingRequiredIssuerField() {
         String invalidJson = """
-            {
-                "jwks_uri": "https://example.com/.well-known/jwks.json"
-            }
-            """;
+                {
+                    "jwks_uri": "https://example.com/.well-known/jwks.json"
+                }
+                """;
 
         Optional<WellKnownResult> result = converter.convert(invalidJson);
 
@@ -170,10 +170,10 @@ class WellKnownResultConverterTest {
     @DisplayName("Should handle missing required jwks_uri field")
     void shouldHandleMissingRequiredJwksUriField() {
         String invalidJson = """
-            {
-                "issuer": "https://example.com"
-            }
-            """;
+                {
+                    "issuer": "https://example.com"
+                }
+                """;
 
         Optional<WellKnownResult> result = converter.convert(invalidJson);
 
@@ -190,11 +190,11 @@ class WellKnownResultConverterTest {
                 new WellKnownConfigurationConverter(config.getDslJson(), securityEventCounter, maxContentSize);
 
         String largeJson = """
-            {
-                "issuer": "https://example.com/with/very/long/path/that/exceeds/limit",
-                "jwks_uri": "https://example.com/.well-known/jwks.json"
-            }
-            """;
+                {
+                    "issuer": "https://example.com/with/very/long/path/that/exceeds/limit",
+                    "jwks_uri": "https://example.com/.well-known/jwks.json"
+                }
+                """;
 
         assertThrows(TokenValidationException.class, () ->
                 restrictiveConverter.convert(largeJson));

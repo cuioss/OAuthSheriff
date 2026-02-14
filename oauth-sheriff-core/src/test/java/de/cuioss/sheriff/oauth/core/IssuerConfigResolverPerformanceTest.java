@@ -56,7 +56,7 @@ class IssuerConfigResolverPerformanceTest {
     @Test
     @Timeout(value = 30, unit = TimeUnit.SECONDS)
     @DisplayName("Achieve >1000 ops/s throughput under concurrent load")
-    void achievesHighThroughputUnderConcurrentLoad() throws InterruptedException {
+    void achievesHighThroughputUnderConcurrentLoad() throws Exception {
         int threadCount = 100;
         int operationsPerThread = 50;
         int totalOperations = threadCount * operationsPerThread;
@@ -127,7 +127,7 @@ class IssuerConfigResolverPerformanceTest {
     @Test
     @Timeout(value = 10, unit = TimeUnit.SECONDS)
     @DisplayName("Demonstrate lock-free warmup without blocking")
-    void demonstratesLockFreeWarmup() throws InterruptedException {
+    void demonstratesLockFreeWarmup() throws Exception {
         // Create fresh resolvers to test warmup behavior
         int resolverCount = 5;
         int threadsPerResolver = 20;
@@ -184,7 +184,7 @@ class IssuerConfigResolverPerformanceTest {
     @Test
     @Timeout(value = 10, unit = TimeUnit.SECONDS)
     @DisplayName("Ensure uniform response times indicate no convoy effect")
-    void ensuresNoConvoyEffect() throws InterruptedException {
+    void ensuresNoConvoyEffect() throws Exception {
         int threadCount = 50;
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         CyclicBarrier barrier = new CyclicBarrier(threadCount);

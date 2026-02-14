@@ -46,7 +46,7 @@ class TrendDataProcessorTest {
     }
 
     @Test
-    void loadHistoricalDataWithValidFiles(@TempDir Path tempDir) throws IOException {
+    void loadHistoricalDataWithValidFiles(@TempDir Path tempDir) throws Exception {
         TrendDataProcessor processor = new TrendDataProcessor();
         Path historyDir = tempDir.resolve("history");
         Files.createDirectories(historyDir);
@@ -217,7 +217,7 @@ class TrendDataProcessorTest {
     }
 
     @Test
-    void loadHistoricalDataWithCorruptFile(@TempDir Path tempDir) throws IOException {
+    void loadHistoricalDataWithCorruptFile(@TempDir Path tempDir) throws Exception {
         TrendDataProcessor processor = new TrendDataProcessor();
         Path historyDir = tempDir.resolve("history");
         Files.createDirectories(historyDir);
@@ -236,7 +236,7 @@ class TrendDataProcessorTest {
     }
 
     @Test
-    void maxHistoryEntries(@TempDir Path tempDir) throws IOException {
+    void maxHistoryEntries(@TempDir Path tempDir) throws Exception {
         TrendDataProcessor processor = new TrendDataProcessor();
         Path historyDir = tempDir.resolve("history");
         Files.createDirectories(historyDir);
@@ -259,7 +259,7 @@ class TrendDataProcessorTest {
     }
 
     @Test
-    void calculateTrendsWithEWMAAfterMajorImprovement(@TempDir Path tempDir) throws IOException {
+    void calculateTrendsWithEWMAAfterMajorImprovement(@TempDir Path tempDir) throws Exception {
         // TEST: Verify EWMA detects improvement even when current score equals most recent history
         // Uses REAL benchmark data from /private/tmp/benchmark-verify/integration/history
         // Real scenario: scores were 28 for many runs, then jumped to 79, then stayed at 79

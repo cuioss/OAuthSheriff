@@ -27,7 +27,6 @@ import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -59,7 +58,7 @@ class HttpJwksLoaderConfigTest {
 
     @Test
     @DisplayName("Should create config with custom values")
-    void shouldCreateConfigWithCustomValues() throws NoSuchAlgorithmException {
+    void shouldCreateConfigWithCustomValues() throws Exception {
 
         SSLContext sslContext = SSLContext.getDefault();
         HttpJwksLoaderConfig config = HttpJwksLoaderConfig.builder()

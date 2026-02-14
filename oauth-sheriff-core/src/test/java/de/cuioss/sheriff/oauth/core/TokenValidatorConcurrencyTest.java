@@ -46,7 +46,7 @@ class TokenValidatorConcurrencyTest {
      * 2. Thread B tries to put() into the now-immutable map
      */
     @RepeatedTest(5)
-    void shouldReproduceRaceConditionWithReadOnlyOptimization() throws InterruptedException {
+    void shouldReproduceRaceConditionWithReadOnlyOptimization() throws Exception {
         // Generate test tokens using existing infrastructure
         var testToken1 = TestTokenGenerators.accessTokens().next();
         var testToken2 = TestTokenGenerators.accessTokens().next();
@@ -108,7 +108,7 @@ class TokenValidatorConcurrencyTest {
      * Simplified test that focuses specifically on the map optimization race condition.
      */
     @Test
-    void shouldDemonstrateMapOptimizationRaceCondition() throws InterruptedException {
+    void shouldDemonstrateMapOptimizationRaceCondition() throws Exception {
         // Generate test token using existing infrastructure
         var testToken = TestTokenGenerators.accessTokens().next();
         var issuerConfig = testToken.getIssuerConfig();

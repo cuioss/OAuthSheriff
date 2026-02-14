@@ -23,7 +23,6 @@ import de.cuioss.sheriff.oauth.core.metrics.TokenValidatorMonitor;
 import de.cuioss.sheriff.oauth.core.metrics.TokenValidatorMonitorConfig;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -37,7 +36,7 @@ class LibraryMetricsExporterTest {
     private final Gson gson = new GsonBuilder().create();
 
     @Test
-    void shouldExportMetricsToJsonFile() throws IOException {
+    void shouldExportMetricsToJsonFile() throws Exception {
         // Given
         TokenValidatorMonitor monitor = TokenValidatorMonitorConfig.builder()
                 .measurementType(MeasurementType.TOKEN_PARSING)
@@ -109,7 +108,7 @@ class LibraryMetricsExporterTest {
     }
 
     @Test
-    void shouldFormatNumbersCorrectly() throws IOException {
+    void shouldFormatNumbersCorrectly() throws Exception {
         // Given
         TokenValidatorMonitor monitor = TokenValidatorMonitorConfig.builder()
                 .measurementType(MeasurementType.TOKEN_PARSING)

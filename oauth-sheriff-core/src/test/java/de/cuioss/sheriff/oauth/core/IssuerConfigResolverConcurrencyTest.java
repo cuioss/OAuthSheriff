@@ -49,7 +49,7 @@ class IssuerConfigResolverConcurrencyTest {
      */
     @Test
     @DisplayName("Handle concurrent cache optimization safely")
-    void shouldHandleConcurrentOptimizationSafely() throws InterruptedException {
+    void shouldHandleConcurrentOptimizationSafely() throws Exception {
         // Use fewer configs so optimization happens sooner
         List<IssuerConfig> issuerConfigs = new ArrayList<>();
         List<String> issuerIds = new ArrayList<>();
@@ -120,7 +120,7 @@ class IssuerConfigResolverConcurrencyTest {
      */
     @Test
     @DisplayName("Handle double-checked locking under extreme concurrency")
-    void shouldHandleDoubleCheckedLockingCorrectly() throws InterruptedException {
+    void shouldHandleDoubleCheckedLockingCorrectly() throws Exception {
         TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
         IssuerConfig config = tokenHolder.getIssuerConfig();
         String issuerId = config.getIssuerIdentifier();
@@ -170,7 +170,7 @@ class IssuerConfigResolverConcurrencyTest {
      */
     @Test
     @DisplayName("Handle mixed health status under concurrency")
-    void shouldHandleMixedHealthStatusUnderConcurrency() throws InterruptedException {
+    void shouldHandleMixedHealthStatusUnderConcurrency() throws Exception {
         List<IssuerConfig> issuerConfigs = new ArrayList<>();
         List<String> healthyIssuerIds = new ArrayList<>();
 

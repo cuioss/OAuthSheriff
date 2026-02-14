@@ -30,7 +30,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -48,7 +47,7 @@ class StringSplitterMapperTest {
     @ParameterizedTest
     @MethodSource("provideSeparatorTestCases")
     @DisplayName("Map values with different separators")
-    void shouldMapValuesWithDifferentSeparators(char separator, String input, List<String> expected) throws IOException {
+    void shouldMapValuesWithDifferentSeparators(char separator, String input, List<String> expected) throws Exception {
         StringSplitterMapper mapper = new StringSplitterMapper(separator);
         String jsonString = "{\"" + CLAIM_NAME + "\": \"" + input.replace("\"", "\\\"") + "\"}";
         DslJson<Object> dslJson = ParserConfig.builder().build().getDslJson();
@@ -75,7 +74,7 @@ class StringSplitterMapperTest {
     @ParameterizedTest
     @MethodSource("provideInputFormatTestCases")
     @DisplayName("Handle different input formats")
-    void shouldHandleDifferentInputFormats(String input, List<String> expected, String testDescription) throws IOException {
+    void shouldHandleDifferentInputFormats(String input, List<String> expected, String testDescription) throws Exception {
         String jsonString = "{\"" + CLAIM_NAME + "\": \"" + input.replace("\"", "\\\"") + "\"}";
         DslJson<Object> dslJson = ParserConfig.builder().build().getDslJson();
         MapRepresentation mapRepresentation = MapRepresentation.fromJson(dslJson, jsonString);
@@ -107,7 +106,7 @@ class StringSplitterMapperTest {
     @NullAndEmptySource
     @ValueSource(strings = {" ", "\t", "\n"})
     @DisplayName("Handle null, empty, and whitespace inputs")
-    void shouldHandleSpecialInputs(String input) throws IOException {
+    void shouldHandleSpecialInputs(String input) throws Exception {
         String jsonString = input == null
                 ? "{\"" + CLAIM_NAME + "\": null}"
                 : "{\"" + CLAIM_NAME + "\": \"" + input.replace("\"", "\\\"").replace("\n", "\\n").replace("\t", "\\t") + "\"}";
@@ -124,7 +123,7 @@ class StringSplitterMapperTest {
 
     @Test
     @DisplayName("Handle missing claim")
-    void shouldHandleMissingClaim() throws IOException {
+    void shouldHandleMissingClaim() throws Exception {
         String jsonString = "{}";
         DslJson<Object> dslJson = ParserConfig.builder().build().getDslJson();
         MapRepresentation mapRepresentation = MapRepresentation.fromJson(dslJson, jsonString);
@@ -140,7 +139,7 @@ class StringSplitterMapperTest {
     @ParameterizedTest
     @MethodSource("provideUnsupportedValueTypes")
     @DisplayName("Throw exception for unsupported value types")
-    void shouldThrowExceptionForUnsupportedValueTypes(String jsonString, String valueTypeName) throws IOException {
+    void shouldThrowExceptionForUnsupportedValueTypes(String jsonString, String valueTypeName) throws Exception {
         DslJson<Object> dslJson = ParserConfig.builder().build().getDslJson();
         MapRepresentation mapRepresentation = MapRepresentation.fromJson(dslJson, jsonString);
 

@@ -41,18 +41,18 @@ class DSLJsonSecurityTest {
         DslJson<Object> dslJson = config.getDslJson();
 
         String validJwks = """
-            {
-                "keys": [
-                    {
-                        "kty": "RSA",
-                        "kid": "test-key-1",
-                        "alg": "RS256",
-                        "n": "test-modulus",
-                        "e": "AQAB"
-                    }
-                ]
-            }
-            """;
+                {
+                    "keys": [
+                        {
+                            "kty": "RSA",
+                            "kid": "test-key-1",
+                            "alg": "RS256",
+                            "n": "test-modulus",
+                            "e": "AQAB"
+                        }
+                    ]
+                }
+                """;
 
         Jwks result = assertDoesNotThrow(() ->
                 dslJson.deserialize(Jwks.class, validJwks.getBytes(), validJwks.getBytes().length)
@@ -68,13 +68,13 @@ class DSLJsonSecurityTest {
         DslJson<Object> dslJson = config.getDslJson();
 
         String validConfig = """
-            {
-                "issuer": "https://example.com",
-                "jwks_uri": "https://example.com/.well-known/jwks.json",
-                "authorization_endpoint": "https://example.com/auth",
-                "token_endpoint": "https://example.com/token"
-            }
-            """;
+                {
+                    "issuer": "https://example.com",
+                    "jwks_uri": "https://example.com/.well-known/jwks.json",
+                    "authorization_endpoint": "https://example.com/auth",
+                    "token_endpoint": "https://example.com/token"
+                }
+                """;
 
         WellKnownResult result = assertDoesNotThrow(() ->
                 dslJson.deserialize(WellKnownResult.class, validConfig.getBytes(), validConfig.getBytes().length)

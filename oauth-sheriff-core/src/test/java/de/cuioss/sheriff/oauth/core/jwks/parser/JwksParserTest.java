@@ -72,15 +72,15 @@ class JwksParserTest {
         void shouldParseSingleJwk() {
             // Given a single JWK object (without keys array)
             String singleJwk = """
-                {
-                    "kty": "RSA",
-                    "kid": "test-key",
-                    "use": "sig",
-                    "alg": "RS256",
-                    "n": "test-modulus",
-                    "e": "AQAB"
-                }
-                """;
+                    {
+                        "kty": "RSA",
+                        "kid": "test-key",
+                        "use": "sig",
+                        "alg": "RS256",
+                        "n": "test-modulus",
+                        "e": "AQAB"
+                    }
+                    """;
 
             // When parsing
             List<JwkKey> result = parser.parse(singleJwk);
@@ -97,28 +97,28 @@ class JwksParserTest {
         void shouldParseMultipleKeys() {
             // Given a JWKS with multiple keys
             String multiKeyJwks = """
-                {
-                    "keys": [
-                        {
-                            "kty": "RSA",
-                            "kid": "key1",
-                            "use": "sig",
-                            "alg": "RS256",
-                            "n": "test-modulus1",
-                            "e": "AQAB"
-                        },
-                        {
-                            "kty": "EC",
-                            "kid": "key2",
-                            "use": "sig",
-                            "alg": "ES256",
-                            "crv": "P-256",
-                            "x": "test-x",
-                            "y": "test-y"
-                        }
-                    ]
-                }
-                """;
+                    {
+                        "keys": [
+                            {
+                                "kty": "RSA",
+                                "kid": "key1",
+                                "use": "sig",
+                                "alg": "RS256",
+                                "n": "test-modulus1",
+                                "e": "AQAB"
+                            },
+                            {
+                                "kty": "EC",
+                                "kid": "key2",
+                                "use": "sig",
+                                "alg": "ES256",
+                                "crv": "P-256",
+                                "x": "test-x",
+                                "y": "test-y"
+                            }
+                        ]
+                    }
+                    """;
 
             // When parsing
             List<JwkKey> result = parser.parse(multiKeyJwks);
@@ -169,10 +169,10 @@ class JwksParserTest {
         void shouldHandleEmptyKeysArray() {
             // Given JWKS with empty keys array
             String emptyKeysJwks = """
-                {
-                    "keys": []
-                }
-                """;
+                    {
+                        "keys": []
+                    }
+                    """;
 
             // When parsing
             List<JwkKey> result = parser.parse(emptyKeysJwks);
@@ -235,14 +235,14 @@ class JwksParserTest {
 
             // Given JWKS with more keys than can fit in size limit
             String manyKeysJwks = """
-                {
-                    "keys": [
-                        {"kty": "RSA", "kid": "key1", "n": "mod1", "e": "AQAB"},
-                        {"kty": "RSA", "kid": "key2", "n": "mod2", "e": "AQAB"},
-                        {"kty": "RSA", "kid": "key3", "n": "mod3", "e": "AQAB"}
-                    ]
-                }
-                """;
+                    {
+                        "keys": [
+                            {"kty": "RSA", "kid": "key1", "n": "mod1", "e": "AQAB"},
+                            {"kty": "RSA", "kid": "key2", "n": "mod2", "e": "AQAB"},
+                            {"kty": "RSA", "kid": "key3", "n": "mod3", "e": "AQAB"}
+                        ]
+                    }
+                    """;
 
             // When parsing - will fail due to size limit
             List<JwkKey> result = limitedParser.parse(manyKeysJwks);
@@ -263,18 +263,18 @@ class JwksParserTest {
         void shouldHandleJwkWithMissingKty() {
             // Given a JWK without kty field
             String missingKtyJwk = """
-                {
-                    "keys": [
-                        {
-                            "kid": "test-key",
-                            "use": "sig",
-                            "alg": "RS256",
-                            "n": "test-modulus",
-                            "e": "AQAB"
-                        }
-                    ]
-                }
-                """;
+                    {
+                        "keys": [
+                            {
+                                "kid": "test-key",
+                                "use": "sig",
+                                "alg": "RS256",
+                                "n": "test-modulus",
+                                "e": "AQAB"
+                            }
+                        ]
+                    }
+                    """;
 
             // When parsing
             List<JwkKey> result = parser.parse(missingKtyJwk);

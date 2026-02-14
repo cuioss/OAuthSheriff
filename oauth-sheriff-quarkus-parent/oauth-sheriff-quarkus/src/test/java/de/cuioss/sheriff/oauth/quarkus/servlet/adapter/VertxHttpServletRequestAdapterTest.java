@@ -79,19 +79,6 @@ class VertxHttpServletRequestAdapterTest {
     @Test
     @DisplayName("Should support HTTP header name normalization for RFC compliance")
     void shouldSupportHttpHeaderNameNormalizationForRfcCompliance() {
-        // This test verifies that the adapter is architecturally compatible with
-        // HttpServletRequestResolver header normalization.
-
-        // The key architectural points verified:
-        // 1. VertxHttpServletRequestAdapter implements HttpServletRequest
-        // 2. HttpServletRequestResolver.createHeaderMapFromRequest() normalizes headers from any HttpServletRequest
-        // 3. The combination provides RFC-compliant header handling for both HTTP/1.1 and HTTP/2
-
-        // Full integration testing with real Vertx objects is done in the Quarkus test environment
-        // where the complete flow (Vertx -> VertxHttpServletRequestAdapter -> HttpServletRequestResolver -> BearerTokenProducer)
-        // is tested with actual HTTP requests.
-
-        assertTrue(true, "VertxHttpServletRequestAdapter is architecturally compatible with RFC-compliant header normalization");
     }
 
     @Nested
@@ -502,7 +489,7 @@ class VertxHttpServletRequestAdapterTest {
 
         @Test
         @DisplayName("setCharacterEncoding should validate charset")
-        void setCharacterEncodingShouldValidateCharset() throws UnsupportedEncodingException {
+        void setCharacterEncodingShouldValidateCharset() throws Exception {
             // Test valid charset
             adapter.setCharacterEncoding("ISO-8859-1");
             adapter.setCharacterEncoding("UTF-16");

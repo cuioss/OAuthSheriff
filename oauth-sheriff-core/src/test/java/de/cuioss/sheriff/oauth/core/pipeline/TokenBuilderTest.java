@@ -202,7 +202,7 @@ class TokenBuilderTest {
 
         @Test
         @DisplayName("TokenBuilder should be thread-safe under concurrent access")
-        void shouldBeThreadSafeUnderConcurrentAccess() throws InterruptedException {
+        void shouldBeThreadSafeUnderConcurrentAccess() throws Exception {
             LOGGER.info("Verifying thread safety of TokenBuilder implementation");
 
             // Generate test tokens

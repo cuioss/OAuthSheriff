@@ -47,7 +47,7 @@ class WrkResultPostProcessorTest {
     }
 
     @Test
-    void comprehensiveStructureGeneration() throws IOException {
+    void comprehensiveStructureGeneration() throws Exception {
         // Copy real benchmark outputs to temp directory wrk subdirectory
         Path wrkDir = tempDir.resolve("wrk");
         Files.createDirectories(wrkDir);
@@ -65,7 +65,7 @@ class WrkResultPostProcessorTest {
     }
 
     @Test
-    void parseWrkHealthOutput() throws IOException {
+    void parseWrkHealthOutput() throws Exception {
         // Copy real health output to temp directory wrk subdirectory
         Path wrkDir = tempDir.resolve("wrk");
         Files.createDirectories(wrkDir);
@@ -119,7 +119,7 @@ class WrkResultPostProcessorTest {
     }
 
     @Test
-    void parseWrkJwtOutput() throws IOException {
+    void parseWrkJwtOutput() throws Exception {
         // Copy real JWT output to temp directory wrk subdirectory
         Path wrkDir = tempDir.resolve("wrk");
         Files.createDirectories(wrkDir);
@@ -174,7 +174,7 @@ class WrkResultPostProcessorTest {
     }
 
     @Test
-    void handlesCompleteWrkOutput() throws IOException {
+    void handlesCompleteWrkOutput() throws Exception {
         // Test with actual WRK output that includes shell wrapper output
         Path wrkDir = tempDir.resolve("wrk");
         Files.createDirectories(wrkDir);
@@ -204,7 +204,7 @@ class WrkResultPostProcessorTest {
     }
 
     @Test
-    void generateGitHubPagesStructure() throws IOException {
+    void generateGitHubPagesStructure() throws Exception {
         // Setup test files in wrk subdirectory
         Path wrkDir = tempDir.resolve("wrk");
         Files.createDirectories(wrkDir);
@@ -230,7 +230,7 @@ class WrkResultPostProcessorTest {
     }
 
     @Test
-    void overviewGeneration() throws IOException {
+    void overviewGeneration() throws Exception {
         // Setup test files in wrk subdirectory
         Path wrkDir = tempDir.resolve("wrk");
         Files.createDirectories(wrkDir);
@@ -258,7 +258,7 @@ class WrkResultPostProcessorTest {
     }
 
     @Test
-    void missingFileHandling() throws IOException {
+    void missingFileHandling() throws Exception {
         // Create wrk directory but with no WRK output files - should throw exception
         Path wrkDir = tempDir.resolve("wrk");
         Files.createDirectories(wrkDir);
@@ -271,34 +271,34 @@ class WrkResultPostProcessorTest {
     }
 
     @Test
-    void parseRealWrkFormatVariations() throws IOException {
+    void parseRealWrkFormatVariations() throws Exception {
         // Test with actual WRK output showing various time units
         String wrkOutput = """
-            === BENCHMARK METADATA ===
-            benchmark_name: format-test
-            start_time: 1700000000
-            start_time_iso: 2023-11-14T22:13:20Z
-            === WRK OUTPUT ===
-
-            Running 10s test @ https://localhost:10443/test
-              4 threads and 20 connections
-              Thread Stats   Avg      Stdev     Max   +/- Stdev
-                Latency   849.00us  500.00us  10.00ms   90.00%
-                Req/Sec     5.00k   1.00k    10.00k    75.00%
-              Latency Distribution
-                 50%  805.00us
-                 75%    1.08ms
-                 90%    1.54ms
-                 99%    4.01ms
-              100000 requests in 10.00s, 50.00MB read
-            Requests/sec:  10000.00
-            Transfer/sec:      5.00MB
-
-            === BENCHMARK COMPLETE ===
-            end_time: 1700000010
-            end_time_iso: 2023-11-14T22:13:30Z
-            duration_seconds: 10
-            """;
+                === BENCHMARK METADATA ===
+                benchmark_name: format-test
+                start_time: 1700000000
+                start_time_iso: 2023-11-14T22:13:20Z
+                === WRK OUTPUT ===
+                
+                Running 10s test @ https://localhost:10443/test
+                  4 threads and 20 connections
+                  Thread Stats   Avg      Stdev     Max   +/- Stdev
+                    Latency   849.00us  500.00us  10.00ms   90.00%
+                    Req/Sec     5.00k   1.00k    10.00k    75.00%
+                  Latency Distribution
+                     50%  805.00us
+                     75%    1.08ms
+                     90%    1.54ms
+                     99%    4.01ms
+                  100000 requests in 10.00s, 50.00MB read
+                Requests/sec:  10000.00
+                Transfer/sec:      5.00MB
+                
+                === BENCHMARK COMPLETE ===
+                end_time: 1700000010
+                end_time_iso: 2023-11-14T22:13:30Z
+                duration_seconds: 10
+                """;
 
         Path wrkDir = tempDir.resolve("wrk");
         Files.createDirectories(wrkDir);
@@ -325,7 +325,7 @@ class WrkResultPostProcessorTest {
     }
 
     @Test
-    void systemMetricsIntegration() throws IOException {
+    void systemMetricsIntegration() throws Exception {
         // Setup test files in wrk subdirectory
         Path wrkDir = tempDir.resolve("wrk");
         Files.createDirectories(wrkDir);
@@ -350,7 +350,7 @@ class WrkResultPostProcessorTest {
     }
 
     @Test
-    void shouldPlacePrometheusMetricsInGitHubPagesDataDirectory() throws IOException {
+    void shouldPlacePrometheusMetricsInGitHubPagesDataDirectory() throws Exception {
         // Setup test files in wrk subdirectory
         Path wrkDir = tempDir.resolve("wrk");
         Files.createDirectories(wrkDir);

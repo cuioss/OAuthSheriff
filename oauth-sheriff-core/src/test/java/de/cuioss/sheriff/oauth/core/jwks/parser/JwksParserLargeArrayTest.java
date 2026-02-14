@@ -56,14 +56,14 @@ class JwksParserLargeArrayTest {
         for (int i = 0; i < 51; i++) {
             if (i > 0) jwksBuilder.append(",");
             jwksBuilder.append("""
-                {
-                    "kty": "RSA",
-                    "kid": "key-%d",
-                    "use": "sig",
-                    "alg": "RS256",
-                    "n": "test-modulus-%d",
-                    "e": "AQAB"
-                }""".formatted(i, i));
+                    {
+                        "kty": "RSA",
+                        "kid": "key-%d",
+                        "use": "sig",
+                        "alg": "RS256",
+                        "n": "test-modulus-%d",
+                        "e": "AQAB"
+                    }""".formatted(i, i));
         }
         jwksBuilder.append("]}");
 
@@ -92,14 +92,14 @@ class JwksParserLargeArrayTest {
         for (int i = 0; i < 50; i++) {
             if (i > 0) jwksBuilder.append(",");
             jwksBuilder.append("""
-                {
-                    "kty": "RSA",
-                    "kid": "key-%d",
-                    "use": "sig",
-                    "alg": "RS256",
-                    "n": "test-modulus-%d",
-                    "e": "AQAB"
-                }""".formatted(i, i));
+                    {
+                        "kty": "RSA",
+                        "kid": "key-%d",
+                        "use": "sig",
+                        "alg": "RS256",
+                        "n": "test-modulus-%d",
+                        "e": "AQAB"
+                    }""".formatted(i, i));
         }
         jwksBuilder.append("]}");
 

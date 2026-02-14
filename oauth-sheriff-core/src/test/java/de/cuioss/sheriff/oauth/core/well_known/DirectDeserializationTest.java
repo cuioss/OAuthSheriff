@@ -58,7 +58,7 @@ class DirectDeserializationTest {
 
     @Test
     @DisplayName("Should deserialize directly to WellKnownResult record")
-    void shouldDeserializeDirectlyToWellKnownConfigurationRecord() throws IOException {
+    void shouldDeserializeDirectlyToWellKnownConfigurationRecord() throws Exception {
         byte[] bytes = VALID_JSON.getBytes();
 
         WellKnownResult config = dslJson.deserialize(WellKnownResult.class, bytes, bytes.length);
@@ -72,7 +72,7 @@ class DirectDeserializationTest {
 
     @Test
     @DisplayName("Should deserialize minimal JSON directly to WellKnownResult record")
-    void shouldDeserializeMinimalJsonDirectly() throws IOException {
+    void shouldDeserializeMinimalJsonDirectly() throws Exception {
         byte[] bytes = MINIMAL_JSON.getBytes();
 
         WellKnownResult config = dslJson.deserialize(WellKnownResult.class, bytes, bytes.length);

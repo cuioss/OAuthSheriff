@@ -63,7 +63,7 @@ public class JfrEventTest {
                             try {
                                 // Simulate JWT validation with varying latency
                                 try (var recorder =
-                                        instrumentation.recordOperation("TestBenchmark", "validation")) {
+                                             instrumentation.recordOperation("TestBenchmark", "validation")) {
                                     // ThreadLocalRandom is safe for benchmark/test simulation
                                     recorder.withPayloadSize(ThreadLocalRandom.current().nextInt(100, 500))
                                             .withMetadata("issuer", "issuer-" + (index % 3))

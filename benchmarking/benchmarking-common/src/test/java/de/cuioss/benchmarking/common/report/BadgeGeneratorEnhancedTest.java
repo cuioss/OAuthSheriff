@@ -20,7 +20,6 @@ import com.google.gson.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -174,7 +173,7 @@ class BadgeGeneratorEnhancedTest {
     }
 
     @Test
-    void writeBadgeFiles(@TempDir Path tempDir) throws IOException {
+    void writeBadgeFiles(@TempDir Path tempDir) throws Exception {
         BadgeGenerator generator = new BadgeGenerator();
 
         BenchmarkMetrics metrics = new BenchmarkMetrics(
@@ -217,7 +216,7 @@ class BadgeGeneratorEnhancedTest {
     }
 
     @Test
-    void writeBadgeFilesWithoutTrendMetrics(@TempDir Path tempDir) throws IOException {
+    void writeBadgeFilesWithoutTrendMetrics(@TempDir Path tempDir) throws Exception {
         BadgeGenerator generator = new BadgeGenerator();
 
         BenchmarkMetrics metrics = new BenchmarkMetrics(

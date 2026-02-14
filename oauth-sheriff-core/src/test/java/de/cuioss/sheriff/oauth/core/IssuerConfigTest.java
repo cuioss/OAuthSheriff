@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
@@ -131,7 +130,7 @@ class IssuerConfigTest implements ShouldImplementToString<IssuerConfig>, ShouldI
 
         @Test
         @DisplayName("Should initialize with file JwksLoader")
-        void shouldInitializeWithFileJwksLoader(@TempDir Path tempDir) throws IOException {
+        void shouldInitializeWithFileJwksLoader(@TempDir Path tempDir) throws Exception {
             var jwksFilePath = tempDir.resolve("jwks.json");
             Files.writeString(jwksFilePath, TEST_JWKS_CONTENT);
 
