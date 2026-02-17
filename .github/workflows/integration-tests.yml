@@ -1,50 +1,29 @@
+# Runs integration/E2E tests via Maven with report deployment to cuioss.github.io.
 name: Integration Tests
 
 on:
-  pull_request:
-    branches: [ "main" ]
   push:
-    tags: [ "*" ]
+    branches: [main, "feature/*", "fix/*", "chore/*", "dependabot/**"]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
-# Declare default permissions as read only (principle of least privilege)
 permissions:
   contents: read
 
 jobs:
   integration-tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
-      
-      - name: Cache npm packages
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json', '**/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-
-      - name: Build with Maven (Default Profile)
-        run: ./mvnw --no-transfer-progress clean install -Dmaven.test.skip=true
-
-      - name: Run Integration Tests Distroless
-        run: ./mvnw --no-transfer-progress clean verify -Pintegration-tests -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
-
-      # JFR profile disabled in CI - only available for local development
-      # The JFR native container has startup issues in GitHub Actions environment
-      # - name: Run Integration Tests ubi9-quarkus-micro-image / jfr
-      #   run: ./mvnw --no-transfer-progress clean verify -Pjfr -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
+    # Run on push events, OR on pull_request only if from a fork
+    # This prevents duplicate runs: push handles internal branches, PR handles forks
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+    uses: cuioss/cuioss-organization/.github/workflows/reusable-maven-integration-tests.yml@4d934640e9ec4e574ee29fe1fc269e542c8d79c5 # v0.3.9
+    with:
+      report-name: oauth-sheriff-integration-tests
+      maven-args-input: |
+        install -DskipTests
+        verify -Pintegration-tests -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
+      reports-folder: |
+        oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/failsafe-reports
+    secrets:
+      RELEASE_APP_ID: ${{ secrets.RELEASE_APP_ID }}
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
