@@ -91,6 +91,7 @@ def prepare_history(args: argparse.Namespace) -> None:
 
 def assemble(args: argparse.Namespace) -> None:
     """Archive current results, merge history, enforce retention, and combine artifacts."""
+    now = datetime.now(timezone.utc)
     output_dir = Path(args.output_dir)
     previous_dir = Path(args.previous_pages_dir) if args.previous_pages_dir else None
     commit_sha = args.commit_sha
@@ -109,7 +110,7 @@ def assemble(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     # 1. Archive current benchmark data into each module's history
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d-T%H%MZ")
+    timestamp = now.strftime("%Y-%m-%d-T%H%MZ")
     archive_name = f"{timestamp}-{commit_sha[:8]}.json"
 
     for name, results_dir in modules:
@@ -160,7 +161,7 @@ def assemble(args: argparse.Namespace) -> None:
 
     # 5. Write deployment metadata
     metadata = {
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "timestamp": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "commit": commit_sha,
     }
     (output_dir / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
@@ -224,10 +225,11 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.command == "prepare-history":
-        prepare_history(args)
-    elif args.command == "assemble":
-        assemble(args)
+    command_handlers = {
+        "prepare-history": prepare_history,
+        "assemble": assemble,
+    }
+    command_handlers[args.command](args)
 
 
 if __name__ == "__main__":
