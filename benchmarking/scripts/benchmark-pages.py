@@ -5,7 +5,7 @@ Manages benchmark history and assembles deployment artifacts for cuioss.github.i
 
 Subcommands:
     prepare-history  Copy fetched history to working directories for Maven trend calculation.
-    assemble         Archive current results, merge history, and combine artifacts for deployment.
+    assemble         Merge history, enforce retention, and combine artifacts for deployment.
 
 Usage in CI:
     # Before Maven benchmark runs:
@@ -90,7 +90,12 @@ def prepare_history(args: argparse.Namespace) -> None:
 
 
 def assemble(args: argparse.Namespace) -> None:
-    """Archive current results, merge history, enforce retention, and combine artifacts."""
+    """Merge history, enforce retention, and combine artifacts for deployment.
+
+    Note: History archiving (current run -> history/) is handled by Maven's
+    HistoricalDataManager.archiveCurrentRun() during the benchmark verify phase.
+    This function only merges previously deployed history and enforces retention.
+    """
     now = datetime.now(timezone.utc)
     output_dir = Path(args.output_dir)
     previous_dir = Path(args.previous_pages_dir) if args.previous_pages_dir else None
@@ -109,19 +114,7 @@ def assemble(args: argparse.Namespace) -> None:
               file=sys.stderr)
         sys.exit(1)
 
-    # 1. Archive current benchmark data into each module's history
-    timestamp = now.strftime("%Y-%m-%d-T%H%MZ")
-    archive_name = f"{timestamp}-{commit_sha[:8]}.json"
-
-    for name, results_dir in modules:
-        data_file = results_dir / "data" / "benchmark-data.json"
-        if data_file.is_file():
-            history_dir = results_dir / "history"
-            history_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(data_file, history_dir / archive_name)
-            print(f"Archived {name} benchmark data as {archive_name}")
-
-    # 2. Merge previous history (skip files that already exist to avoid overwriting current run)
+    # 1. Merge previous history (skip files that already exist to avoid overwriting current run)
     if previous_dir and previous_dir.is_dir():
         for name, results_dir in modules:
             prev_history = previous_dir / name / "history"
@@ -131,13 +124,13 @@ def assemble(args: argparse.Namespace) -> None:
             count = _copy_json_files(prev_history, history_dir, skip_existing=True)
             print(f"Merged {count} previous {name} history files")
 
-    # 3. Enforce retention policy per module
+    # 2. Enforce retention policy per module
     for name, results_dir in modules:
         removed = _enforce_retention(results_dir / "history", max_history)
         if removed:
             print(f"Removed {removed} old {name} history files (retention: {max_history})")
 
-    # 4. Combine into output directory
+    # 3. Combine into output directory
     output_dir.mkdir(parents=True, exist_ok=True)
     badges_dir = output_dir / "badges"
     badges_dir.mkdir(exist_ok=True)
@@ -159,7 +152,7 @@ def assemble(args: argparse.Namespace) -> None:
                 if src.is_file():
                     shutil.copy2(src, badges_dir / dst_name)
 
-    # 5. Write deployment metadata
+    # 4. Write deployment metadata
     metadata = {
         "timestamp": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "commit": commit_sha,
@@ -196,7 +189,7 @@ def main() -> None:
     # assemble
     asm = subparsers.add_parser(
         "assemble",
-        help="Archive, merge history, and combine all benchmark artifacts for deployment.",
+        help="Merge history, enforce retention, and combine all benchmark artifacts for deployment.",
     )
     asm.add_argument(
         "--micro-results",
