@@ -35,11 +35,20 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Create GitHub App token for deployment
+        id: app-token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }},cuioss.github.io
+          owner: cuioss
+
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0  # Fetch all history for proper versioning
-          persist-credentials: false  # Prevent GITHUB_TOKEN from overriding PAGES_DEPLOY_TOKEN during deploy
+          persist-credentials: false  # Prevent token from overriding app token during deploy
 
       - name: Set up JDK 21
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
@@ -74,25 +83,9 @@ jobs:
 
       - name: Prepare Historical Data for Benchmarks
         run: |
-          # Copy previous history to a separate directory (not under target which gets cleaned)
-          # This directory path will be passed to the benchmarks as a system property
-          export HISTORY_BASE_DIR="${GITHUB_WORKSPACE}/benchmark-history"
-
-          if [ -d "previous-pages/OAuth-Sheriff/benchmarks/micro/history" ]; then
-            echo "📜 Preparing micro benchmark history..."
-            mkdir -p "${HISTORY_BASE_DIR}/micro"
-            cp previous-pages/OAuth-Sheriff/benchmarks/micro/history/*.json \
-               "${HISTORY_BASE_DIR}/micro/" 2>/dev/null || true
-            echo "✅ Copied $(ls -1 ${HISTORY_BASE_DIR}/micro/*.json 2>/dev/null | wc -l) micro history files"
-          fi
-
-          if [ -d "previous-pages/OAuth-Sheriff/benchmarks/integration/history" ]; then
-            echo "📜 Preparing integration benchmark history..."
-            mkdir -p "${HISTORY_BASE_DIR}/integration"
-            cp previous-pages/OAuth-Sheriff/benchmarks/integration/history/*.json \
-               "${HISTORY_BASE_DIR}/integration/" 2>/dev/null || true
-            echo "✅ Copied $(ls -1 ${HISTORY_BASE_DIR}/integration/*.json 2>/dev/null | wc -l) integration history files"
-          fi
+          python3 benchmarking/scripts/benchmark-pages.py prepare-history \
+            --previous-pages-dir previous-pages/OAuth-Sheriff/benchmarks \
+            --output-dir "${GITHUB_WORKSPACE}/benchmark-history"
 
       - name: Run Micro Benchmarks
         run: |
@@ -104,9 +97,6 @@ jobs:
           # Verify artifacts were generated
           echo "📊 Micro benchmark artifacts generated:"
           ls -la benchmarking/benchmark-core/target/benchmark-results/
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.7.1
 
       - name: Run Integration Benchmarks with WRK
         run: |
@@ -120,99 +110,15 @@ jobs:
           echo "📊 Integration benchmark artifacts generated:"
           ls -la benchmarking/benchmark-integration-wrk/target/benchmark-results/
 
-      - name: Archive Historical Data
+      - name: Assemble benchmark artifacts for deployment
         run: |
-          # Generate timestamp and commit info
-          TIMESTAMP=$(date -u +"%Y-%m-%d-T%H%MZ")
-          COMMIT_SHA="${{ github.sha }}"
-          ARCHIVE_NAME="${TIMESTAMP}-${COMMIT_SHA:0:8}.json"
-          
-          # Create history directories if they don't exist
-          mkdir -p benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/history
-          mkdir -p benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/history
+          python3 benchmarking/scripts/benchmark-pages.py assemble \
+            --micro-results benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready \
+            --integration-results benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready \
+            --previous-pages-dir previous-pages/OAuth-Sheriff/benchmarks \
+            --output-dir gh-pages \
+            --commit-sha "${{ github.sha }}"
 
-          # Archive current benchmark data if it exists
-          if [ -f "benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/data/benchmark-data.json" ]; then
-            cp benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/data/benchmark-data.json \
-               "benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/history/${ARCHIVE_NAME}"
-          fi
-
-          if [ -f "benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/data/benchmark-data.json" ]; then
-            cp benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/data/benchmark-data.json \
-               "benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/history/${ARCHIVE_NAME}"
-          fi
-
-      - name: Merge Historical Data
-        run: |
-          # Copy previous history to gh-pages-ready if it exists (already fetched before benchmarks)
-          if [ -d "previous-pages/OAuth-Sheriff/benchmarks/micro/history" ]; then
-            echo "📜 Merging micro benchmark history..."
-            mkdir -p benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/history
-            cp -n previous-pages/OAuth-Sheriff/benchmarks/micro/history/*.json \
-               benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/history/ 2>/dev/null || true
-          fi
-
-          if [ -d "previous-pages/OAuth-Sheriff/benchmarks/integration/history" ]; then
-            echo "📜 Merging integration benchmark history..."
-            mkdir -p benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/history
-            cp -n previous-pages/OAuth-Sheriff/benchmarks/integration/history/*.json \
-               benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/history/ 2>/dev/null || true
-          fi
-
-          # Enforce retention policy (keep only 10 most recent by filename/date)
-          for dir in benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/history \
-                     benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/history; do
-            if [ -d "$dir" ]; then
-              echo "🧹 Enforcing retention policy in $dir"
-              cd "$dir"
-              # Sort by filename (date) in reverse, keep newest 10, delete the rest
-              ls -1 *.json 2>/dev/null | sort -r | tail -n +11 | xargs rm -f 2>/dev/null || true
-              cd - > /dev/null
-            fi
-          done
-
-      - name: Combine Benchmark Artifacts
-        run: |
-          # Create combined gh-pages directory with separate subdirectories for each benchmark type
-          mkdir -p gh-pages
-          mkdir -p gh-pages/micro
-          mkdir -p gh-pages/integration
-          mkdir -p gh-pages/badges
-          
-          # Copy micro benchmark artifacts to micro subdirectory
-          if [ -d "benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready" ]; then
-            echo "📦 Copying micro benchmark artifacts..."
-            cp -r benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/* gh-pages/micro/
-            # Copy micro badges to root badges directory
-            if [ -d "benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/badges" ]; then
-              cp benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/badges/performance-badge.json gh-pages/badges/ 2>/dev/null || true
-              cp benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/badges/trend-badge.json gh-pages/badges/ 2>/dev/null || true
-              cp benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/badges/last-run-badge.json gh-pages/badges/ 2>/dev/null || true
-            fi
-          fi
-          
-          # Copy integration benchmark artifacts to integration subdirectory
-          if [ -d "benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready" ]; then
-            echo "📦 Copying integration benchmark artifacts..."
-            cp -r benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/* gh-pages/integration/
-            # Copy integration badges to root badges directory
-            if [ -d "benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/badges" ]; then
-              cp benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/badges/integration-performance-badge.json gh-pages/badges/integration-performance-badge.json 2>/dev/null || true
-              cp benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/badges/integration-trend-badge.json gh-pages/badges/integration-trend-badge.json 2>/dev/null || true
-              cp benchmarking/benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/badges/last-run-badge.json gh-pages/badges/integration-last-run-badge.json 2>/dev/null || true
-            fi
-          fi
-          
-          # Add metadata
-          echo "{ \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\", \"commit\": \"${{ github.sha }}\" }" > gh-pages/metadata.json
-          
-          echo "📊 Combined artifacts structure:"
-          ls -la gh-pages/
-          echo "📊 Micro history:"
-          ls -la gh-pages/micro/history/ 2>/dev/null || echo "No micro history"
-          echo "📊 Integration history:"
-          ls -la gh-pages/integration/history/ 2>/dev/null || echo "No integration history"
-          
       - name: Upload benchmark results
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
@@ -220,11 +126,23 @@ jobs:
           path: gh-pages/
           retention-days: 90  # Keep results for 90 days
 
-      - name: Deploy to cuioss.github.io
-        uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f # v4.8.0
+      - name: Checkout cuioss.github.io for deployment
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          folder: gh-pages
-          repository-name: cuioss/cuioss.github.io
-          target-folder: OAuth-Sheriff/benchmarks
-          branch: main
-          token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+          repository: cuioss/cuioss.github.io
+          path: _pages-deploy
+          sparse-checkout: OAuth-Sheriff/benchmarks
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Deploy to cuioss.github.io
+        run: |
+          TARGET_DIR="_pages-deploy/OAuth-Sheriff/benchmarks"
+          rm -rf "$TARGET_DIR"
+          mkdir -p "$TARGET_DIR"
+          cp -r gh-pages/* "$TARGET_DIR/"
+          cd _pages-deploy
+          git config user.name "cuioss-release-bot[bot]"
+          git config user.email "cuioss-release-bot[bot]@users.noreply.github.com"
+          git add .
+          git diff --staged --quiet || git commit -m "Deploy benchmark results from ${{ github.sha }}"
+          git push
