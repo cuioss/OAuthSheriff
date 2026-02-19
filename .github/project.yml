@@ -26,3 +26,11 @@ pages:
 github-automation:
   auto-merge-build-versions: true
   auto-merge-build-timeout: 300
+
+consumers:
+  - nifi-extensions:version.oauth-sheriff
+
+dependency-propagation:
+  group-id: de.cuioss.sheriff.oauth
+  artifact-id: oauth-sheriff-core
+  scope: dependency
