@@ -9,11 +9,21 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
+      semver-minor-days: 3
+      semver-patch-days: 1
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: daily
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
+      semver-minor-days: 3
+      semver-patch-days: 1
 
   - package-ecosystem: docker
     directory: "/oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests"
@@ -24,8 +34,18 @@ updates:
     # doesn't scan compose files. Current versions in docker-compose.yml:
     # - quay.io/keycloak/keycloak:26.4.0
     # - prom/prometheus:v3.6.0
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
+      semver-minor-days: 3
+      semver-patch-days: 1
 
   - package-ecosystem: npm
     directory: "/oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-deployment"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
+      semver-minor-days: 3
+      semver-patch-days: 1
