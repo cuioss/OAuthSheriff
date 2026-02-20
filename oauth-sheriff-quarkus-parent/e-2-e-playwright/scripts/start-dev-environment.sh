@@ -46,10 +46,17 @@ fi
 echo "[2/3] Starting Quarkus dev mode..."
 cd "$INTEGRATION_TESTS_DIR"
 
+# Resolve the truststore path for Keycloak's self-signed certificate.
+# The cui-http library uses java.net.http.HttpClient which relies on the JVM truststore,
+# not the Quarkus TLS registry. We must pass it as JVM system properties.
+TRUSTSTORE_PATH="$INTEGRATION_TESTS_DIR/src/main/docker/certificates/localhost-truststore.p12"
+
 # Start Quarkus dev mode in the background
 # - enforceBuildGoal=false: integration-tests module disables the build goal by default
 # - console.enabled=false: prevent interactive console from reading stdin in CI
 # - log.console.color=false: clean log output without ANSI codes
+# - javax.net.ssl.trustStore*: JVM truststore for self-signed Keycloak cert
+MAVEN_OPTS="-Djavax.net.ssl.trustStore=$TRUSTSTORE_PATH -Djavax.net.ssl.trustStorePassword=localhost-trust -Djavax.net.ssl.trustStoreType=PKCS12" \
 "$PROJECT_ROOT/mvnw" quarkus:dev \
     -Dquarkus.enforceBuildGoal=false \
     -Dquarkus.analytics.disabled=true \
