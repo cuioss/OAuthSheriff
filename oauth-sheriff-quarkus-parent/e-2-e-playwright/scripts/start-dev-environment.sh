@@ -46,17 +46,32 @@ fi
 echo "[2/3] Starting Quarkus dev mode..."
 cd "$INTEGRATION_TESTS_DIR"
 
-# Resolve the truststore path for Keycloak's self-signed certificate.
+# Build a merged truststore: JVM default CAs + localhost self-signed cert.
 # The cui-http library uses java.net.http.HttpClient which relies on the JVM truststore,
-# not the Quarkus TLS registry. We must pass it as JVM system properties.
-TRUSTSTORE_PATH="$INTEGRATION_TESTS_DIR/src/main/docker/certificates/localhost-truststore.p12"
+# not the Quarkus TLS registry. We must provide a truststore that includes both
+# public CA certs (for Maven Central) and the localhost cert (for Keycloak).
+LOCALHOST_CERT="$INTEGRATION_TESTS_DIR/src/main/docker/certificates/localhost.crt"
+MERGED_TRUSTSTORE="$TARGET_DIR/merged-truststore.p12"
+if [ -n "${JAVA_HOME:-}" ]; then
+    JAVA_CACERTS="$JAVA_HOME/lib/security/cacerts"
+else
+    JAVA_CACERTS="$(java -XshowSettings:property -version 2>&1 | grep 'java.home' | awk '{print $3}')/lib/security/cacerts"
+fi
+
+echo "[2/3] Building merged truststore..."
+cp "$JAVA_CACERTS" "$MERGED_TRUSTSTORE"
+keytool -importcert -trustcacerts -noprompt \
+    -keystore "$MERGED_TRUSTSTORE" \
+    -storepass changeit \
+    -alias localhost-e2e \
+    -file "$LOCALHOST_CERT" 2>/dev/null || echo "[2/3] Warning: keytool import returned non-zero (cert may already exist)"
 
 # Start Quarkus dev mode in the background
 # - enforceBuildGoal=false: integration-tests module disables the build goal by default
 # - console.enabled=false: prevent interactive console from reading stdin in CI
 # - log.console.color=false: clean log output without ANSI codes
-# - javax.net.ssl.trustStore*: JVM truststore for self-signed Keycloak cert
-MAVEN_OPTS="-Djavax.net.ssl.trustStore=$TRUSTSTORE_PATH -Djavax.net.ssl.trustStorePassword=localhost-trust -Djavax.net.ssl.trustStoreType=PKCS12" \
+# - javax.net.ssl.trustStore: merged truststore with CAs + localhost cert
+MAVEN_OPTS="-Djavax.net.ssl.trustStore=$MERGED_TRUSTSTORE -Djavax.net.ssl.trustStorePassword=changeit" \
 "$PROJECT_ROOT/mvnw" quarkus:dev \
     -Dquarkus.enforceBuildGoal=false \
     -Dquarkus.analytics.disabled=true \
