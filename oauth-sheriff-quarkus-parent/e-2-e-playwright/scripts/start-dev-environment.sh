@@ -47,8 +47,11 @@ echo "[2/3] Starting Quarkus dev mode..."
 cd "$INTEGRATION_TESTS_DIR"
 
 # Start Quarkus dev mode in the background
-# Disable interactive console and ANSI colors to prevent hangs in CI
+# - enforceBuildGoal=false: integration-tests module disables the build goal by default
+# - console.enabled=false: prevent interactive console from reading stdin in CI
+# - log.console.color=false: clean log output without ANSI codes
 "$PROJECT_ROOT/mvnw" quarkus:dev \
+    -Dquarkus.enforceBuildGoal=false \
     -Dquarkus.analytics.disabled=true \
     -Dquarkus.test.continuous-testing=disabled \
     -Dquarkus.dev-ui.cors.enabled=true \
