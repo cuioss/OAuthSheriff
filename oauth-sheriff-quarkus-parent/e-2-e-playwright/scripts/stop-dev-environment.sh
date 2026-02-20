@@ -17,7 +17,8 @@ if [ -f "$PID_FILE" ]; then
     QUARKUS_PID=$(cat "$PID_FILE")
     echo "[1/2] Stopping Quarkus dev mode (PID: $QUARKUS_PID)..."
     if kill -0 "$QUARKUS_PID" 2>/dev/null; then
-        kill "$QUARKUS_PID" 2>/dev/null || true
+        # Kill child processes first (the actual Java/Quarkus process), then the wrapper
+        pkill -TERM -P "$QUARKUS_PID" 2>/dev/null || kill "$QUARKUS_PID" 2>/dev/null || true
         # Wait for graceful shutdown
         WAITED=0
         while kill -0 "$QUARKUS_PID" 2>/dev/null && [ $WAITED -lt 15 ]; do

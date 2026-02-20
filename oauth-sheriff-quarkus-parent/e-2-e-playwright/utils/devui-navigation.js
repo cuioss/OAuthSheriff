@@ -3,7 +3,7 @@
  * Handles navigation to Quarkus Dev-UI pages with shadow DOM awareness
  */
 
-import { CONSTANTS } from './constants.js';
+import { CONSTANTS } from "./constants.js";
 
 /**
  * Navigate to a Dev-UI extension page and wait for the custom element to render.
@@ -14,18 +14,22 @@ import { CONSTANTS } from './constants.js';
  * @param {string} [waitForSelector] - Optional CSS selector to wait for after navigation
  */
 export async function navigateToDevUIPage(page, url, waitForSelector) {
-  await page.goto(url, { waitUntil: 'networkidle', timeout: CONSTANTS.TIMEOUTS.NAVIGATION });
-
-  // Dev-UI pages load Lit components; wait for them to upgrade
-  await page.waitForTimeout(2000);
-
-  if (waitForSelector) {
-    // Dev-UI components render inside shadow DOM; use Playwright's pierce selector
-    await page.locator(waitForSelector).waitFor({
-      state: 'visible',
-      timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
+    await page.goto(url, {
+        waitUntil: "networkidle",
+        timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
     });
-  }
+
+    // Dev-UI pages load Lit components asynchronously; wait for DOM to stabilize
+    await page.waitForLoadState("networkidle");
+    await page.waitForFunction(() => document.readyState === "complete");
+
+    if (waitForSelector) {
+        // Dev-UI components render inside shadow DOM; use Playwright's pierce selector
+        await page.locator(waitForSelector).waitFor({
+            state: "visible",
+            timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
+        });
+    }
 }
 
 /**
@@ -33,7 +37,7 @@ export async function navigateToDevUIPage(page, url, waitForSelector) {
  * @param {import('@playwright/test').Page} page
  */
 export async function goToValidationStatus(page) {
-  await navigateToDevUIPage(page, CONSTANTS.DEVUI_PAGES.VALIDATION_STATUS);
+    await navigateToDevUIPage(page, CONSTANTS.DEVUI_PAGES.VALIDATION_STATUS);
 }
 
 /**
@@ -41,7 +45,7 @@ export async function goToValidationStatus(page) {
  * @param {import('@playwright/test').Page} page
  */
 export async function goToJwksEndpoints(page) {
-  await navigateToDevUIPage(page, CONSTANTS.DEVUI_PAGES.JWKS_ENDPOINTS);
+    await navigateToDevUIPage(page, CONSTANTS.DEVUI_PAGES.JWKS_ENDPOINTS);
 }
 
 /**
@@ -49,7 +53,7 @@ export async function goToJwksEndpoints(page) {
  * @param {import('@playwright/test').Page} page
  */
 export async function goToTokenDebugger(page) {
-  await navigateToDevUIPage(page, CONSTANTS.DEVUI_PAGES.TOKEN_DEBUGGER);
+    await navigateToDevUIPage(page, CONSTANTS.DEVUI_PAGES.TOKEN_DEBUGGER);
 }
 
 /**
@@ -57,7 +61,7 @@ export async function goToTokenDebugger(page) {
  * @param {import('@playwright/test').Page} page
  */
 export async function goToConfiguration(page) {
-  await navigateToDevUIPage(page, CONSTANTS.DEVUI_PAGES.CONFIGURATION);
+    await navigateToDevUIPage(page, CONSTANTS.DEVUI_PAGES.CONFIGURATION);
 }
 
 /**
@@ -66,13 +70,13 @@ export async function goToConfiguration(page) {
  * @returns {Promise<boolean>}
  */
 export async function isDevUIAccessible(page) {
-  try {
-    const response = await page.goto(CONSTANTS.URLS.DEVUI, {
-      waitUntil: 'domcontentloaded',
-      timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
-    });
-    return response !== null && response.ok();
-  } catch {
-    return false;
-  }
+    try {
+        const response = await page.goto(CONSTANTS.URLS.DEVUI, {
+            waitUntil: "domcontentloaded",
+            timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
+        });
+        return response !== null && response.ok();
+    } catch {
+        return false;
+    }
 }

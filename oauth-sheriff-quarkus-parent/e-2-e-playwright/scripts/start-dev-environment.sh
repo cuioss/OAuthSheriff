@@ -47,11 +47,14 @@ echo "[2/3] Starting Quarkus dev mode..."
 cd "$INTEGRATION_TESTS_DIR"
 
 # Start Quarkus dev mode in the background
+# Disable interactive console and ANSI colors to prevent hangs in CI
 "$PROJECT_ROOT/mvnw" quarkus:dev \
     -Dquarkus.analytics.disabled=true \
     -Dquarkus.test.continuous-testing=disabled \
     -Dquarkus.dev-ui.cors.enabled=true \
-    > "$TARGET_DIR/quarkus-dev.log" 2>&1 &
+    -Dquarkus.console.enabled=false \
+    -Dquarkus.log.console.color=false \
+    < /dev/null > "$TARGET_DIR/quarkus-dev.log" 2>&1 &
 
 QUARKUS_PID=$!
 echo "$QUARKUS_PID" > "$TARGET_DIR/quarkus-dev.pid"
