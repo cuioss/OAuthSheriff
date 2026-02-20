@@ -239,7 +239,7 @@ export class QwcJwtConfig extends LitElement {
 
   _renderGeneralConfiguration(config) {
     return html`
-      <div class="config-section">
+      <div class="config-section" data-testid="jwt-config-general-section">
         <h4 class="section-title">General Settings</h4>
         <div class="config-grid">
           <div class="config-item">
@@ -259,7 +259,7 @@ export class QwcJwtConfig extends LitElement {
 
   _renderParserConfiguration(config) {
     return html`
-      <div class="config-section">
+      <div class="config-section" data-testid="jwt-config-parser-section">
         <h4 class="section-title">Parser Configuration</h4>
         <div class="config-grid">
           <div class="config-item">
@@ -331,7 +331,7 @@ export class QwcJwtConfig extends LitElement {
 
   _renderIssuersConfiguration(config) {
     return html`
-      <div class="config-section">
+      <div class="config-section" data-testid="jwt-config-issuers-section">
         <h4 class="section-title">Configured Issuers</h4>
         ${config.issuers && Object.keys(config.issuers).length > 0
           ? html`
@@ -386,12 +386,12 @@ export class QwcJwtConfig extends LitElement {
 
   render() {
     if (this._loading && !this._configuration) {
-      return html`<div class="loading">Loading JWT configuration...</div>`;
+      return html`<div class="loading" data-testid="jwt-config-loading">Loading JWT configuration...</div>`;
     }
 
     if (this._error) {
       return html`
-        <div class="error">
+        <div class="error" data-testid="jwt-config-error">
           ${this._error}
           <button class="refresh-button" @click="${this._refreshConfiguration}">Retry</button>
         </div>
@@ -406,7 +406,7 @@ export class QwcJwtConfig extends LitElement {
     const health = this._healthInfo;
 
     return html`
-      <div class="config-container">
+      <div class="config-container" data-testid="jwt-config-container">
         <div class="config-header">
           <h3 class="config-title">JWT Configuration</h3>
           <div style="display: flex; align-items: center; gap: 1rem;">
@@ -414,13 +414,20 @@ export class QwcJwtConfig extends LitElement {
               ? html`
                   <div
                     class="health-indicator ${health.overallStatus === 'HEALTHY' ? 'health-healthy' : 'health-issues'}"
+                    data-testid="jwt-config-health-indicator"
                   >
                     <div class="health-dot ${health.overallStatus === 'HEALTHY' ? 'healthy' : 'issues'}"></div>
                     ${health.overallStatus === 'HEALTHY' ? 'Healthy' : 'Issues Detected'}
                   </div>
                 `
               : ''}
-            <button class="refresh-button" @click="${this._refreshConfiguration}">Refresh</button>
+            <button
+              class="refresh-button"
+              data-testid="jwt-config-refresh-button"
+              @click="${this._refreshConfiguration}"
+            >
+              Refresh
+            </button>
           </div>
         </div>
 

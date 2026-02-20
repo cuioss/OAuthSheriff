@@ -332,7 +332,7 @@ export class QwcJwtDebugger extends LitElement {
     if (this._validationResult.valid) {
       const claimsContent = this._validationResult.claims
         ? html`
-            <div class="claims-section">
+            <div class="claims-section" data-testid="jwt-debugger-claims">
               <div class="claims-title">Token Claims</div>
               <div class="claims-container">
                 <pre class="claims-json">${this._formatJson(this._validationResult.claims)}</pre>
@@ -383,11 +383,13 @@ export class QwcJwtDebugger extends LitElement {
     }
 
     return html`
-      <div class="results-section">
+      <div class="results-section" data-testid="jwt-debugger-result">
         <div class="result-card ${this._getResultCardClass()}">
           <div class="result-header">
             <div class="result-icon ${this._getResultIconClass()}"></div>
-            <h4 class="result-title ${this._getResultTitleClass()}">${this._getResultTitleText()}</h4>
+            <h4 class="result-title ${this._getResultTitleClass()}" data-testid="jwt-debugger-result-title">
+              ${this._getResultTitleText()}
+            </h4>
           </div>
 
           ${this._renderValidationContent()}
@@ -398,7 +400,7 @@ export class QwcJwtDebugger extends LitElement {
 
   render() {
     return html`
-      <div class="debugger-container">
+      <div class="debugger-container" data-testid="jwt-debugger-container">
         <h3 class="debugger-title">JWT Token Debugger</h3>
 
         <div class="input-section">
@@ -406,6 +408,7 @@ export class QwcJwtDebugger extends LitElement {
             <label class="input-label">JWT Token</label>
             <textarea
               class="token-input"
+              data-testid="jwt-debugger-token-input"
               placeholder="Paste your JWT token here..."
               @input="${this._handleTokenInput}"
             ></textarea>
@@ -414,15 +417,28 @@ export class QwcJwtDebugger extends LitElement {
           <div class="button-group">
             <button
               class="action-button validate-button"
+              data-testid="jwt-debugger-validate-button"
               ?disabled="${this._validating}"
               @click="${this._validateToken}"
             >
               ${this._renderValidateButtonContent()}
             </button>
 
-            <button class="action-button clear-button" @click="${this._clearToken}">Clear</button>
+            <button
+              class="action-button clear-button"
+              data-testid="jwt-debugger-clear-button"
+              @click="${this._clearToken}"
+            >
+              Clear
+            </button>
 
-            <button class="action-button sample-button" @click="${this._loadSampleToken}">Load Sample</button>
+            <button
+              class="action-button sample-button"
+              data-testid="jwt-debugger-sample-button"
+              @click="${this._loadSampleToken}"
+            >
+              Load Sample
+            </button>
           </div>
         </div>
 

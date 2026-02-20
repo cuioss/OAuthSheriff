@@ -39,6 +39,7 @@ import de.cuioss.sheriff.oauth.core.security.JwkAlgorithmPreferences;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.sheriff.oauth.core.security.SignatureAlgorithmPreferences;
 import de.cuioss.sheriff.oauth.quarkus.config.AccessLogFilterConfigProducer;
+import de.cuioss.sheriff.oauth.quarkus.runtime.OAuthSheriffDevUIRuntimeService;
 import de.cuioss.sheriff.oauth.quarkus.config.ParserConfigResolver;
 import de.cuioss.sheriff.oauth.quarkus.interceptor.BearerTokenInterceptor;
 import de.cuioss.sheriff.oauth.quarkus.logging.CustomAccessLogFilter;
@@ -378,7 +379,7 @@ public class OAuthSheriffProcessor {
      */
     @BuildStep(onlyIf = IsDevelopment.class)
     public JsonRPCProvidersBuildItem createJwtDevUIJsonRPCService() {
-        return new JsonRPCProvidersBuildItem("OAuthSheriffDevUI", OAuthSheriffDevUIJsonRPCService.class);
+        return new JsonRPCProvidersBuildItem("OAuthSheriffDevUI", OAuthSheriffDevUIRuntimeService.class);
     }
 
 }

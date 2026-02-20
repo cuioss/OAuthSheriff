@@ -150,12 +150,12 @@ export class QwcJwtValidationStatus extends LitElement {
 
   render() {
     if (this._loading && !this._validationStatus) {
-      return html`<div class="loading">Loading JWT validation status...</div>`;
+      return html`<div class="loading" data-testid="validation-loading">Loading JWT validation status...</div>`;
     }
 
     if (this._error) {
       return html`
-        <div class="error">
+        <div class="error" data-testid="validation-error">
           ${this._error}
           <button class="refresh-button" @click="${this._refreshStatus}">Retry</button>
         </div>
@@ -170,26 +170,31 @@ export class QwcJwtValidationStatus extends LitElement {
     const isActive = status.status === 'ACTIVE';
 
     return html`
-      <div class="status-card">
+      <div class="status-card" data-testid="validation-status-card">
         <div class="status-header">
-          <div class="status-indicator ${isActive ? 'status-active' : 'status-inactive'}"></div>
+          <div
+            class="status-indicator ${isActive ? 'status-active' : 'status-inactive'}"
+            data-testid="validation-status-indicator"
+          ></div>
           <h3 class="status-title">JWT Validation Status</h3>
         </div>
 
-        <div class="status-message">${status.statusMessage || 'No status message available'}</div>
+        <div class="status-message" data-testid="validation-status-message">
+          ${status.statusMessage || 'No status message available'}
+        </div>
 
         <div class="metrics-grid">
-          <div class="metric-card">
+          <div class="metric-card" data-testid="metric-enabled">
             <div class="metric-label">Validation Enabled</div>
             <div class="metric-value">${status.enabled ? 'Yes' : 'No'}</div>
           </div>
 
-          <div class="metric-card">
+          <div class="metric-card" data-testid="metric-validator-present">
             <div class="metric-label">Validator Available</div>
             <div class="metric-value">${status.validatorPresent ? 'Yes' : 'No'}</div>
           </div>
 
-          <div class="metric-card">
+          <div class="metric-card" data-testid="metric-overall-status">
             <div class="metric-label">Overall Status</div>
             <div class="metric-value">${status.status}</div>
           </div>
@@ -214,7 +219,9 @@ export class QwcJwtValidationStatus extends LitElement {
             : ''}
         </div>
 
-        <button class="refresh-button" @click="${this._refreshStatus}">Refresh Status</button>
+        <button class="refresh-button" data-testid="validation-refresh-button" @click="${this._refreshStatus}">
+          Refresh Status
+        </button>
       </div>
     `;
   }

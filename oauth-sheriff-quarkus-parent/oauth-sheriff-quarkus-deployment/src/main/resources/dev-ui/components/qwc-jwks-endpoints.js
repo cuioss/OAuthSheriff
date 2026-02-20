@@ -209,12 +209,12 @@ export class QwcJwksEndpoints extends LitElement {
 
   render() {
     if (this._loading && !this._jwksStatus) {
-      return html`<div class="loading">Loading JWKS endpoint status...</div>`;
+      return html`<div class="loading" data-testid="jwks-loading">Loading JWKS endpoint status...</div>`;
     }
 
     if (this._error) {
       return html`
-        <div class="error">
+        <div class="error" data-testid="jwks-error">
           ${this._error}
           <button class="refresh-button" @click="${this._refreshStatus}">Retry</button>
         </div>
@@ -228,20 +228,24 @@ export class QwcJwksEndpoints extends LitElement {
     const status = this._jwksStatus;
 
     return html`
-      <div class="jwks-container">
+      <div class="jwks-container" data-testid="jwks-endpoints-container">
         <div class="jwks-header">
           <h3 class="jwks-title">JWKS Endpoints Status</h3>
-          <button class="refresh-button" @click="${this._refreshStatus}">Refresh</button>
+          <button class="refresh-button" data-testid="jwks-refresh-button" @click="${this._refreshStatus}">
+            Refresh
+          </button>
         </div>
 
-        <div class="jwks-status ${this._getStatusClass(status.status)}">${this._getStatusMessage(status.status)}</div>
+        <div class="jwks-status ${this._getStatusClass(status.status)}" data-testid="jwks-status-message">
+          ${this._getStatusMessage(status.status)}
+        </div>
 
         ${status.issuers && status.issuers.length > 0
           ? html`
               <div class="issuers-grid">
                 ${status.issuers.map(
                   (issuer) => html`
-                    <div class="issuer-card">
+                    <div class="issuer-card" data-testid="jwks-issuer-card">
                       <div class="issuer-name">${issuer.name}</div>
 
                       <div class="issuer-details">

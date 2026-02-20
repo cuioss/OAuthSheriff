@@ -15,6 +15,7 @@
  */
 package de.cuioss.sheriff.oauth.quarkus.deployment;
 
+import de.cuioss.sheriff.oauth.quarkus.runtime.OAuthSheriffDevUIRuntimeService;
 import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.test.QuarkusUnitTest;
@@ -36,7 +37,8 @@ class CuiJwtDevUIIntegrationTest {
     @RegisterExtension
     static final QuarkusUnitTest config = new QuarkusUnitTest()
             .withApplicationRoot(jar -> jar
-                    .addClasses(OAuthSheriffProcessor.class, OAuthSheriffDevUIJsonRPCService.class))
+                    .addClasses(OAuthSheriffProcessor.class, OAuthSheriffDevUIJsonRPCService.class,
+                            OAuthSheriffDevUIRuntimeService.class))
             .overrideConfigKey("sheriff.oauth.enabled", "true")
             .overrideConfigKey("quarkus.dev", "true");
 
