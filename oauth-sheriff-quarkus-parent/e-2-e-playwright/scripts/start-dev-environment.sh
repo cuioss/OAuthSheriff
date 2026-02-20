@@ -60,6 +60,7 @@ fi
 
 echo "[2/3] Building merged truststore..."
 cp "$JAVA_CACERTS" "$MERGED_TRUSTSTORE"
+chmod u+w "$MERGED_TRUSTSTORE"
 keytool -importcert -trustcacerts -noprompt \
     -keystore "$MERGED_TRUSTSTORE" \
     -storepass changeit \
