@@ -75,41 +75,29 @@ test.describe("self-devui-accessible: Environment Validation", () => {
     test("JSON-RPC returns RUNTIME status (not BUILD_TIME)", async ({
         page,
     }) => {
-        // Navigate to the Dev-UI extensions page first to fully initialize the SPA.
-        // Direct navigation to sub-page URLs fails because the Vaadin Router has not
-        // configured its routes yet when the page first loads.
+        // Navigate to Dev-UI to establish the JSON-RPC WebSocket connection.
         await page.goto(CONSTANTS.URLS.DEVUI, {
             waitUntil: "networkidle",
             timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
         });
 
-        // Wait for the OAuth Sheriff extension card to appear in the extensions list
-        await page.getByText("JWT Token Validation").waitFor({
+        // Wait for the WebSocket connection to be established (visible in footer)
+        await page.getByText("Connected to").waitFor({
             state: "visible",
             timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
         });
 
-        // Click through to the JWT Validation Status page via client-side routing
-        await page
-            .getByRole("link", { name: "JWT Validation Status" })
-            .click();
+        // Call the JSON-RPC method directly from browser context.
+        // Bypasses Vaadin Router SPA navigation which does not reliably render
+        // extension sub-pages when links are inside shadow DOM.
+        const result = await page.evaluate(async () => {
+            const { devui } = await import("devui");
+            const response =
+                await devui.jsonRPC.OAuthSheriffDevUI.getValidationStatus();
+            return JSON.stringify(response);
+        });
 
-        // Wait for the component to finish loading via JSON-RPC
-        await page
-            .locator('[data-testid="validation-status-card"]')
-            .or(page.locator('[data-testid="validation-error"]'))
-            .or(page.locator('[data-testid="validation-loading"]'))
-            .waitFor({
-                state: "visible",
-                timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
-            });
-
-        // Verify the component does not show BUILD_TIME placeholder data.
-        // Use textContent() on the custom element because page.content() does not
-        // include shadow DOM content (LitElement renders inside shadow root).
-        const componentText = await page
-            .locator("qwc-jwt-validation-status")
-            .textContent();
-        expect(componentText).not.toContain("BUILD_TIME");
+        // Verify the response does not contain BUILD_TIME placeholder data
+        expect(result).not.toContain("BUILD_TIME");
     });
 });
