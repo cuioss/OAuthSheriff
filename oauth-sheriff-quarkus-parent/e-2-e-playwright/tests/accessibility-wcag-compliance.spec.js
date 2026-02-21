@@ -101,13 +101,24 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
         await page.keyboard.press("Tab");
         await page.keyboard.press("Tab");
 
-        // Verify focus is on an interactive element (not stuck)
-        const focusedTag = await page.evaluate(() =>
-            document.activeElement?.tagName?.toLowerCase(),
-        );
-        // Should be on a focusable element
-        expect(["button", "textarea", "input", "a", "select"]).toContain(
-            focusedTag,
-        );
+        // Verify focus is on an interactive element (not stuck).
+        // Traverse shadow roots to find the deepest active element,
+        // since Dev-UI Lit components use shadow DOM.
+        const focusedTag = await page.evaluate(() => {
+            let el = document.activeElement;
+            while (el?.shadowRoot?.activeElement) {
+                el = el.shadowRoot.activeElement;
+            }
+            return el?.tagName?.toLowerCase();
+        });
+        // Should be on a focusable element (or a shadow host like the custom element)
+        expect([
+            "button",
+            "textarea",
+            "input",
+            "a",
+            "select",
+            "qwc-jwt-debugger",
+        ]).toContain(focusedTag);
     });
 });
