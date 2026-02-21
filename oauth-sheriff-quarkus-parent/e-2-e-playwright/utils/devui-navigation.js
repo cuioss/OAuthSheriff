@@ -23,53 +23,62 @@ const SLUG_TO_ELEMENT = {
  * Extensions card grid renders (qwc-extensions._renderActives). Each card page
  * triggers import(page.componentRef) and routerController.addRouteForExtension(page).
  *
- * This helper:
- *   1. Navigates to the Dev-UI main page to fully initialize the SPA
- *   2. Waits for extension cards to render (confirming routes are registered)
- *   3. Calls Router.go() via the SPA's import map to trigger client-side navigation
- *   4. Waits for the target custom element to appear in the DOM
+ * Navigation strategy: Use the Dev-UI's built-in ?from= relocation mechanism.
+ * When the SPA loads at /q/dev-ui/?from=/path/to/subpage, the addRoute() function
+ * in RouterController automatically calls Router.go() to navigate to the sub-page
+ * once the matching route is registered. This is the same mechanism the Dev-UI
+ * uses internally for direct URL navigation.
  *
  * @param {import('@playwright/test').Page} page - Playwright page
  * @param {string} url - Full URL to navigate to
  * @param {string} [waitForSelector] - Optional CSS selector to wait for after navigation
  */
 export async function navigateToDevUIPage(page, url, waitForSelector) {
-    // Step 1: Navigate to the Dev-UI main page to fully initialize the SPA.
-    await page.goto(CONSTANTS.URLS.DEVUI, {
+    const targetPath = new URL(url).pathname;
+    const slug = targetPath.split("/").pop();
+    const elementName = SLUG_TO_ELEMENT[slug];
+
+    // Navigate to the Dev-UI main page with ?from= parameter.
+    // The Dev-UI's RouterController.addRoute() checks this parameter and
+    // automatically navigates to the sub-page when the matching route registers.
+    const devuiWithFrom = `${CONSTANTS.URLS.DEVUI}?from=${targetPath}`;
+    await page.goto(devuiWithFrom, {
         waitUntil: "networkidle",
         timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
     });
 
-    // Step 2: Wait for extension cards to load. This confirms:
-    //   - JSON-RPC WebSocket is connected
-    //   - Extension metadata has arrived
-    //   - qwc-extensions has rendered (which triggers route registration + component imports)
-    await page.getByText("JWT Token Validation").first().waitFor({
-        state: "visible",
-        timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
-    });
-
-    // Step 3: Navigate using the Vaadin Router API via the SPA's import map.
-    // The @vaadin/router module is available via the Dev-UI import map.
-    // Router.go() does pushState + popstate, which the Router listens for.
-    const targetPath = new URL(url).pathname;
-    const slug = targetPath.split("/").pop();
-
-    await page.evaluate(async (path) => {
-        const { Router } = await import("@vaadin/router");
-        Router.go(path);
-    }, targetPath);
-
-    // Step 4: Wait for the custom element to appear in the DOM.
-    // The Router resolves the route, creates the element, and renders it in #page.
-    // The async import(componentRef) may still be in progress, but custom elements
-    // get upgraded automatically once defined.
-    const elementName = SLUG_TO_ELEMENT[slug];
+    // Wait for the custom element to appear in the DOM.
+    // The ?from= mechanism triggers Router.go() from within addRoute(),
+    // which creates the element in the #page outlet.
     if (elementName) {
-        await page.locator(elementName).first().waitFor({
-            state: "attached",
-            timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
-        });
+        try {
+            await page.locator(elementName).first().waitFor({
+                state: "attached",
+                timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
+            });
+        } catch (err) {
+            // Dump diagnostic information before failing
+            const diag = await page.evaluate(() => {
+                const outlet = document.querySelector("#page");
+                return {
+                    currentUrl: window.location.href,
+                    outletExists: !!outlet,
+                    outletChildCount: outlet?.children?.length ?? 0,
+                    outletChildTags: Array.from(outlet?.children ?? []).map(
+                        (c) => c.tagName.toLowerCase(),
+                    ),
+                    outletInnerHTML: outlet?.innerHTML?.substring(0, 1000) ?? "",
+                    fromParam: new URLSearchParams(window.location.search).get(
+                        "from",
+                    ),
+                };
+            });
+            console.error(
+                `[devui-nav] Element <${elementName}> not found. Diagnostics:`,
+                JSON.stringify(diag, null, 2),
+            );
+            throw err;
+        }
         // Give the Lit component time to initialize (connectedCallback -> firstUpdated -> render)
         await page.waitForTimeout(1000);
     }
