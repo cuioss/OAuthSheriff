@@ -36,7 +36,7 @@ test.describe('self-devui-accessible: Environment Validation', () => {
   });
 
   test('JWT Validation Status page is navigable', async ({ page }) => {
-    await navigateToDevUIPage(page, 'JWT Validation Status');
+    await navigateToDevUIPage(page, 'Validation Status');
     // Verify the custom element is in the DOM
     await expect(page.locator('qwc-jwt-validation-status')).toBeAttached();
   });
