@@ -116,8 +116,8 @@ public class OAuthSheriffDevUIRuntimeService {
         for (IssuerConfig ic : issuerConfigs) {
             Map<String, Object> issuer = new HashMap<>();
             String identifier = ic.getIssuerIdentifier();
-            issuer.put("name", identifier != null ? identifier : "unknown");
-            issuer.put("issuerUri", identifier != null ? identifier : "not configured");
+            issuer.put("name", identifier);
+            issuer.put("issuerUri", identifier);
             issuer.put("jwksUri", ic.getJwksLoader() != null ? "configured" : "not configured");
             issuer.put("loaderStatus", ic.getLoaderStatus().toString());
             issuer.put("lastRefresh", "N/A");
@@ -164,7 +164,7 @@ public class OAuthSheriffDevUIRuntimeService {
         Map<String, Object> issuersMap = new LinkedHashMap<>();
         for (IssuerConfig ic : issuerConfigs) {
             String identifier = ic.getIssuerIdentifier();
-            String name = identifier != null ? identifier : "unknown";
+            String name = identifier;
             Map<String, Object> issuerDetail = new HashMap<>();
             issuerDetail.put("issuerUri", identifier);
             issuerDetail.put("jwksUri", ic.getJwksLoader() != null ? "configured" : null);
