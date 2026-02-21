@@ -46,6 +46,16 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Dev-UI runtime: required for Dev-UI to work in dev mode.
+             The conditional-dev-dependency mechanism in quarkus-vertx-http should
+             automatically include this in dev mode, but fails to resolve the
+             deployment JAR. Adding it explicitly ensures DevUIProcessor runs
+             during augmentation and registers /q/dev-ui/ routes. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-devui</artifactId>
+        </dependency>
+
         <!-- Quarkus Extensions for REST and Health -->
         <dependency>
             <groupId>io.quarkus</groupId>
