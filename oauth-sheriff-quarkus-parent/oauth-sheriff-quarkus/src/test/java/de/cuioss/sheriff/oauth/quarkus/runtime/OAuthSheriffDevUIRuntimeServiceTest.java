@@ -170,7 +170,7 @@ class OAuthSheriffDevUIRuntimeServiceTest {
             assertTrue(issuers.size() >= 1, "Should have at least one configured issuer, but found: " + issuers.size());
 
             // Verify issuer details
-            Map<String, Object> firstIssuer = issuers.get(0);
+            Map<String, Object> firstIssuer = issuers.getFirst();
             assertNotNull(firstIssuer.get("name"), "Issuer name should be present");
             assertNotNull(firstIssuer.get("issuerUri"), "Issuer URI should be present");
             assertNotNull(firstIssuer.get("loaderStatus"), "Loader status should be present");

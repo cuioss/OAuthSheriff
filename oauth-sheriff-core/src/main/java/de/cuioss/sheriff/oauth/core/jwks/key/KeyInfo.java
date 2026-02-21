@@ -46,9 +46,9 @@ import java.security.PublicKey;
  * @since 1.0
  */
 public record KeyInfo(
-        PublicKey key,
-        String algorithm,
-        String keyId
+PublicKey key,
+String algorithm,
+String keyId
 ) {
     /**
      * Creates a new KeyInfo record with validation.

@@ -58,11 +58,11 @@ import java.util.Optional;
  * @since 1.0
  */
 public record DecodedJwt(
-        JwtHeader header,
-        MapRepresentation body,
-        String signature,
-        String[] parts,
-        String rawToken
+JwtHeader header,
+MapRepresentation body,
+String signature,
+String[] parts,
+String rawToken
 ) {
     /**
      * Gets the header of the JWT token.

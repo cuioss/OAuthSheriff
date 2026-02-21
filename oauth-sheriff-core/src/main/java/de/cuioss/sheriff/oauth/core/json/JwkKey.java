@@ -42,14 +42,14 @@ import static de.cuioss.sheriff.oauth.core.JWTValidationLogMessages.WARN;
  */
 @CompiledJson
 public record JwkKey(
-        String kty,    // Key type: "RSA", "EC"
-        String kid,   // Key ID (optional)
-        String alg,   // Algorithm: "RS256", "ES256", etc. (optional)
-        String n,     // RSA modulus (Base64url-encoded, RSA only)
-        String e,     // RSA exponent (Base64url-encoded, RSA only)
-        String crv,   // EC curve: "P-256", "P-384", "P-521" (EC only)
-        String x,     // EC x coordinate (Base64url-encoded, EC only)
-        String y      // EC y coordinate (Base64url-encoded, EC only)
+String kty,    // Key type: "RSA", "EC"
+String kid,   // Key ID (optional)
+String alg,   // Algorithm: "RS256", "ES256", etc. (optional)
+String n,     // RSA modulus (Base64url-encoded, RSA only)
+String e,     // RSA exponent (Base64url-encoded, RSA only)
+String crv,   // EC curve: "P-256", "P-384", "P-521" (EC only)
+String x,     // EC x coordinate (Base64url-encoded, EC only)
+String y      // EC y coordinate (Base64url-encoded, EC only)
 ) {
 
     private static final Pattern BASE64_URL_PATTERN = Pattern.compile("^[A-Za-z0-9\\-_]*=*$");
