@@ -216,7 +216,13 @@ public class OAuthSheriffDevUIRuntimeService {
             // Convert ClaimValue objects to simple strings for JSON-RPC serialization
             // (ClaimValue contains OffsetDateTime which Jackson cannot serialize by default)
             Map<String, String> simpleClaims = new HashMap<>();
-            tokenContent.getClaims().forEach((key, value) -> simpleClaims.put(key, value.getOriginalString()));
+            tokenContent.getClaims().forEach((key, value) -> {
+                if (value != null) {
+                    simpleClaims.put(key, value.getOriginalString());
+                } else {
+                    simpleClaims.put(key, null);
+                }
+            });
             result.put(CLAIMS, simpleClaims);
             result.put(ISSUER, tokenContent.getIssuer());
 
