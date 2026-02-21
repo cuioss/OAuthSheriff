@@ -89,14 +89,34 @@ test.describe("self-devui-accessible: Environment Validation", () => {
             timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
         });
 
-        // Call the JSON-RPC method directly from browser context.
-        // Bypasses Vaadin Router SPA navigation which does not reliably render
-        // extension sub-pages when links are inside shadow DOM.
-        const result = await page.evaluate(async () => {
-            const { devui } = await import("devui");
-            const response =
-                await devui.jsonRPC.OAuthSheriffDevUI.getValidationStatus();
-            return JSON.stringify(response);
+        // Call the JSON-RPC method directly via WebSocket from browser context.
+        // Bypasses Vaadin Router SPA navigation and avoids dynamic import issues
+        // (import maps are not available in page.evaluate context).
+        const result = await page.evaluate(() => {
+            return new Promise((resolve, reject) => {
+                const wsUrl = `wss://${location.host}/q/dev-ui/json-rpc-ws`;
+                const ws = new WebSocket(wsUrl);
+                ws.onopen = () => {
+                    ws.send(
+                        JSON.stringify({
+                            jsonrpc: "2.0",
+                            method: "OAuthSheriffDevUI.getValidationStatus",
+                            params: {},
+                            id: 1,
+                        }),
+                    );
+                };
+                ws.onmessage = (event) => {
+                    ws.close();
+                    resolve(event.data);
+                };
+                ws.onerror = () =>
+                    reject(new Error("WebSocket connection failed"));
+                setTimeout(() => {
+                    ws.close();
+                    reject(new Error("JSON-RPC timeout"));
+                }, 10000);
+            });
         });
 
         // Verify the response does not contain BUILD_TIME placeholder data
