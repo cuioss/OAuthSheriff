@@ -18,12 +18,13 @@ export const CONSTANTS = {
         KEYCLOAK_INTEGRATION_TOKEN: `${KEYCLOAK_URL}/realms/integration/protocol/openid-connect/token`,
     },
 
-    /** Dev-UI navigation paths for OAuth Sheriff extension pages */
+    /** Dev-UI navigation paths for OAuth Sheriff extension pages.
+     *  Namespace is the Maven artifactId; slugs are derived from page titles. */
     DEVUI_PAGES: {
-        VALIDATION_STATUS: `${BASE_URL}/q/dev-ui/de.cuioss.sheriff.oauth.oauth-sheriff-quarkus/jwt-validation-status`,
-        JWKS_ENDPOINTS: `${BASE_URL}/q/dev-ui/de.cuioss.sheriff.oauth.oauth-sheriff-quarkus/jwks-endpoints`,
-        TOKEN_DEBUGGER: `${BASE_URL}/q/dev-ui/de.cuioss.sheriff.oauth.oauth-sheriff-quarkus/jwt-debugger`,
-        CONFIGURATION: `${BASE_URL}/q/dev-ui/de.cuioss.sheriff.oauth.oauth-sheriff-quarkus/jwt-configuration`,
+        VALIDATION_STATUS: `${BASE_URL}/q/dev-ui/oauth-sheriff-quarkus/jwt-validation-status`,
+        JWKS_ENDPOINTS: `${BASE_URL}/q/dev-ui/oauth-sheriff-quarkus/jwks-endpoints`,
+        TOKEN_DEBUGGER: `${BASE_URL}/q/dev-ui/oauth-sheriff-quarkus/token-debugger`,
+        CONFIGURATION: `${BASE_URL}/q/dev-ui/oauth-sheriff-quarkus/configuration`,
     },
 
     /** data-testid selectors for Playwright locators */
