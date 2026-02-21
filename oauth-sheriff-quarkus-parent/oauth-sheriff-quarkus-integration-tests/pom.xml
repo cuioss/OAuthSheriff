@@ -100,7 +100,24 @@
 
     <build>
         <plugins>
-            
+
+            <!-- Quarkus Maven Plugin: Required for quarkus:dev to properly set up Dev-UI.
+                 generate-code goals run during compilation; build goal creates the runner jar.
+                 Profiles may override the default execution as needed (e.g. integration-tests
+                 disables it to handle native builds via script). -->
+            <plugin>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate-code</goal>
+                            <goal>generate-code-tests</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- Execute Docker cleanup before Maven clean -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

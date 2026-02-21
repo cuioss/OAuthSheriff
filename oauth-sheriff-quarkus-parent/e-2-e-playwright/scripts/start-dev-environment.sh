@@ -68,7 +68,7 @@ keytool -importcert -trustcacerts -noprompt \
     -file "$LOCALHOST_CERT" 2>/dev/null || echo "[2/3] Warning: keytool import returned non-zero (cert may already exist)"
 
 # Start Quarkus dev mode in the background
-# - enforceBuildGoal=false: integration-tests module disables the build goal by default
+# - enforceBuildGoal=false: skip check that build goal ran before dev
 # - console.enabled=false: prevent interactive console from reading stdin in CI
 # - log.console.color=false: clean log output without ANSI codes
 # - javax.net.ssl.trustStore: merged truststore with CAs + localhost cert
@@ -77,7 +77,6 @@ MAVEN_OPTS="-Djavax.net.ssl.trustStore=$MERGED_TRUSTSTORE -Djavax.net.ssl.trustS
     -Dquarkus.enforceBuildGoal=false \
     -Dquarkus.analytics.disabled=true \
     -Dquarkus.test.continuous-testing=disabled \
-    -Dquarkus.dev-ui.cors.enabled=true \
     -Dquarkus.console.enabled=false \
     -Dquarkus.log.console.color=false \
     < /dev/null > "$TARGET_DIR/quarkus-dev.log" 2>&1 &
@@ -125,24 +124,21 @@ fi
 # Diagnostic: probe multiple endpoints to understand Dev-UI availability
 echo "[3/3] Probing Quarkus endpoints..."
 for PROBE_URL in \
-    "http://127.0.0.1:8080/" \
-    "http://127.0.0.1:8080/q/" \
-    "http://127.0.0.1:8080/q/dev-ui" \
-    "http://127.0.0.1:8080/q/dev-ui/" \
     "http://127.0.0.1:8080/q/health/ready" \
+    "http://127.0.0.1:8080/q/dev-ui/" \
     "https://127.0.0.1:8443/q/dev-ui/" \
-    "https://127.0.0.1:8443/q/dev-ui"; do
+    "https://127.0.0.1:8443/q/dev-ui/extensions"; do
     PROBE_CODE=$(curl -sk -o /dev/null -w "%{http_code}" "$PROBE_URL" 2>/dev/null || echo "ERR")
     echo "  $PROBE_CODE $PROBE_URL"
 done
 
-# Verify Keycloak well-known endpoint returns correct URLs
-echo "[3/3] Verifying Keycloak well-known endpoint..."
-WELL_KNOWN=$(curl -sk "https://localhost:1443/realms/benchmark/.well-known/openid-configuration" 2>/dev/null || echo "FAILED")
-echo "[3/3] Well-known issuer: $(echo "$WELL_KNOWN" | grep -o '"issuer":"[^"]*"' || echo 'N/A')"
+# Dump Keycloak container logs for diagnostics
+echo "[3/3] Keycloak container logs (last 10 lines):"
+cd "$MODULE_DIR"
+docker compose logs --tail=10 keycloak 2>/dev/null || echo "  (no Keycloak logs available)"
 
 echo "=== E2E Dev-UI Test Environment Ready ==="
 echo "  Keycloak:    https://localhost:1443"
-echo "  Quarkus:     http://127.0.0.1:8080"
+echo "  Quarkus:     https://127.0.0.1:8443"
 echo "  Dev-UI:      https://127.0.0.1:8443/q/dev-ui/"
 echo "  Quarkus PID: $QUARKUS_PID"

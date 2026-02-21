@@ -1,6 +1,10 @@
 # E2E Dev-UI Tests - Keycloak for Quarkus Dev Mode
 # Purpose: Provide a Keycloak instance accessible from the host for Dev-UI testing
-# Key difference from integration-tests: KC_HOSTNAME=https://localhost:1443 so tokens advertise the external URL
+# NOTE: Keycloak start-dev ignores hostname configuration (hostname-strict defaults to false
+# and cannot be reliably overridden). Tokens will contain Docker-internal issuer URLs
+# (https://keycloak:8443/realms/...). The OAuth Sheriff %dev config accepts this by using
+# the base config's issuer-identifier (which matches the Docker-internal URL) and direct
+# JWKS URLs pointing to the host-mapped port (localhost:1443).
 
 services:
   keycloak:
@@ -13,9 +17,6 @@ services:
       - --https-certificate-file=/opt/keycloak/certificates/localhost.crt
       - --https-certificate-key-file=/opt/keycloak/certificates/localhost.key
       - --https-port=8443
-      # Pass hostname as CLI arg (env vars ignored by start-dev in Keycloak 26.x)
-      - --hostname=https://localhost:1443
-      - --hostname-strict=true
     ports:
       - "1443:8443"  # External HTTPS port for Keycloak
       - "1090:9000"  # External port for Keycloak management (health checks)
@@ -28,11 +29,6 @@ services:
       - KC_HEALTH_ENABLED=true
       - KC_METRICS_ENABLED=true
       - KC_LOG_LEVEL=INFO
-      # Hostname configuration for well-known discovery endpoint
-      # KC_HOSTNAME must be a full URL in Keycloak 26.x (v2 hostname provider)
-      # to include the external mapped port. KC_HOSTNAME_PORT is deprecated.
-      - KC_HOSTNAME=https://localhost:1443
-      - KC_HOSTNAME_STRICT=true
       - KC_HTTP_ENABLED=false
       - KC_HTTPS_PORT=8443
     healthcheck:
