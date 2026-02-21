@@ -9,17 +9,12 @@ export class QwcJwtConfig extends LitElement {
       padding: 1rem;
     }
 
-    .config-header {
+    .toolbar {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
+      gap: 1rem;
       margin-bottom: 1rem;
-    }
-
-    .config-title {
-      margin: 0;
-      font-size: 1.2rem;
-      font-weight: 600;
     }
 
     .refresh-button {
@@ -410,28 +405,21 @@ export class QwcJwtConfig extends LitElement {
 
     return html`
       <div class="config-container" data-testid="jwt-config-container">
-        <div class="config-header">
-          <h3 class="config-title">JWT Configuration</h3>
-          <div style="display: flex; align-items: center; gap: 1rem;">
-            ${health
-              ? html`
-                  <div
-                    class="health-indicator ${health.overallStatus === 'HEALTHY' ? 'health-healthy' : 'health-issues'}"
-                    data-testid="jwt-config-health-indicator"
-                  >
-                    <div class="health-dot ${health.overallStatus === 'HEALTHY' ? 'healthy' : 'issues'}"></div>
-                    ${health.overallStatus === 'HEALTHY' ? 'Healthy' : 'Issues Detected'}
-                  </div>
-                `
-              : ''}
-            <button
-              class="refresh-button"
-              data-testid="jwt-config-refresh-button"
-              @click="${this._refreshConfiguration}"
-            >
-              Refresh
-            </button>
-          </div>
+        <div class="toolbar">
+          ${health
+            ? html`
+                <div
+                  class="health-indicator ${health.overallStatus === 'HEALTHY' ? 'health-healthy' : 'health-issues'}"
+                  data-testid="jwt-config-health-indicator"
+                >
+                  <div class="health-dot ${health.overallStatus === 'HEALTHY' ? 'healthy' : 'issues'}"></div>
+                  ${health.overallStatus === 'HEALTHY' ? 'Healthy' : 'Issues Detected'}
+                </div>
+              `
+            : ''}
+          <button class="refresh-button" data-testid="jwt-config-refresh-button" @click="${this._refreshConfiguration}">
+            Refresh
+          </button>
         </div>
 
         <div class="config-sections">

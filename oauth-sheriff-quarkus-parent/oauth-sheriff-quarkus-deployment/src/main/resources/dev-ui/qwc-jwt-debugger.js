@@ -9,12 +9,6 @@ export class QwcJwtDebugger extends LitElement {
       padding: 1rem;
     }
 
-    .debugger-title {
-      margin-bottom: 1rem;
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-
     .input-section {
       margin-bottom: 2rem;
     }
@@ -402,8 +396,6 @@ export class QwcJwtDebugger extends LitElement {
   render() {
     return html`
       <div class="debugger-container" data-testid="jwt-debugger-container">
-        <h3 class="debugger-title">JWT Token Debugger</h3>
-
         <div class="input-section">
           <div class="input-group">
             <label class="input-label">JWT Token</label>

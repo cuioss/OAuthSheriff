@@ -8,17 +8,12 @@ export class QwcJwksEndpoints extends LitElement {
       padding: 1rem;
     }
 
-    .jwks-header {
+    .toolbar {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
+      gap: 1rem;
       margin-bottom: 1rem;
-    }
-
-    .jwks-title {
-      margin: 0;
-      font-size: 1.2rem;
-      font-weight: 600;
     }
 
     .refresh-button {
@@ -230,8 +225,7 @@ export class QwcJwksEndpoints extends LitElement {
 
     return html`
       <div class="jwks-container" data-testid="jwks-endpoints-container">
-        <div class="jwks-header">
-          <h3 class="jwks-title">JWKS Endpoints Status</h3>
+        <div class="toolbar">
           <button class="refresh-button" data-testid="jwks-refresh-button" @click="${this._refreshStatus}">
             Refresh
           </button>

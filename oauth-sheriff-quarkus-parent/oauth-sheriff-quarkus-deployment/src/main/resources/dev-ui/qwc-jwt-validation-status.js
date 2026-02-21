@@ -12,17 +12,11 @@ export class QwcJwtValidationStatus extends LitElement {
       background-color: var(--lumo-base-color);
     }
 
-    .status-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
     .status-indicator {
       display: inline-block;
-      width: 16px;
-      height: 16px;
-      margin-right: 0.5rem;
+      flex-shrink: 0;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
     }
 
@@ -36,13 +30,10 @@ export class QwcJwtValidationStatus extends LitElement {
       box-shadow: 0 0 8px var(--lumo-error-color);
     }
 
-    .status-title {
-      margin: 0;
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
     .status-message {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       margin-bottom: 1rem;
       color: var(--lumo-secondary-text-color);
     }
@@ -172,15 +163,11 @@ export class QwcJwtValidationStatus extends LitElement {
 
     return html`
       <div class="status-card" data-testid="validation-status-card">
-        <div class="status-header">
+        <div class="status-message" data-testid="validation-status-message">
           <div
             class="status-indicator ${isActive ? 'status-active' : 'status-inactive'}"
             data-testid="validation-status-indicator"
           ></div>
-          <h3 class="status-title">JWT Validation Status</h3>
-        </div>
-
-        <div class="status-message" data-testid="validation-status-message">
           ${status.statusMessage || 'No status message available'}
         </div>
 
