@@ -8,50 +8,47 @@
  * the exact route paths depend on internal Quarkus conventions. Instead, we:
  * 1. Navigate to the Dev-UI extensions page
  * 2. Wait for the OAuth Sheriff extension card to render
- * 3. Click the specific sub-page link by its static label text
+ * 3. Click the page link anchor inside the matching qwc-extension-link element
  * 4. Wait for the custom element to appear in the #page outlet
+ *
+ * DOM structure of extension card page links:
+ *   <qwc-extension-link displayName="Title" path="/q/dev-ui/...">
+ *     #shadow-root
+ *       <a class="extensionLink" href="/q/dev-ui/...">
+ *         <span class="iconAndName"><vaadin-icon/> Title</span>
+ *       </a>
+ *       <qui-badge><span>Label</span></qui-badge>
+ *
+ * The <a> element is inside the shadow root. We must click the <a> element
+ * (not the badge) to trigger Vaadin Router navigation.
+ * We scope to <qwc-extension-link> elements to avoid matching sidebar items.
  */
 
 import { CONSTANTS } from './constants.js';
 
 /**
- * Pages configuration mapping page key to element name and the click target text.
- * The clickTarget is the static label text shown on the extension card link,
- * chosen to be unique on the page (avoiding ambiguity with sidebar items).
+ * Pages configuration mapping page title to the custom element tag name.
+ * The page title matches the `displayName` attribute of `qwc-extension-link`.
  */
 const PAGES = {
-  'JWT Validation Status': {
-    element: 'qwc-jwt-validation-status',
-    clickTarget: 'View Status',
-  },
-  'JWKS Endpoints': {
-    element: 'qwc-jwks-endpoints',
-    clickTarget: 'View Endpoints',
-  },
-  'Token Debugger': {
-    element: 'qwc-jwt-debugger',
-    clickTarget: 'Debug Tokens',
-  },
-  Configuration: {
-    element: 'qwc-jwt-config',
-    clickTarget: 'View Config',
-  },
+  'JWT Validation Status': 'qwc-jwt-validation-status',
+  'JWKS Endpoints': 'qwc-jwks-endpoints',
+  'Token Debugger': 'qwc-jwt-debugger',
+  Configuration: 'qwc-jwt-config',
 };
 
 /**
  * Navigate to a Dev-UI extension sub-page by clicking through the extension card.
  *
  * @param {import('@playwright/test').Page} page - Playwright page
- * @param {string} pageKey - The page key from the PAGES map (e.g. "JWT Validation Status")
+ * @param {string} pageTitle - The page title as set by the processor (e.g. "JWT Validation Status")
  * @param {string} [waitForSelector] - Optional CSS selector to wait for after navigation
  */
-export async function navigateToDevUIPage(page, pageKey, waitForSelector) {
-  const pageConfig = PAGES[pageKey];
-  if (!pageConfig) {
-    throw new Error(`Unknown page key: ${pageKey}. Valid keys: ${Object.keys(PAGES).join(', ')}`);
+export async function navigateToDevUIPage(page, pageTitle, waitForSelector) {
+  const elementName = PAGES[pageTitle];
+  if (!elementName) {
+    throw new Error(`Unknown page: ${pageTitle}. Valid pages: ${Object.keys(PAGES).join(', ')}`);
   }
-
-  const { element: elementName, clickTarget } = pageConfig;
 
   // Step 1: Navigate to Dev-UI extensions page
   await page.goto(CONSTANTS.URLS.DEVUI, {
@@ -60,48 +57,46 @@ export async function navigateToDevUIPage(page, pageKey, waitForSelector) {
   });
 
   // Step 2: Wait for the OAuth Sheriff extension card to appear.
-  // The card title contains "JWT Token Validation" (the extension display name).
   await page.getByText('JWT Token Validation').first().waitFor({
     state: 'visible',
     timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
   });
 
-  // Step 3: Click the sub-page link by its static label text.
-  // Static labels (e.g. "View Status", "Debug Tokens", "View Config") are unique
-  // and avoid ambiguity with sidebar navigation items.
-  const pageLink = page.getByText(clickTarget, { exact: true }).first();
-  await pageLink.waitFor({
+  // Step 3: Click the page link.
+  // Find the <qwc-extension-link> that contains our page title text,
+  // then click the <a> anchor inside it. Using qwc-extension-link as scope
+  // avoids matching sidebar items like "Configuration".
+  const extensionLink = page.locator('qwc-extension-link').filter({ hasText: pageTitle });
+  await extensionLink.first().waitFor({
     state: 'visible',
     timeout: CONSTANTS.TIMEOUTS.SHORT,
   });
-  await pageLink.click();
+  // Click the anchor element inside the shadow root
+  await extensionLink.first().locator('a').first().click();
 
   // Step 4: Wait for the custom element to appear in the DOM.
-  // After clicking, the Vaadin Router creates the element in the #page outlet.
-  if (elementName) {
-    try {
-      await page.locator(elementName).first().waitFor({
-        state: 'attached',
-        timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
-      });
-    } catch (err) {
-      // Dump diagnostic information before failing
-      const diag = await page.evaluate(() => {
-        const outlet = document.querySelector('#page');
-        return {
-          currentUrl: window.location.href,
-          outletExists: !!outlet,
-          outletChildCount: outlet?.children?.length ?? 0,
-          outletChildTags: Array.from(outlet?.children ?? []).map((c) => c.tagName.toLowerCase()),
-          outletInnerHTML: outlet?.innerHTML?.substring(0, 1000) ?? '',
-        };
-      });
-      console.error(`[devui-nav] Element <${elementName}> not found. Diagnostics:`, JSON.stringify(diag, null, 2));
-      throw err;
-    }
-    // Give the Lit component time to initialize (connectedCallback -> firstUpdated -> render)
-    await page.waitForTimeout(1000);
+  try {
+    await page.locator(elementName).first().waitFor({
+      state: 'attached',
+      timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
+    });
+  } catch (err) {
+    // Dump diagnostic information before failing
+    const diag = await page.evaluate(() => {
+      const outlet = document.querySelector('#page');
+      return {
+        currentUrl: window.location.href,
+        outletExists: !!outlet,
+        outletChildCount: outlet?.children?.length ?? 0,
+        outletChildTags: Array.from(outlet?.children ?? []).map((c) => c.tagName.toLowerCase()),
+        outletInnerHTML: outlet?.innerHTML?.substring(0, 1000) ?? '',
+      };
+    });
+    console.error(`[devui-nav] Element <${elementName}> not found. Diagnostics:`, JSON.stringify(diag, null, 2));
+    throw err;
   }
+  // Give the Lit component time to initialize (connectedCallback -> firstUpdated -> render)
+  await page.waitForTimeout(1000);
 
   if (waitForSelector) {
     await page.locator(waitForSelector).waitFor({
