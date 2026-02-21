@@ -50,7 +50,7 @@
         <accessibility.output.dir>${project.build.directory}/results-accessibility-tests</accessibility.output.dir>
 
         <!-- URLs -->
-        <devui.base.url>http://localhost:8080</devui.base.url>
+        <devui.base.url>https://localhost:8443</devui.base.url>
         <keycloak.url>https://localhost:1443</keycloak.url>
 
         <!-- Script directory -->

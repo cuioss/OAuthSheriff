@@ -5,7 +5,7 @@ const path = require('path');
 /**
  * Read environment variables from process.env
  */
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080';
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://localhost:8443';
 
 /**
  * Define paths for test artifacts (following Maven standard)

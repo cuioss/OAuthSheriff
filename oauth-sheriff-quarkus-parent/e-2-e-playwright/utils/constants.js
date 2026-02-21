@@ -2,7 +2,7 @@
  * @fileoverview Constants for OAuth Sheriff Dev-UI E2E tests
  */
 
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:8080";
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || "https://localhost:8443";
 const KEYCLOAK_URL =
     process.env.PLAYWRIGHT_KEYCLOAK_URL || "https://localhost:1443";
 

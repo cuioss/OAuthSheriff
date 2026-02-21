@@ -13,6 +13,9 @@ services:
       - --https-certificate-file=/opt/keycloak/certificates/localhost.crt
       - --https-certificate-key-file=/opt/keycloak/certificates/localhost.key
       - --https-port=8443
+      # Pass hostname as CLI arg (env vars ignored by start-dev in Keycloak 26.x)
+      - --hostname=https://localhost:1443
+      - --hostname-strict=true
     ports:
       - "1443:8443"  # External HTTPS port for Keycloak
       - "1090:9000"  # External port for Keycloak management (health checks)

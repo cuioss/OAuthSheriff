@@ -86,10 +86,11 @@ QUARKUS_PID=$!
 echo "$QUARKUS_PID" > "$TARGET_DIR/quarkus-dev.pid"
 echo "[2/3] Quarkus dev mode started (PID: $QUARKUS_PID)"
 
-# --- Step 3: Wait for Quarkus Dev-UI ---
-echo "[3/3] Waiting for Quarkus Dev-UI..."
+# --- Step 3: Wait for Quarkus readiness ---
+echo "[3/3] Waiting for Quarkus to start..."
 # Use 127.0.0.1 instead of localhost to avoid IPv6 resolution issues in CI
-DEVUI_URL="http://127.0.0.1:8080/q/dev-ui/"
+# Check health endpoint first (always available), then verify Dev-UI
+HEALTH_URL="http://127.0.0.1:8080/q/health/ready"
 MAX_WAIT=120
 WAITED=0
 while [ $WAITED -lt $MAX_WAIT ]; do
@@ -101,25 +102,39 @@ while [ $WAITED -lt $MAX_WAIT ]; do
         exit 1
     fi
 
-    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$DEVUI_URL" 2>/dev/null || echo "000")
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" 2>/dev/null || echo "000")
     if echo "$HTTP_CODE" | grep -qE "^(200|301|302|303)$"; then
-        echo "[3/3] Quarkus Dev-UI is ready (${WAITED}s, HTTP $HTTP_CODE)"
+        echo "[3/3] Quarkus health endpoint ready (${WAITED}s, HTTP $HTTP_CODE)"
         break
     fi
     sleep 2
     WAITED=$((WAITED + 2))
     if [ $((WAITED % 10)) -eq 0 ]; then
-        echo "[3/3] Still waiting for Quarkus Dev-UI... (${WAITED}s/${MAX_WAIT}s, last HTTP=$HTTP_CODE)"
+        echo "[3/3] Still waiting for Quarkus... (${WAITED}s/${MAX_WAIT}s, last HTTP=$HTTP_CODE)"
     fi
 done
 
 if [ $WAITED -ge $MAX_WAIT ]; then
-    echo "[3/3] ERROR: Quarkus Dev-UI did not become ready within ${MAX_WAIT}s"
+    echo "[3/3] ERROR: Quarkus did not become ready within ${MAX_WAIT}s"
     echo "[3/3] Last HTTP code: $HTTP_CODE"
     echo "Last 50 lines of log:"
     tail -50 "$TARGET_DIR/quarkus-dev.log"
     exit 1
 fi
+
+# Diagnostic: probe multiple endpoints to understand Dev-UI availability
+echo "[3/3] Probing Quarkus endpoints..."
+for PROBE_URL in \
+    "http://127.0.0.1:8080/" \
+    "http://127.0.0.1:8080/q/" \
+    "http://127.0.0.1:8080/q/dev-ui" \
+    "http://127.0.0.1:8080/q/dev-ui/" \
+    "http://127.0.0.1:8080/q/health/ready" \
+    "https://127.0.0.1:8443/q/dev-ui/" \
+    "https://127.0.0.1:8443/q/dev-ui"; do
+    PROBE_CODE=$(curl -sk -o /dev/null -w "%{http_code}" "$PROBE_URL" 2>/dev/null || echo "ERR")
+    echo "  $PROBE_CODE $PROBE_URL"
+done
 
 # Verify Keycloak well-known endpoint returns correct URLs
 echo "[3/3] Verifying Keycloak well-known endpoint..."
@@ -129,5 +144,5 @@ echo "[3/3] Well-known issuer: $(echo "$WELL_KNOWN" | grep -o '"issuer":"[^"]*"'
 echo "=== E2E Dev-UI Test Environment Ready ==="
 echo "  Keycloak:    https://localhost:1443"
 echo "  Quarkus:     http://127.0.0.1:8080"
-echo "  Dev-UI:      http://127.0.0.1:8080/q/dev-ui/"
+echo "  Dev-UI:      https://127.0.0.1:8443/q/dev-ui/"
 echo "  Quarkus PID: $QUARKUS_PID"
