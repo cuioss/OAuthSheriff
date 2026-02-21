@@ -1,7 +1,8 @@
 import { html, css, LitElement } from 'lit';
-import { devui } from 'devui';
+import { JsonRpc } from 'jsonrpc';
 
 export class QwcJwtDebugger extends LitElement {
+  jsonRpc = new JsonRpc("OAuthSheriffDevUI");
   static styles = css`
     .debugger-container {
       max-width: 1200px;
@@ -282,8 +283,8 @@ export class QwcJwtDebugger extends LitElement {
       this._validating = true;
       this._validationResult = null;
 
-      const result = await devui.jsonRPC.OAuthSheriffDevUI.validateToken(this._token.trim());
-      this._validationResult = result;
+      const jsonRpcResponse = await this.jsonRpc.validateToken(this._token.trim());
+      this._validationResult = jsonRpcResponse.result;
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error validating token:', error);

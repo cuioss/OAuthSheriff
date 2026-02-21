@@ -1,7 +1,8 @@
 import { html, css, LitElement } from 'lit';
-import { devui } from 'devui';
+import { JsonRpc } from 'jsonrpc';
 
 export class QwcJwtConfig extends LitElement {
+  jsonRpc = new JsonRpc("OAuthSheriffDevUI");
   static styles = css`
     .config-container {
       max-width: 1200px;
@@ -204,10 +205,12 @@ export class QwcJwtConfig extends LitElement {
       this._loading = true;
       this._error = null;
 
-      const [config, health] = await Promise.all([
-        devui.jsonRPC.OAuthSheriffDevUI.getConfiguration(),
-        devui.jsonRPC.OAuthSheriffDevUI.getHealthInfo(),
+      const [configResponse, healthResponse] = await Promise.all([
+        this.jsonRpc.getConfiguration(),
+        this.jsonRpc.getHealthInfo(),
       ]);
+      const config = configResponse.result;
+      const health = healthResponse.result;
 
       this._configuration = config;
       this._healthInfo = health;

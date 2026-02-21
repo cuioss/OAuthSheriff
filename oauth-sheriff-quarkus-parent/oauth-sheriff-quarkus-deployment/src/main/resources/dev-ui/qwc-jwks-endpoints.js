@@ -1,7 +1,8 @@
 import { html, css, LitElement } from 'lit';
-import { devui } from 'devui';
+import { JsonRpc } from 'jsonrpc';
 
 export class QwcJwksEndpoints extends LitElement {
+  jsonRpc = new JsonRpc("OAuthSheriffDevUI");
   static styles = css`
     .jwks-container {
       padding: 1rem;
@@ -164,8 +165,8 @@ export class QwcJwksEndpoints extends LitElement {
       this._loading = true;
       this._error = null;
 
-      const response = await devui.jsonRPC.OAuthSheriffDevUI.getJwksStatus();
-      this._jwksStatus = response;
+      const jsonRpcResponse = await this.jsonRpc.getJwksStatus();
+      this._jwksStatus = jsonRpcResponse.result;
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error loading JWKS status:', error);

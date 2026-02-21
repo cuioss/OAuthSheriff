@@ -1,7 +1,8 @@
 import { html, css, LitElement } from 'lit';
-import { devui } from 'devui';
+import { JsonRpc } from 'jsonrpc';
 
 export class QwcJwtValidationStatus extends LitElement {
+  jsonRpc = new JsonRpc("OAuthSheriffDevUI");
   static styles = css`
     .status-card {
       margin-bottom: 1rem;
@@ -133,8 +134,8 @@ export class QwcJwtValidationStatus extends LitElement {
       this._loading = true;
       this._error = null;
 
-      const response = await devui.jsonRPC.OAuthSheriffDevUI.getValidationStatus();
-      this._validationStatus = response;
+      const jsonRpcResponse = await this.jsonRpc.getValidationStatus();
+      this._validationStatus = jsonRpcResponse.result;
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error loading JWT validation status:', error);
