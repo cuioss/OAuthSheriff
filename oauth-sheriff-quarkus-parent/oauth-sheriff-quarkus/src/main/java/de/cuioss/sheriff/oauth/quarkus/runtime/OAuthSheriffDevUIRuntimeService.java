@@ -217,7 +217,11 @@ public class OAuthSheriffDevUIRuntimeService {
 
             result.put(VALID, true);
             result.put(TOKEN_TYPE, "ACCESS_TOKEN");
-            result.put(CLAIMS, tokenContent.getClaims());
+            // Convert ClaimValue objects to simple strings for JSON-RPC serialization
+            // (ClaimValue contains OffsetDateTime which Jackson cannot serialize by default)
+            Map<String, String> simpleClaims = new HashMap<>();
+            tokenContent.getClaims().forEach((key, value) -> simpleClaims.put(key, value.getOriginalString()));
+            result.put(CLAIMS, simpleClaims);
             result.put(ISSUER, tokenContent.getIssuer());
 
         } catch (TokenValidationException e) {
