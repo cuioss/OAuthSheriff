@@ -56,7 +56,7 @@ test.describe('self-devui-accessible: Environment Validation', () => {
     await expect(page.locator('qwc-jwt-config')).toBeAttached();
   });
 
-  test('JSON-RPC returns RUNTIME status (not BUILD_TIME)', async ({ page }) => {
+  test('JSON-RPC returns runtime data (not BUILD_TIME)', async ({ page }) => {
     // Navigate to Dev-UI to establish the JSON-RPC WebSocket connection.
     await page.goto(CONSTANTS.URLS.DEVUI, {
       waitUntil: 'networkidle',

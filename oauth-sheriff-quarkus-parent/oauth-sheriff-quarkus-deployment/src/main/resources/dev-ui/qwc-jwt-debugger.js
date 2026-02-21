@@ -283,7 +283,7 @@ export class QwcJwtDebugger extends LitElement {
       this._validating = true;
       this._validationResult = null;
 
-      const jsonRpcResponse = await this.jsonRpc.validateToken(this._token.trim());
+      const jsonRpcResponse = await this.jsonRpc.validateToken({ token: this._token.trim() });
       this._validationResult = jsonRpcResponse.result;
     } catch (error) {
       // eslint-disable-next-line no-console
