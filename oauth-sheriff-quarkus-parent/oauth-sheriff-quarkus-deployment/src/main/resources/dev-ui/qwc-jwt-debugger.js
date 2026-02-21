@@ -2,7 +2,7 @@ import { html, css, LitElement } from 'lit';
 import { JsonRpc } from 'jsonrpc';
 
 export class QwcJwtDebugger extends LitElement {
-  jsonRpc = new JsonRpc("OAuthSheriffDevUI");
+  jsonRpc = new JsonRpc('OAuthSheriffDevUI');
   static styles = css`
     .debugger-container {
       max-width: 1200px;

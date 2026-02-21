@@ -2,7 +2,7 @@ import { html, css, LitElement } from 'lit';
 import { JsonRpc } from 'jsonrpc';
 
 export class QwcJwtValidationStatus extends LitElement {
-  jsonRpc = new JsonRpc("OAuthSheriffDevUI");
+  jsonRpc = new JsonRpc('OAuthSheriffDevUI');
   static styles = css`
     .status-card {
       margin-bottom: 1rem;
