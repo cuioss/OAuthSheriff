@@ -3,11 +3,15 @@
  * These are gate-keeper tests: if they fail, the environment is not ready.
  */
 
-import { test, expect } from '../fixtures/test-fixtures.js';
+import { test, expect, takeStartScreenshot } from '../fixtures/test-fixtures.js';
 import { CONSTANTS } from '../utils/constants.js';
 import { isDevUIAccessible, navigateToDevUIPage } from '../utils/devui-navigation.js';
 
 test.describe('self-devui-accessible: Environment Validation', () => {
+  test.beforeEach(async ({ page }, testInfo) => {
+    await takeStartScreenshot(page, testInfo);
+  });
+
   test('Quarkus application is accessible', async ({ page }) => {
     const response = await page.goto(CONSTANTS.URLS.BASE, {
       waitUntil: 'domcontentloaded',

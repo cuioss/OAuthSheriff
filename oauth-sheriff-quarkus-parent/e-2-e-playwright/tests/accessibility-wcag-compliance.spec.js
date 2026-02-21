@@ -6,6 +6,7 @@
 import {
     accessibilityTest as test,
     expect,
+    takeStartScreenshot,
 } from "../fixtures/test-fixtures.js";
 import { CONSTANTS } from "../utils/constants.js";
 import {
@@ -14,6 +15,10 @@ import {
 } from "../utils/devui-navigation.js";
 
 test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
+    test.beforeEach(async ({ page }, testInfo) => {
+        await takeStartScreenshot(page, testInfo);
+    });
+
     test("Full Dev-UI page WCAG compliance", async ({
         page,
         accessibilityHelper,

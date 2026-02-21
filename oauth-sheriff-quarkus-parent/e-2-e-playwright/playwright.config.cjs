@@ -10,9 +10,23 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://localhost:8443';
 /**
  * Define paths for test artifacts (following Maven standard)
  */
-const TARGET_DIR = process.env.PLAYWRIGHT_OUTPUT_DIR || path.join(__dirname, 'target');
-const TEST_RESULTS_DIR = process.env.TEST_RESULTS_DIR || path.join(TARGET_DIR, 'test-results');
-const REPORTS_DIR = process.env.PLAYWRIGHT_REPORT_DIR || path.join(TARGET_DIR, 'playwright-report');
+const TARGET_DIR = path.join(__dirname, 'target');
+
+/**
+ * Shared Chrome launch options used by all projects.
+ */
+const CHROME_OPTIONS = {
+  ...devices['Desktop Chrome'],
+  viewport: { width: 1920, height: 1080 },
+  launchOptions: {
+    args: [
+      '--disable-web-security',
+      '--no-sandbox',
+      '--disable-dev-shm-usage',
+      '--ignore-certificate-errors',
+    ],
+  },
+};
 
 /**
  * Playwright Configuration for OAuth Sheriff Dev-UI E2E Tests
@@ -40,7 +54,7 @@ module.exports = defineConfig({
     ['list'],
   ],
   /* Output directories for test artifacts */
-  outputDir: TEST_RESULTS_DIR,
+  outputDir: path.join(TARGET_DIR, 'test-results'),
   /* Preserve output from test runs */
   preserveOutput: 'always',
   /* Shared settings for all projects */
@@ -66,22 +80,24 @@ module.exports = defineConfig({
     navigationTimeout: 30000,
   },
 
-  /* Chromium only - Dev-UI is primarily Chrome-based */
+  /* Three projects mirror nifi-extensions layout with category suffixes */
   projects: [
     {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1920, height: 1080 },
-        launchOptions: {
-          args: [
-            '--disable-web-security',
-            '--no-sandbox',
-            '--disable-dev-shm-usage',
-            '--ignore-certificate-errors',
-          ],
-        },
-      },
+      name: 'self-tests',
+      testMatch: /self-.*\.spec\.js$/,
+      use: { ...CHROME_OPTIONS },
+    },
+    {
+      name: 'functional',
+      testMatch: /\d{2}-.*\.spec\.js$/,
+      dependencies: ['self-tests'],
+      use: { ...CHROME_OPTIONS },
+    },
+    {
+      name: 'accessibility',
+      testMatch: /accessibility.*\.spec\.js$/,
+      dependencies: ['self-tests'],
+      use: { ...CHROME_OPTIONS },
     },
   ],
 });

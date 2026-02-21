@@ -4,13 +4,14 @@
  * from all four JSON-RPC methods (validation status, JWKS status, configuration, health).
  */
 
-import { test, expect } from "../fixtures/test-fixtures.js";
+import { test, expect, takeStartScreenshot } from "../fixtures/test-fixtures.js";
 import { CONSTANTS } from "../utils/constants.js";
 import { goToStatusConfig } from "../utils/devui-navigation.js";
 
 test.describe("01 - Status & Config Page", () => {
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async ({ page }, testInfo) => {
         await goToStatusConfig(page);
+        await takeStartScreenshot(page, testInfo);
     });
 
     // --- Status Overview section ---

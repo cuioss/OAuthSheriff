@@ -25,6 +25,7 @@
  */
 
 import { CONSTANTS } from './constants.js';
+import { testLogger } from './test-logger.js';
 
 /**
  * Pages configuration mapping page title to the custom element tag name.
@@ -47,6 +48,8 @@ export async function navigateToDevUIPage(page, pageTitle, waitForSelector) {
   if (!elementName) {
     throw new Error(`Unknown page: ${pageTitle}. Valid pages: ${Object.keys(PAGES).join(', ')}`);
   }
+
+  testLogger.info('Navigation', `Navigating to Dev-UI page "${pageTitle}"`);
 
   // Step 1: Navigate to Dev-UI extensions page
   await page.goto(CONSTANTS.URLS.DEVUI, {
@@ -93,6 +96,8 @@ export async function navigateToDevUIPage(page, pageTitle, waitForSelector) {
     console.error(`[devui-nav] Element <${elementName}> not found. Diagnostics:`, JSON.stringify(diag, null, 2));
     throw err;
   }
+  testLogger.info('Navigation', `Page "${pageTitle}" ready (<${elementName}> attached)`);
+
   // Give the Lit component time to initialize (connectedCallback -> firstUpdated -> render)
   await page.waitForTimeout(1000);
 

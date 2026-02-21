@@ -3,14 +3,15 @@
  * Verifies the qwc-jwt-debugger component for token validation functionality.
  */
 
-import { test, expect } from "../fixtures/test-fixtures.js";
+import { test, expect, takeStartScreenshot } from "../fixtures/test-fixtures.js";
 import { CONSTANTS } from "../utils/constants.js";
 import { goToTokenDebugger } from "../utils/devui-navigation.js";
 import { getKeycloakTokenInsecure } from "../utils/keycloak-token-service.js";
 
 test.describe("03 - Token Debugger Card", () => {
-    test.beforeEach(async ({ page }) => {
+    test.beforeEach(async ({ page }, testInfo) => {
         await goToTokenDebugger(page);
+        await takeStartScreenshot(page, testInfo);
     });
 
     test("should display the token debugger container", async ({ page }) => {

@@ -25,9 +25,7 @@ jobs:
       npm-cache: true
       timeout-minutes: 25
       reports-folder: |
-        oauth-sheriff-quarkus-parent/e-2-e-playwright/target/results-selftests
-        oauth-sheriff-quarkus-parent/e-2-e-playwright/target/results-functional-tests
-        oauth-sheriff-quarkus-parent/e-2-e-playwright/target/results-accessibility-tests
+        oauth-sheriff-quarkus-parent/e-2-e-playwright/target/test-results
       report-logs: |
         oauth-sheriff-quarkus-parent/e-2-e-playwright/target/quarkus-dev.log
     secrets:

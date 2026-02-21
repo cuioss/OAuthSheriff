@@ -17,10 +17,26 @@ export const test = base.extend({
      * Page fixture with automatic console logging
      */
     page: async ({ page }, use, testInfo) => {
+        const t0 = Date.now();
         testLogger.startTest(testInfo.testId);
         testLogger.setupBrowserCapture(page);
+        testLogger.info(
+            "Lifecycle",
+            `START  ${testInfo.titlePath.join(" > ")}`,
+        );
 
         await use(page);
+
+        // Log test outcome
+        const duration = ((Date.now() - t0) / 1000).toFixed(1);
+        const status = testInfo.status ?? "unknown";
+        testLogger.info(
+            "Lifecycle",
+            `END    ${status.toUpperCase()} (${duration}s) – ${testInfo.title}`,
+        );
+        if (testInfo.error) {
+            testLogger.error("Lifecycle", testInfo.error.message);
+        }
 
         // Automatic end-of-test screenshot and text logs
         mkdirSync(testInfo.outputDir, { recursive: true });
@@ -68,6 +84,10 @@ export const accessibilityTest = test.extend({
              */
             async expectNoViolations(options = {}) {
                 const results = await this.analyze(options);
+                testLogger.info(
+                    "Accessibility",
+                    `axe-core scan: ${results.passes.length} rules passed, ${results.violations.length} violations`,
+                );
                 if (results.violations.length > 0) {
                     const summary = results.violations
                         .map(
