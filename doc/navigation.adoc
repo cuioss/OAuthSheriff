@@ -6,7 +6,7 @@
 :sectnums:
 
 
-This guide helps navigate the comprehensive documentation across all CUI JWT modules.
+This guide helps navigate the comprehensive documentation across all OAuth Sheriff modules.
 
 == Module Documentation
 

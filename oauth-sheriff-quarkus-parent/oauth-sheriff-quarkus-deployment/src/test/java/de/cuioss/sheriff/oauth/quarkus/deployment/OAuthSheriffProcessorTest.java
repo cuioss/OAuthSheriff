@@ -28,7 +28,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test for verifying the auto-configuration of the CUI JWT Quarkus extension.
+ * Test for verifying the auto-configuration of the OAuth Sheriff Quarkus extension.
  * <p>
  * This test checks:
  * <ul>

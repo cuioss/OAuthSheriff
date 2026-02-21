@@ -95,7 +95,7 @@ The DevUI integration is implemented through:
 
 * `OAuthSheriffProcessor.createJwtDevUICard()`: Creates the DevUI card pages
 * `OAuthSheriffProcessor.createJwtDevUIJsonRPCService()`: Registers the JSON-RPC service
-* `OAuthSheriffDevUIJsonRPCService`: Provides runtime data access for the DevUI components
+* `OAuthSheriffDevUIRuntimeService`: Provides runtime data access for the DevUI components
 
 The DevUI components are only active in development mode, controlled by the `@BuildStep(onlyIf = IsDevelopment.class)` annotation.
 

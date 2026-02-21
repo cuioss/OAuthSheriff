@@ -15,6 +15,7 @@
  */
 package de.cuioss.sheriff.oauth.quarkus.deployment;
 
+import de.cuioss.sheriff.oauth.quarkus.runtime.OAuthSheriffDevUIRuntimeService;
 import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.test.QuarkusUnitTest;
@@ -26,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * Integration test for CUI JWT DevUI components.
+ * Integration test for OAuth Sheriff DevUI components.
  * <p>
  * This test verifies that DevUI build items are properly registered
  * when the extension is enabled in development mode.
@@ -36,7 +37,8 @@ class CuiJwtDevUIIntegrationTest {
     @RegisterExtension
     static final QuarkusUnitTest config = new QuarkusUnitTest()
             .withApplicationRoot(jar -> jar
-                    .addClasses(OAuthSheriffProcessor.class, OAuthSheriffDevUIJsonRPCService.class))
+                    .addClasses(OAuthSheriffProcessor.class, OAuthSheriffDevUIJsonRPCService.class,
+                            OAuthSheriffDevUIRuntimeService.class))
             .overrideConfigKey("sheriff.oauth.enabled", "true")
             .overrideConfigKey("quarkus.dev", "true");
 

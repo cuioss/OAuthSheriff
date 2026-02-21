@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Provides CDI annotations and qualifiers for the CUI JWT Quarkus extension.
+ * Provides CDI annotations and qualifiers for the OAuth Sheriff Quarkus extension.
  * <p>
  * This package contains:
  * <ul>

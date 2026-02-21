@@ -38,13 +38,13 @@ The oauth-sheriff-quarkus extension provides automatic metrics collection for JW
 
 ```promql
 # Total validation errors
-sum(cui_jwt_validation_errors_total)
+sum(sheriff_oauth_validation_errors_total)
 
 # Error rate by category
-rate(cui_jwt_validation_errors_total[5m]) by (category)
+rate(sheriff_oauth_validation_errors_total[5m]) by (category)
 
 # Signature verification failures
-cui_jwt_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"}
+sheriff_oauth_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"}
 ```
 
 ## Documentation
@@ -131,7 +131,7 @@ Example Grafana dashboard JSON:
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(cui_jwt_validation_attempts_total[5m])) by (result)",
+          "expr": "sum(rate(sheriff_oauth_validation_attempts_total[5m])) by (result)",
           "interval": "",
           "legendFormat": "",
           "refId": "A"

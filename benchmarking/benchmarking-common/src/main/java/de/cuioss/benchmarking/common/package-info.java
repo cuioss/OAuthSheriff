@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Common benchmarking infrastructure for CUI JWT project.
+ * Common benchmarking infrastructure for OAuth Sheriff project.
  * <p>
  * This package provides a comprehensive benchmarking framework built on JMH
  * (Java Microbenchmark Harness) that automatically generates artifacts during

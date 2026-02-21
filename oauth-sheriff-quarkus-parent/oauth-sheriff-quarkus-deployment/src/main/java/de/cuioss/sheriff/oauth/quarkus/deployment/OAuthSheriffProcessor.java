@@ -49,6 +49,7 @@ import de.cuioss.sheriff.oauth.quarkus.mapper.keycloak.KeycloakRolesMapperBean;
 import de.cuioss.sheriff.oauth.quarkus.metrics.JwtMetricsCollector;
 import de.cuioss.sheriff.oauth.quarkus.producer.BearerTokenProducer;
 import de.cuioss.sheriff.oauth.quarkus.producer.TokenValidatorProducer;
+import de.cuioss.sheriff.oauth.quarkus.runtime.OAuthSheriffDevUIRuntimeService;
 import de.cuioss.sheriff.oauth.quarkus.servlet.VertxServletObjectsResolver;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.logging.LogRecord;
@@ -71,7 +72,7 @@ import io.quarkus.resteasy.common.spi.ResteasyJaxrsProviderBuildItem;
 import org.jboss.jandex.DotName;
 
 /**
- * Processor for the CUI JWT Quarkus extension.
+ * Processor for the OAuth Sheriff Quarkus extension.
  * <p>
  * This class handles the build-time processing for the extension, including
  * registering the feature, setting up reflection configuration, and providing
@@ -93,20 +94,20 @@ public class OAuthSheriffProcessor {
     /**
      * LogRecord for feature registration.
      */
-    private static final LogRecord CUI_JWT_FEATURE_REGISTERED = LogRecordModel.builder()
-            .template("CUI JWT feature registered")
-            .prefix("CUI_JWT_QUARKUS_DEPLOYMENT")
+    private static final LogRecord OAUTH_SHERIFF_FEATURE_REGISTERED = LogRecordModel.builder()
+            .template("OAuth Sheriff feature registered")
+            .prefix("OAUTH_SHERIFF_QUARKUS_DEPLOYMENT")
             .identifier(1)
             .build();
 
     /**
-     * Register the CUI JWT feature.
+     * Register the OAuth Sheriff feature.
      *
-     * @return A {@link FeatureBuildItem} for the CUI JWT feature
+     * @return A {@link FeatureBuildItem} for the OAuth Sheriff feature
      */
     @BuildStep
     public FeatureBuildItem feature() {
-        LOGGER.info(CUI_JWT_FEATURE_REGISTERED);
+        LOGGER.info(OAUTH_SHERIFF_FEATURE_REGISTERED);
         return new FeatureBuildItem(FEATURE);
     }
 
@@ -340,33 +341,17 @@ public class OAuthSheriffProcessor {
     public CardPageBuildItem createJwtDevUICard() {
         CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
 
-        // JWT Validation Status page
+        // Status & Config page (merged view of validation status, JWKS endpoints, and configuration)
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-                .icon("font-awesome-solid:shield-check")
-                .title("JWT Validation Status")
-                .componentLink("components/qwc-jwt-validation-status.js")
-                .staticLabel("View Status"));
-
-        // JWKS Endpoint Monitoring page
-        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-                .icon("font-awesome-solid:key")
-                .title("JWKS Endpoints")
-                .componentLink("components/qwc-jwks-endpoints.js")
-                .dynamicLabelJsonRPCMethodName("getJwksStatus"));
+                .icon("font-awesome-solid:shield-halved")
+                .title("Status & Config")
+                .componentLink("qwc-jwt-status-config.js"));
 
         // Token Debugging Tools page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
                 .icon("font-awesome-solid:bug")
                 .title("Token Debugger")
-                .componentLink("components/qwc-jwt-debugger.js")
-                .staticLabel("Debug Tokens"));
-
-        // Configuration Overview page
-        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-                .icon("font-awesome-solid:cog")
-                .title("Configuration")
-                .componentLink("components/qwc-jwt-config.js")
-                .staticLabel("View Config"));
+                .componentLink("qwc-jwt-debugger.js"));
 
         return cardPageBuildItem;
     }
@@ -378,7 +363,7 @@ public class OAuthSheriffProcessor {
      */
     @BuildStep(onlyIf = IsDevelopment.class)
     public JsonRPCProvidersBuildItem createJwtDevUIJsonRPCService() {
-        return new JsonRPCProvidersBuildItem("OAuthSheriffDevUI", OAuthSheriffDevUIJsonRPCService.class);
+        return new JsonRPCProvidersBuildItem("OAuthSheriffDevUI", OAuthSheriffDevUIRuntimeService.class);
     }
 
 }

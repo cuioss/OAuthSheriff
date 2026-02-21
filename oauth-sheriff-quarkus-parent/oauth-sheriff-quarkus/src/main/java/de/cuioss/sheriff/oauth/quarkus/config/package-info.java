@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 /**
- * <h2>Configuration for CUI JWT Quarkus Extension</h2>
+ * <h2>Configuration for OAuth Sheriff Quarkus Extension</h2>
  * <p>
- * This package contains the configuration classes for the CUI JWT Quarkus extension.
+ * This package contains the configuration classes for the OAuth Sheriff Quarkus extension.
  * Configuration is accessed directly through MicroProfile Config to ensure compatibility
  * with native images and avoid ConfigMapping fragility issues.
  * </p>

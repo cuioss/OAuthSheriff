@@ -6,7 +6,7 @@
 :toc-title: Table of Contents
 
 
-Common issues and solutions when integrating the CUI JWT library with Keycloak.
+Common issues and solutions when integrating the OAuth Sheriff library with Keycloak.
 
 == Document Navigation
 
@@ -28,7 +28,7 @@ Common issues and solutions when integrating the CUI JWT library with Keycloak.
 
 === Solution 1: Configure claimSubOptional (Recommended)
 
-The simplest solution is to configure the CUI JWT library to make the `sub` claim optional for Keycloak issuers:
+The simplest solution is to configure the OAuth Sheriff library to make the `sub` claim optional for Keycloak issuers:
 
 [source,properties]
 ----
@@ -185,9 +185,9 @@ Expected token structure after configuration:
 
 Adding the group membership mapper with `"full.path": "false"` to your Keycloak realm configuration resolves this issue completely. The integration tests confirm that tokens now contain group names without leading slashes, making them compatible with `@BearerToken` annotations.
 
-== Alternative: CUI JWT Default Mappers
+== Alternative: OAuth Sheriff Default Mappers
 
-Use built-in mappers instead of custom protocol mappers (CUI JWT v1.0+):
+Use built-in mappers instead of custom protocol mappers (OAuth Sheriff v1.0+):
 
 [source,properties]
 ----

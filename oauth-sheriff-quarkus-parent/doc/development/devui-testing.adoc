@@ -1,18 +1,22 @@
-= JWT DevUI Testing
+= OAuth Sheriff DevUI Testing
 :toc: left
 :toclevels: 3
 :source-highlighter: highlight.js
 :toc-title: Table of Contents
 :sectnums:
 
-
-This document describes the JavaScript unit testing setup for CUI JWT Quarkus DevUI components.
-
 == Overview
 
-The testing framework provides comprehensive unit tests for JavaScript DevUI components using Jest and modern testing practices. Components are tested in isolation without requiring actual Quarkus runtime.
+The DevUI components are tested at two levels:
 
-== Quick Start
+* **Unit tests (Jest)** -- Test individual Lit components in isolation with mocked JSON-RPC responses
+* **E2E tests (Playwright)** -- Test the full DevUI integration against a running Quarkus dev instance
+
+== Unit Tests (Jest)
+
+Unit tests run without a Quarkus runtime. They verify component rendering, state management, and error handling using mocked backend responses.
+
+=== Quick Start
 
 [source,bash]
 ----
@@ -29,7 +33,7 @@ npm run test:coverage
 npm run test:ci
 ----
 
-== Test Structure
+=== Test Structure
 
 ----
 src/test/js/
@@ -39,48 +43,76 @@ src/test/js/
 └── utils/              # Test utility functions
 ----
 
-== Key Features
+=== Component Test Files
 
-* **Build-time Testing**: Components tested without Quarkus runtime
-* **Comprehensive Mocking**: Lit library, DevUI services, and DOM environment
-* **Custom Matchers**: Enhanced assertions for web component testing
-* **Coverage Reporting**: Configurable thresholds with HTML and LCOV reports
-* **CI/CD Ready**: Optimized for continuous integration
+* `qwc-jwt-status-config.test.js` -- Merged status and configuration viewer
+* `qwc-jwt-debugger.test.js` -- Token validation tool
 
-== Mock Framework
+=== Mock Framework
 
-The testing framework includes complete mocks for:
+The test setup includes mocks for:
 
 * **Lit Library**: LitElement, html, css, and all directives
 * **DevUI Services**: JSON-RPC methods with realistic responses
 * **DOM Environment**: jsdom simulation for web component testing
 
-== Component Testing
+=== Custom Test Utilities
 
-Each DevUI component has dedicated test files:
+* `toHaveRenderedContent()` -- Verify component rendering
+* `toHaveShadowClass()` -- Check shadow DOM classes
+* `toBeDefinedAsCustomElement()` -- Validate custom element registration
+* `waitForComponentUpdate()` -- Handle async component updates
+* `createTestComponent()` -- Component creation helper
+* `cleanupTestComponents()` -- Test cleanup utility
 
-* `qwc-jwt-validation-status.test.js`
-* `qwc-jwks-endpoints.test.js`
-* `qwc-jwt-debugger.test.js`
-* `qwc-jwt-config.test.js`
+=== Configuration
 
-== Custom Test Utilities
+* `jest.config.js` -- Main Jest configuration
+* `package.json` -- Dependencies and npm scripts
+* `.eslintrc.js` -- Code quality enforcement
 
-The framework provides custom matchers and helpers:
+== E2E Tests (Playwright)
 
-* `toHaveRenderedContent()` - Verify component rendering
-* `toHaveShadowClass()` - Check shadow DOM classes
-* `toBeDefinedAsCustomElement()` - Validate custom element registration
-* `waitForComponentUpdate()` - Handle async component updates
-* `createTestComponent()` - Component creation helper
-* `cleanupTestComponents()` - Test cleanup utility
+E2E tests verify the full DevUI integration with a running Quarkus dev instance and Keycloak.
 
-== Configuration
+=== Test Structure
 
-Testing is configured through:
+----
+e-2-e-playwright/
+├── tests/
+│   ├── self-devui-accessible.spec.js          # Environment gate-keeper tests
+│   ├── 01-verify-status-config.spec.js        # Status & Config page
+│   ├── 03-verify-token-debugger.spec.js       # Token Debugger page
+│   └── accessibility-wcag-compliance.spec.js  # WCAG 2.1 AA compliance
+├── utils/
+│   ├── constants.js                           # URLs, timeouts, selectors
+│   └── devui-navigation.js                    # Click-based SPA navigation helpers
+└── fixtures/
+    └── test-fixtures.js                       # Shared test fixtures
+----
 
-* `jest.config.js` - Main Jest configuration
-* `package.json` - Dependencies and npm scripts
-* `.eslintrc.js` - Code quality enforcement
+=== Running E2E Tests
 
-The framework uses jsdom environment with ES6 module support and comprehensive mocking to simulate the DevUI build-time environment.
+E2E tests require a running Quarkus dev instance and Keycloak:
+
+[source,bash]
+----
+# Start Keycloak
+docker compose up -d
+
+# Start Quarkus dev mode (in integration-tests module)
+./mvnw -f oauth-sheriff-quarkus-integration-tests/pom.xml quarkus:dev
+
+# Run Playwright tests
+cd e-2-e-playwright && npx playwright test
+----
+
+=== Navigation Strategy
+
+Quarkus DevUI is a SPA (Vaadin Router + Lit web components) where extension sub-page routes are registered lazily. Direct URL navigation is fragile. Instead, tests use click-based navigation through the extension card, traversing shadow DOM to reach anchors inside `qwc-extension-link` elements.
+
+=== Test Coverage
+
+* **Self-tests (6)**: Environment validation (app accessible, DevUI accessible, extension visible, 2 pages navigable, JSON-RPC runtime data)
+* **Functional tests (20)**: Status & Config data rendering (13), Token Debugger interactive features (7)
+* **Accessibility tests (4)**: WCAG 2.1 AA compliance, keyboard navigation

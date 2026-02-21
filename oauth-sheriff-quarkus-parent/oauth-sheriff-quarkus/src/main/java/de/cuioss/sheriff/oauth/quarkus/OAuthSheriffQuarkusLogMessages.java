@@ -20,7 +20,7 @@ import de.cuioss.tools.logging.LogRecordModel;
 import lombok.experimental.UtilityClass;
 
 /**
- * Log messages for the CUI JWT Quarkus runtime module.
+ * Log messages for the OAuth Sheriff Quarkus runtime module.
  * <p>
  * This class provides structured logging constants for runtime JWT validation functionality,
  * following the CUI logging standards with unique identifiers for each message.

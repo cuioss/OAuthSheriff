@@ -6,7 +6,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CERT_DIR="${SCRIPT_DIR}"
-CERT_DNAME="CN=localhost, OU=Integration Testing, O=CUI-JWT, L=Berlin, ST=Berlin, C=DE"
+CERT_DNAME="CN=localhost, OU=Integration Testing, O=OAuth-Sheriff, L=Berlin, ST=Berlin, C=DE"
 CERT_VALIDITY=730
 TEMP_KEYSTORE="${CERT_DIR}/temp-keystore.p12"
 TEMP_PASSWORD="temp-$(date +%s)"

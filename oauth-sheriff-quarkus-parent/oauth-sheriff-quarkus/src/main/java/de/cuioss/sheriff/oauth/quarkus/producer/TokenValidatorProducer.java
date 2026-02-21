@@ -76,6 +76,10 @@ public class TokenValidatorProducer {
 
     @Produces
     @ApplicationScoped
+    ParserConfig parserConfig;
+
+    @Produces
+    @ApplicationScoped
     SecurityEventCounter securityEventCounter;
 
     @SuppressWarnings("java:S2637") // False positive: fields are initialized in @PostConstruct
@@ -102,7 +106,7 @@ public class TokenValidatorProducer {
         // Resolve ParserConfig FIRST — must be created on the caller's thread (correct classloader)
         // before any async JWKS loading that may run on ForkJoinPool threads
         ParserConfigResolver parserConfigResolver = new ParserConfigResolver(config);
-        ParserConfig parserConfig = parserConfigResolver.resolveParserConfig();
+        parserConfig = parserConfigResolver.resolveParserConfig();
 
         // Resolve issuer configurations using the dedicated resolver WITH parserConfig
         // CDI-discovered claim mappers are applied globally via ClaimMapperRegistry

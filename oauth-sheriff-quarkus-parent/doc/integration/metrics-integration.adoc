@@ -100,25 +100,25 @@ The metrics will be available at the standard Micrometer endpoint: `/q/metrics`
 [source,promql]
 ----
 # Total JWT validation errors
-sum(cui_jwt_validation_errors_total)
+sum(sheriff_oauth_validation_errors_total)
 
 # Error rate by category over time
-rate(cui_jwt_validation_errors_total[5m]) by (category)
+rate(sheriff_oauth_validation_errors_total[5m]) by (category)
 
 # Signature verification failures (potential security issue)
-sum(cui_jwt_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"})
+sum(sheriff_oauth_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"})
 
 # Token expiration issues
-rate(cui_jwt_validation_errors_total{event_type="TOKEN_EXPIRED"}[5m])
+rate(sheriff_oauth_validation_errors_total{event_type="TOKEN_EXPIRED"}[5m])
 
 # Average signature validation duration (performance monitoring)
-rate(cui_jwt_validation_duration_seconds_sum{step="signature_validation"}[5m]) / rate(cui_jwt_validation_duration_seconds_count{step="signature_validation"}[5m])
+rate(sheriff_oauth_validation_duration_seconds_sum{step="signature_validation"}[5m]) / rate(sheriff_oauth_validation_duration_seconds_count{step="signature_validation"}[5m])
 
 # 95th percentile of complete validation duration
-histogram_quantile(0.95, rate(cui_jwt_validation_duration_seconds_bucket{step="complete_validation"}[5m]))
+histogram_quantile(0.95, rate(sheriff_oauth_validation_duration_seconds_bucket{step="complete_validation"}[5m]))
 
 # JWKS operations duration (network performance indicator)
-rate(cui_jwt_validation_duration_seconds_sum{step="jwks_operations"}[5m]) / rate(cui_jwt_validation_duration_seconds_count{step="jwks_operations"}[5m])
+rate(sheriff_oauth_validation_duration_seconds_sum{step="jwks_operations"}[5m]) / rate(sheriff_oauth_validation_duration_seconds_count{step="jwks_operations"}[5m])
 ----
 
 === Alerting Examples
@@ -127,7 +127,7 @@ rate(cui_jwt_validation_duration_seconds_sum{step="jwks_operations"}[5m]) / rate
 ----
 # Alert on signature verification failures
 - alert: JwtSignatureVerificationFailures
-  expr: rate(cui_jwt_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"}[5m]) > 0.1
+  expr: rate(sheriff_oauth_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"}[5m]) > 0.1
   for: 5m
   labels:
     severity: critical
@@ -137,7 +137,7 @@ rate(cui_jwt_validation_duration_seconds_sum{step="jwks_operations"}[5m]) / rate
 
 # Alert on high error rates
 - alert: JwtHighErrorRate
-  expr: rate(cui_jwt_validation_errors_total[5m]) > 5
+  expr: rate(sheriff_oauth_validation_errors_total[5m]) > 5
   for: 10m
   labels:
     severity: warning
@@ -147,7 +147,7 @@ rate(cui_jwt_validation_duration_seconds_sum{step="jwks_operations"}[5m]) / rate
 
 # Alert on slow signature validation (performance issue)
 - alert: JwtSlowSignatureValidation
-  expr: histogram_quantile(0.95, rate(cui_jwt_validation_duration_seconds_bucket{step="signature_validation"}[5m])) > 0.1
+  expr: histogram_quantile(0.95, rate(sheriff_oauth_validation_duration_seconds_bucket{step="signature_validation"}[5m])) > 0.1
   for: 5m
   labels:
     severity: warning

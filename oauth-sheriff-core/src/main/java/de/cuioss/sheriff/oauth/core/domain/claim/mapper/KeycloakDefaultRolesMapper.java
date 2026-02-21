@@ -28,7 +28,7 @@ import java.util.Optional;
  * A {@link ClaimMapper} implementation for mapping Keycloak's default roles structure.
  * <p>
  * This mapper extracts roles from Keycloak's standard {@code realm_access.roles} claim
- * and maps them to the expected {@code roles} claim format used by the CUI JWT library.
+ * and maps them to the expected {@code roles} claim format used by the OAuth Sheriff library.
  * <p>
  * Keycloak by default stores realm roles in a nested structure:
  * <pre>
@@ -40,7 +40,7 @@ import java.util.Optional;
  * </pre>
  * <p>
  * This mapper extracts the roles array and maps it to a standard {@code roles} claim,
- * making it compatible with CUI JWT library's authorization mechanisms.
+ * making it compatible with OAuth Sheriff library's authorization mechanisms.
  * <p>
  * The mapper handles:
  * <ul>

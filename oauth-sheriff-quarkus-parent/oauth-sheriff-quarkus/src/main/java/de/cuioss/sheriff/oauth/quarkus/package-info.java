@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 /**
- * <h2>CUI JWT Quarkus Extension</h2>
+ * <h2>OAuth Sheriff Quarkus Extension</h2>
  * <p>
- * This package provides Quarkus integration for the CUI JWT validation library.
+ * This package provides Quarkus integration for the OAuth Sheriff validation library.
  * It enables Quarkus applications to easily configure and use JWT validation
  * with proper CDI integration, metrics, and health checks.
  * </p>

@@ -6,7 +6,7 @@
 :toc-title: Table of Contents
 
 
-Maven build configuration for the CUI JWT Quarkus extension project.
+Maven build configuration for the OAuth Sheriff Quarkus extension project.
 
 == Compiler Configuration
 

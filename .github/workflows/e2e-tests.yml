@@ -1,0 +1,33 @@
+# Runs E2E Playwright tests for Dev-UI components via Maven with report deployment.
+name: End-to-End Tests
+
+on:
+  push:
+    branches: [main, "feature/*", "fix/*", "chore/*", "dependabot/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-tests:
+    # Run on push events, OR on pull_request only if from a fork
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+    uses: cuioss/cuioss-organization/.github/workflows/reusable-maven-integration-tests.yml@10e359dfd5cff4bb6fd758dcbe4692d6f70d2b03 # v0.6.0
+    with:
+      report-name: e-2-e-playwright
+      maven-args-input: |
+        install -DskipTests
+        verify -Pe2e-tests -pl oauth-sheriff-quarkus-parent/e-2-e-playwright
+      install-playwright: true
+      npm-cache: true
+      timeout-minutes: 25
+      reports-folder: |
+        oauth-sheriff-quarkus-parent/e-2-e-playwright/target/test-results
+      report-logs: |
+        oauth-sheriff-quarkus-parent/e-2-e-playwright/target/quarkus-dev.log
+    secrets:
+      RELEASE_APP_ID: ${{ secrets.RELEASE_APP_ID }}
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}

@@ -1,5 +1,5 @@
 /**
- * Prettier configuration for CUI JWT DevUI components
+ * Prettier configuration for OAuth Sheriff DevUI components
  * 
  * This configuration ensures consistent code formatting across
  * JavaScript (including CSS-in-JS), JSON, and Markdown files.

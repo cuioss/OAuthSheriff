@@ -46,6 +46,16 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Dev-UI runtime: required for Dev-UI to work in dev mode.
+             The conditional-dev-dependency mechanism in quarkus-vertx-http should
+             automatically include this in dev mode, but fails to resolve the
+             deployment JAR. Adding it explicitly ensures DevUIProcessor runs
+             during augmentation and registers /q/dev-ui/ routes. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-devui</artifactId>
+        </dependency>
+
         <!-- Quarkus Extensions for REST and Health -->
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -100,7 +110,16 @@
 
     <build>
         <plugins>
-            
+
+            <!-- Quarkus Maven Plugin: Required for quarkus:dev to properly set up Dev-UI.
+                 Inherits build + generate-code + generate-code-tests from parent pluginManagement.
+                 The build goal must be present for quarkus:dev to recognize this as a runnable
+                 application and register Dev-UI routes. Profiles may override as needed. -->
+            <plugin>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+            </plugin>
+
             <!-- Execute Docker cleanup before Maven clean -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

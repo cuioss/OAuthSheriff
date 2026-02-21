@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * JSON-RPC service for CUI JWT DevUI.
+ * JSON-RPC service for OAuth Sheriff DevUI.
  * <p>
  * This service provides methods for retrieving JWT validation information
  * for the DevUI components at build time.

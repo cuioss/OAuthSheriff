@@ -76,7 +76,7 @@ class OAuthSheriffDevUIRuntimeServiceTest {
             assertNotNull(result, "Result should not be null");
             assertNotNull(result.get("enabled"), "Enabled status should be present");
             assertNotNull(result.get("validatorPresent"), "Validator present status should be present");
-            assertEquals("RUNTIME", result.get("status"), "Status should be RUNTIME");
+            assertNotNull(result.get("status"), "Status should be present");
             assertNotNull(result.get("statusMessage"), "Status message should be present");
 
             boolean enabled = (Boolean) result.get("enabled");
@@ -84,6 +84,7 @@ class OAuthSheriffDevUIRuntimeServiceTest {
 
             // Based on the current test configuration (JwtTestProfile), validation is enabled
             assertTrue(enabled, "JWT validation should be enabled with current test configuration");
+            assertEquals("ACTIVE", result.get("status"), "Status should be ACTIVE when enabled");
             assertEquals("JWT validation is active and ready", statusMessage,
                     "Status message should indicate active validation when enabled");
         }
@@ -145,32 +146,34 @@ class OAuthSheriffDevUIRuntimeServiceTest {
             Map<String, Object> result = service.getJwksStatus();
 
             assertNotNull(result, "Result should not be null");
-            assertEquals("RUNTIME", result.get("status"), "Status should be RUNTIME");
-            assertNotNull(result.get("message"), "Message should be present");
-            assertNotNull(result.get("issuersConfigured"), "Issuers configured count should be present");
+            assertNotNull(result.get("status"), "Status should be present");
+            assertNotNull(result.get("issuers"), "Issuers list should be present");
 
-            int issuersConfigured = (Integer) result.get("issuersConfigured");
-            assertTrue(issuersConfigured >= 0, "Issuers configured count should be non-negative, but was: " + issuersConfigured);
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> issuers = (List<Map<String, Object>>) result.get("issuers");
+            assertTrue(issuers.size() >= 0, "Issuers count should be non-negative");
         }
 
         @Test
-        @DisplayName("Should correctly count configured issuers including disabled ones")
-        void shouldCorrectlyCountConfiguredIssuersIncludingDisabledOnes() {
+        @DisplayName("Should correctly list configured issuers with details")
+        void shouldCorrectlyListConfiguredIssuersWithDetails() {
             Map<String, Object> result = service.getJwksStatus();
 
             assertNotNull(result, "Result should not be null");
 
-            // Based on JwtTestProfile: "default" issuer is enabled, "test-issuer" is disabled
-            // The JWKS status should count all configured issuers, not just enabled ones
-            int issuersConfigured = (Integer) result.get("issuersConfigured");
-            assertTrue(issuersConfigured >= 1, "Should have at least one configured issuer, but found: " + issuersConfigured);
+            // Based on JwtTestProfile: "default" issuer is enabled
+            String status = (String) result.get("status");
+            assertEquals("CONFIGURED", status, "Status should be CONFIGURED when issuers exist");
 
-            String message = (String) result.get("message");
-            assertNotNull(message, "Message should be present");
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> issuers = (List<Map<String, Object>>) result.get("issuers");
+            assertTrue(issuers.size() >= 1, "Should have at least one configured issuer, but found: " + issuers.size());
 
-            assertTrue(message.contains("configured"),
-                    "Message should mention issuers or configuration");
-
+            // Verify issuer details
+            Map<String, Object> firstIssuer = issuers.getFirst();
+            assertNotNull(firstIssuer.get("name"), "Issuer name should be present");
+            assertNotNull(firstIssuer.get("issuerUri"), "Issuer URI should be present");
+            assertNotNull(firstIssuer.get("loaderStatus"), "Loader status should be present");
         }
 
     }
@@ -180,20 +183,16 @@ class OAuthSheriffDevUIRuntimeServiceTest {
     class ConfigurationTests {
 
         @Test
-        @DisplayName("Should return configuration information")
+        @DisplayName("Should return configuration information with nested structure")
         void shouldReturnConfigurationInformation() {
             Map<String, Object> result = service.getConfiguration();
 
             assertNotNull(result, "Result should not be null");
             assertNotNull(result.get("enabled"), "Enabled status should be present");
-            assertEquals(true, result.get("healthEnabled"), "Health should always be enabled");
-            assertEquals(false, result.get("buildTime"), "Should not be build time");
-            assertEquals(true, result.get("metricsEnabled"), "Metrics should always be enabled");
-            assertNotNull(result.get("message"), "Message should be present");
-            assertNotNull(result.get("issuersCount"), "Issuers count should be present");
-
-            int issuersCount = (Integer) result.get("issuersCount");
-            assertTrue(issuersCount >= 0, "Issuers count should be non-negative, but was: " + issuersCount);
+            assertNotNull(result.get("logLevel"), "Log level should be present");
+            assertNotNull(result.get("parser"), "Parser config should be present");
+            assertNotNull(result.get("httpJwksLoader"), "HTTP JWKS loader config should be present");
+            assertNotNull(result.get("issuers"), "Issuers config should be present");
         }
 
         @Test
@@ -203,19 +202,22 @@ class OAuthSheriffDevUIRuntimeServiceTest {
 
             assertNotNull(result, "Result should not be null");
             assertTrue(result.containsKey("enabled"), "Should contain enabled key");
-            assertTrue(result.containsKey("healthEnabled"), "Should contain healthEnabled key");
-            assertTrue(result.containsKey("buildTime"), "Should contain buildTime key");
-            assertTrue(result.containsKey("metricsEnabled"), "Should contain metricsEnabled key");
-            assertTrue(result.containsKey("message"), "Should contain message key");
-            assertTrue(result.containsKey("issuersCount"), "Should contain issuersCount key");
+            assertTrue(result.containsKey("logLevel"), "Should contain logLevel key");
+            assertTrue(result.containsKey("parser"), "Should contain parser key");
+            assertTrue(result.containsKey("httpJwksLoader"), "Should contain httpJwksLoader key");
+            assertTrue(result.containsKey("issuers"), "Should contain issuers key");
 
             // Verify data types
             assertInstanceOf(Boolean.class, result.get("enabled"), "Enabled should be Boolean");
-            assertInstanceOf(Boolean.class, result.get("healthEnabled"), "HealthEnabled should be Boolean");
-            assertInstanceOf(Boolean.class, result.get("buildTime"), "BuildTime should be Boolean");
-            assertInstanceOf(Boolean.class, result.get("metricsEnabled"), "MetricsEnabled should be Boolean");
-            assertInstanceOf(String.class, result.get("message"), "Message should be String");
-            assertInstanceOf(Integer.class, result.get("issuersCount"), "IssuersCount should be Integer");
+            assertInstanceOf(String.class, result.get("logLevel"), "LogLevel should be String");
+            assertInstanceOf(Map.class, result.get("parser"), "Parser should be Map");
+            assertInstanceOf(Map.class, result.get("httpJwksLoader"), "HttpJwksLoader should be Map");
+            assertInstanceOf(Map.class, result.get("issuers"), "Issuers should be Map");
+
+            // Verify parser sub-structure
+            @SuppressWarnings("unchecked")
+            Map<String, Object> parser = (Map<String, Object>) result.get("parser");
+            assertNotNull(parser.get("maxTokenSize"), "Parser should have maxTokenSize");
         }
 
     }
@@ -293,7 +295,7 @@ class OAuthSheriffDevUIRuntimeServiceTest {
             assertNotNull(result.get("configurationValid"), "Configuration valid status should be present");
             assertNotNull(result.get("tokenValidatorAvailable"), "Token validator available status should be present");
             assertEquals(true, result.get("securityCounterAvailable"), "Security counter should always be available");
-            assertEquals("RUNTIME", result.get("overallStatus"), "Overall status should be RUNTIME");
+            assertEquals("HEALTHY", result.get("overallStatus"), "Overall status should be HEALTHY");
             assertNotNull(result.get("message"), "Message should be present");
             assertNotNull(result.get("healthStatus"), "Health status should be present");
 
@@ -351,10 +353,11 @@ class OAuthSheriffDevUIRuntimeServiceTest {
 
             // With enabled issuer, JWT should be enabled
             Boolean jwtEnabled = (Boolean) validationStatus.get("enabled");
-            Integer enabledIssuersCount = (Integer) configuration.get("issuersCount");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> issuersMap = (Map<String, Object>) configuration.get("issuers");
 
             assertTrue(jwtEnabled, "JWT should be enabled with valid issuer configuration");
-            assertTrue(enabledIssuersCount > 0, "Should have at least one enabled issuer, but found: " + enabledIssuersCount);
+            assertFalse(issuersMap.isEmpty(), "Should have at least one issuer in config");
         }
 
         @Test
@@ -370,10 +373,11 @@ class OAuthSheriffDevUIRuntimeServiceTest {
 
             // With no enabled issuers, JWT should be disabled
             Boolean jwtEnabled = (Boolean) validationStatus.get("enabled");
-            Integer enabledIssuersCount = (Integer) configuration.get("issuersCount");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> issuersMap = (Map<String, Object>) configuration.get("issuers");
 
             assertFalse(jwtEnabled, "JWT should be disabled with no enabled issuers");
-            assertEquals(0, enabledIssuersCount, "Should have zero enabled issuers");
+            assertTrue(issuersMap.isEmpty(), "Should have zero issuers");
             assertEquals("JWT validation is disabled", validationStatus.get("statusMessage"));
         }
 
@@ -386,15 +390,11 @@ class OAuthSheriffDevUIRuntimeServiceTest {
             issuerConfigsList.addAll(issuerConfigs);
             OAuthSheriffDevUIRuntimeService testService = new OAuthSheriffDevUIRuntimeService(tokenValidator, issuerConfigsList);
 
-            Map<String, Object> configuration = testService.getConfiguration();
             Map<String, Object> jwksStatus = testService.getJwksStatus();
 
-            // Should count multiple issuers
-            int issuersCount = (Integer) configuration.get("issuersCount");
-            int issuersConfigured = (Integer) jwksStatus.get("issuersConfigured");
-
-            assertTrue(issuersCount >= 2, "Should have multiple enabled issuers, but found: " + issuersCount);
-            assertTrue(issuersConfigured >= 2, "Should have multiple configured issuers, but found: " + issuersConfigured);
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> issuers = (List<Map<String, Object>>) jwksStatus.get("issuers");
+            assertTrue(issuers.size() >= 2, "Should have multiple configured issuers, but found: " + issuers.size());
         }
 
         @Test
@@ -537,7 +537,7 @@ class OAuthSheriffDevUIRuntimeServiceTest {
 
             // Configuration consistency
             assertEquals(config1.get("enabled"), config2.get("enabled"), "Config enabled should be consistent");
-            assertEquals(config1.get("issuersCount"), config2.get("issuersCount"), "Config issuers count should be consistent");
+            assertEquals(config1.get("parser"), config2.get("parser"), "Config parser should be consistent");
 
             // Health info consistency
             assertEquals(health1.get("configurationValid"), health2.get("configurationValid"), "Health config valid should be consistent");
@@ -545,7 +545,7 @@ class OAuthSheriffDevUIRuntimeServiceTest {
 
             // JWKS status consistency
             assertEquals(jwks1.get("status"), jwks2.get("status"), "JWKS status should be consistent");
-            assertEquals(jwks1.get("issuersConfigured"), jwks2.get("issuersConfigured"), "JWKS issuers configured should be consistent");
+            assertEquals(jwks1.get("issuers"), jwks2.get("issuers"), "JWKS issuers should be consistent");
         }
 
         @Test
@@ -554,19 +554,14 @@ class OAuthSheriffDevUIRuntimeServiceTest {
             Map<String, Object> result = service.getConfiguration();
 
             assertNotNull(result, "Result should not be null");
-            assertEquals(true, result.get("healthEnabled"),
-                    "Health should always be enabled in runtime");
-            assertEquals(false, result.get("buildTime"),
-                    "Should not be build time in runtime");
-            assertEquals(true, result.get("metricsEnabled"),
-                    "Metrics should always be enabled in runtime");
+            assertNotNull(result.get("enabled"), "Enabled should be present");
+            assertNotNull(result.get("parser"), "Parser config should be present");
+            assertNotNull(result.get("issuers"), "Issuers should be present");
 
-            Object issuersCount = result.get("issuersCount");
-            assertNotNull(issuersCount, "Issuers count should not be null");
-            assertInstanceOf(Integer.class, issuersCount, "Issuers count should be Integer");
-
-            Integer issuersCountValue = (Integer) issuersCount;
-            assertTrue(issuersCountValue >= 0, "Issuers count should be non-negative, but was: " + issuersCountValue);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> parser = (Map<String, Object>) result.get("parser");
+            assertNotNull(parser.get("maxTokenSize"), "Max token size should be present");
+            assertTrue((Integer) parser.get("maxTokenSize") > 0, "Max token size should be positive");
         }
 
 
@@ -576,15 +571,12 @@ class OAuthSheriffDevUIRuntimeServiceTest {
             Map<String, Object> result = service.getJwksStatus();
 
             assertNotNull(result, "Result should not be null");
-            assertEquals("RUNTIME", result.get("status"), "Status should be RUNTIME");
-            assertNotNull(result.get("message"), "Message should not be null");
-            assertNotNull(result.get("issuersConfigured"), "Issuers configured should not be null");
+            assertNotNull(result.get("status"), "Status should be present");
+            assertNotNull(result.get("issuers"), "Issuers list should be present");
 
-            Object issuersConfigured = result.get("issuersConfigured");
-            assertInstanceOf(Integer.class, issuersConfigured, "Issuers configured should be Integer");
-
-            Integer issuersConfiguredValue = (Integer) issuersConfigured;
-            assertTrue(issuersConfiguredValue >= 0, "Issuers configured should be non-negative, but was: " + issuersConfiguredValue);
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> issuers = (List<Map<String, Object>>) result.get("issuers");
+            assertNotNull(issuers, "Issuers should not be null");
         }
     }
 

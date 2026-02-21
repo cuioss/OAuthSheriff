@@ -1,10 +1,10 @@
-= CUI JWT Quarkus Extension Configuration Reference
+= OAuth Sheriff Quarkus Extension Configuration Reference
 :toc-title: Table of Contents
 :sectnums:
 :source-highlighter: highlight.js
 
 
-This document describes the configuration options available for the CUI JWT Quarkus extension.
+This document describes the configuration options available for the OAuth Sheriff Quarkus extension.
 
 == Minimal Configuration
 

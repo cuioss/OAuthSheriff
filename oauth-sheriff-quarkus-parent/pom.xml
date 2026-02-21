@@ -19,6 +19,7 @@
         <module>oauth-sheriff-quarkus</module>
         <module>oauth-sheriff-quarkus-deployment</module>
         <module>oauth-sheriff-quarkus-integration-tests</module>
+        <module>e-2-e-playwright</module>
     </modules>
 
     <properties>

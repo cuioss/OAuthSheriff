@@ -74,17 +74,17 @@ import java.util.Optional;
  */
 @CompiledJson
 public record JwtHeader(
-        String alg,
-        String typ,
-        String kid,
-        String jku,
-        String jwk,
-        String x5u,
-        String x5c,
-        String x5t,
-        String x5tS256,
-        String cty,
-        String crit
+String alg,
+String typ,
+String kid,
+String jku,
+String jwk,
+String x5u,
+String x5c,
+String x5t,
+String x5tS256,
+String cty,
+String crit
 ) {
 
     /**

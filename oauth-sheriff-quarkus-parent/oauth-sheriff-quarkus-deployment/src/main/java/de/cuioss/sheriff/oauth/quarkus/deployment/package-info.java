@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 /**
- * Quarkus build-time processing for CUI JWT extension.
+ * Quarkus build-time processing for OAuth Sheriff extension.
  * <p>
- * This package contains the deployment-time logic for the CUI JWT Quarkus extension,
+ * This package contains the deployment-time logic for the OAuth Sheriff Quarkus extension,
  * including build steps, configuration validation, and Dev UI integration.
  * </p>
  *

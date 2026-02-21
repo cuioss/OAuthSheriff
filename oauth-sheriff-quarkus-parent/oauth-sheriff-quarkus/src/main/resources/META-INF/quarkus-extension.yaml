@@ -1,4 +1,4 @@
-name: JWT Token Validation
+name: OAuth Sheriff
 description: Provides JWT token validation with support for multiple issuers, token decryption, and security event integration
 metadata:
   keywords:

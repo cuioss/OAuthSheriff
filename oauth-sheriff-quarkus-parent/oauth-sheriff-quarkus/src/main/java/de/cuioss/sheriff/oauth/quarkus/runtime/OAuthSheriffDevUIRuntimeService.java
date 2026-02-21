@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.oauth.quarkus.runtime;
 
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
+import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
 import de.cuioss.sheriff.oauth.core.domain.token.TokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
@@ -23,23 +24,20 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.JsonException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * Runtime JSON-RPC service for CUI JWT DevUI.
+ * Runtime JSON-RPC service for OAuth Sheriff DevUI.
  * <p>
- * This service provides runtime methods for JWT validation and status information
- * for the DevUI components. Unlike the build-time service, this provides actual
- * runtime functionality.
+ * Provides read-only status information and token validation for the DevUI
+ * components. All methods return {@link Map} structures serialized as JSON-RPC
+ * responses over WebSocket.
  * </p>
  */
 @ApplicationScoped
 public class OAuthSheriffDevUIRuntimeService {
 
     // String constants for commonly used literals
-    private static final String RUNTIME = "RUNTIME";
     private static final String JWT_VALIDATION_DISABLED = "JWT validation is disabled";
     private static final String MESSAGE = "message";
     private static final String VALID = "valid";
@@ -51,17 +49,31 @@ public class OAuthSheriffDevUIRuntimeService {
 
     private final TokenValidator tokenValidator;
     private final List<IssuerConfig> issuerConfigs;
+    private final ParserConfig parserConfig;
 
     /**
      * Constructor for dependency injection.
      *
      * @param tokenValidator the token validator
-     * @param issuerConfigs the issuer configurations from TokenValidatorProducer
+     * @param issuerConfigs  the issuer configurations from TokenValidatorProducer
+     * @param parserConfig   the parser configuration from TokenValidatorProducer
      */
     @Inject
-    public OAuthSheriffDevUIRuntimeService(TokenValidator tokenValidator, List<IssuerConfig> issuerConfigs) {
+    public OAuthSheriffDevUIRuntimeService(TokenValidator tokenValidator, List<IssuerConfig> issuerConfigs,
+            ParserConfig parserConfig) {
         this.tokenValidator = tokenValidator;
         this.issuerConfigs = issuerConfigs;
+        this.parserConfig = parserConfig;
+    }
+
+    /**
+     * Convenience constructor without ParserConfig (uses defaults).
+     *
+     * @param tokenValidator the token validator
+     * @param issuerConfigs  the issuer configurations
+     */
+    OAuthSheriffDevUIRuntimeService(TokenValidator tokenValidator, List<IssuerConfig> issuerConfigs) {
+        this(tokenValidator, issuerConfigs, ParserConfig.builder().build());
     }
 
     /**
@@ -76,7 +88,7 @@ public class OAuthSheriffDevUIRuntimeService {
         boolean isEnabled = isJwtEnabled();
         status.put("enabled", isEnabled);
         status.put("validatorPresent", tokenValidator != null);
-        status.put("status", RUNTIME);
+        status.put("status", isEnabled ? "ACTIVE" : "INACTIVE");
 
         if (isEnabled) {
             status.put("statusMessage", "JWT validation is active and ready");
@@ -96,18 +108,22 @@ public class OAuthSheriffDevUIRuntimeService {
     public Map<String, Object> getJwksStatus() {
         Map<String, Object> jwksInfo = new HashMap<>();
 
-        jwksInfo.put("status", RUNTIME);
+        boolean hasIssuers = !issuerConfigs.isEmpty();
+        jwksInfo.put("status", hasIssuers ? "CONFIGURED" : "NO_ISSUERS");
 
-        boolean isEnabled = isJwtEnabled();
-        int allConfiguredIssuers = countAllConfiguredIssuers();
-
-        if (isEnabled) {
-            jwksInfo.put(MESSAGE, "JWKS endpoints are configured and active");
-            jwksInfo.put("issuersConfigured", allConfiguredIssuers);
-        } else {
-            jwksInfo.put(MESSAGE, "JWKS endpoints are disabled");
-            jwksInfo.put("issuersConfigured", allConfiguredIssuers);
+        // Build issuers array with details for each configured issuer
+        List<Map<String, Object>> issuers = new ArrayList<>();
+        for (IssuerConfig ic : issuerConfigs) {
+            Map<String, Object> issuer = new HashMap<>();
+            String identifier = ic.getIssuerIdentifier();
+            issuer.put("name", identifier);
+            issuer.put("issuerUri", identifier);
+            issuer.put("jwksUri", ic.getJwksLoader() != null ? "configured" : "not configured");
+            issuer.put("loaderStatus", ic.getLoaderStatus().toString());
+            issuer.put("lastRefresh", "N/A");
+            issuers.add(issuer);
         }
+        jwksInfo.put("issuers", issuers);
 
         return jwksInfo;
     }
@@ -123,17 +139,42 @@ public class OAuthSheriffDevUIRuntimeService {
 
         boolean isEnabled = isJwtEnabled();
         configMap.put("enabled", isEnabled);
-        configMap.put("healthEnabled", true); // Health is always enabled in runtime
-        configMap.put("buildTime", false);
-        configMap.put("metricsEnabled", true); // Metrics are always enabled in runtime
+        configMap.put("logLevel", "INFO");
 
-        if (isEnabled) {
-            configMap.put(MESSAGE, "JWT validation is properly configured");
-            configMap.put("issuersCount", countEnabledIssuers());
-        } else {
-            configMap.put(MESSAGE, JWT_VALIDATION_DISABLED);
-            configMap.put("issuersCount", 0);
+        // Parser configuration section
+        Map<String, Object> parser = new HashMap<>();
+        parser.put("maxTokenSize", parserConfig.getMaxTokenSize());
+        parser.put("clockSkewSeconds", 60);
+        parser.put("requireExpirationTime", true);
+        parser.put("requireNotBeforeTime", false);
+        parser.put("requireIssuedAtTime", false);
+        configMap.put("parser", parser);
+
+        // HTTP JWKS loader configuration section
+        Map<String, Object> httpJwksLoader = new HashMap<>();
+        httpJwksLoader.put("connectTimeoutSeconds", 10);
+        httpJwksLoader.put("readTimeoutSeconds", 10);
+        httpJwksLoader.put("sizeLimit", parserConfig.getMaxBufferSize());
+        httpJwksLoader.put("cacheTtlSeconds", 600);
+        httpJwksLoader.put("cacheSize", 10);
+        httpJwksLoader.put("backgroundRefreshEnabled", true);
+        configMap.put("httpJwksLoader", httpJwksLoader);
+
+        // Issuers configuration section
+        Map<String, Object> issuersMap = new LinkedHashMap<>();
+        for (IssuerConfig ic : issuerConfigs) {
+            String identifier = ic.getIssuerIdentifier();
+            String name = identifier;
+            Map<String, Object> issuerDetail = new HashMap<>();
+            issuerDetail.put("issuerUri", identifier);
+            issuerDetail.put("jwksUri", ic.getJwksLoader() != null ? "configured" : null);
+            issuerDetail.put("audience", ic.getExpectedAudience().isEmpty() ? null
+                    : String.join(", ", ic.getExpectedAudience()));
+            issuerDetail.put("publicKeyLocation", null);
+            issuerDetail.put("algorithmPreference", null);
+            issuersMap.put(name, issuerDetail);
         }
+        configMap.put("issuers", issuersMap);
 
         return configMap;
     }
@@ -172,7 +213,17 @@ public class OAuthSheriffDevUIRuntimeService {
 
             result.put(VALID, true);
             result.put(TOKEN_TYPE, "ACCESS_TOKEN");
-            result.put(CLAIMS, tokenContent.getClaims());
+            // Convert ClaimValue objects to simple strings for JSON-RPC serialization
+            // (ClaimValue contains OffsetDateTime which Jackson cannot serialize by default)
+            Map<String, String> simpleClaims = new HashMap<>();
+            tokenContent.getClaims().forEach((key, value) -> {
+                if (value != null) {
+                    simpleClaims.put(key, value.getOriginalString());
+                } else {
+                    simpleClaims.put(key, null);
+                }
+            });
+            result.put(CLAIMS, simpleClaims);
             result.put(ISSUER, tokenContent.getIssuer());
 
         } catch (TokenValidationException e) {
@@ -203,7 +254,7 @@ public class OAuthSheriffDevUIRuntimeService {
         health.put("configurationValid", configValid);
         health.put("tokenValidatorAvailable", validatorAvailable);
         health.put("securityCounterAvailable", true); // Metrics are always enabled in runtime
-        health.put("overallStatus", RUNTIME);
+        health.put("overallStatus", "HEALTHY");
 
         if (configValid && validatorAvailable) {
             health.put(MESSAGE, "All JWT components are healthy and operational");
@@ -243,14 +294,4 @@ public class OAuthSheriffDevUIRuntimeService {
                 .count();
     }
 
-    /**
-     * Counts the total number of configured issuers (both enabled and disabled) using
-     * the resolved issuer configurations from TokenValidatorProducer.
-     *
-     * @return number of all configured issuers
-     */
-    private int countAllConfiguredIssuers() {
-        // Count all configured issuers (enabled and disabled)
-        return issuerConfigs.size();
-    }
 }
