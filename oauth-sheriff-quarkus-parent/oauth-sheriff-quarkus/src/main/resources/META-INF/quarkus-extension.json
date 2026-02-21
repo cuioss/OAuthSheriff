@@ -1,5 +1,5 @@
 {
-  "name": "CUI JWT Token Validation",
+  "name": "OAuth Sheriff",
   "description": "Runtime module for Quarkus integration for JWT token validation, providing configuration, producers, and integration from SecurityEvents to Micrometer",
   "metadata": {
     "keywords": [

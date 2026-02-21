@@ -343,7 +343,7 @@ public class OAuthSheriffProcessor {
 
         // JWT Validation Status page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-                .icon("font-awesome-solid:shield-check")
+                .icon("font-awesome-solid:shield-halved")
                 .title("JWT Validation Status")
                 .componentLink("qwc-jwt-validation-status.js")
                 .staticLabel("View Status"));
@@ -364,7 +364,7 @@ public class OAuthSheriffProcessor {
 
         // Configuration Overview page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-                .icon("font-awesome-solid:cog")
+                .icon("font-awesome-solid:gear")
                 .title("Configuration")
                 .componentLink("qwc-jwt-config.js")
                 .staticLabel("View Config"));

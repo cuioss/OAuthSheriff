@@ -28,8 +28,8 @@ test.describe('self-devui-accessible: Environment Validation', () => {
       timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
     });
 
-    // The extension card should mention JWT Token Validation
-    await page.getByText('JWT Token Validation').first().waitFor({
+    // The extension card should mention OAuth Sheriff
+    await page.getByText('OAuth Sheriff').first().waitFor({
       state: 'visible',
       timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
     });
@@ -65,7 +65,7 @@ test.describe('self-devui-accessible: Environment Validation', () => {
 
     // Wait for extension metadata to load (confirms WebSocket is connected
     // and SPA is fully initialized).
-    await page.getByText('JWT Token Validation').first().waitFor({
+    await page.getByText('OAuth Sheriff').first().waitFor({
       state: 'visible',
       timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
     });

@@ -57,7 +57,7 @@ export async function navigateToDevUIPage(page, pageTitle, waitForSelector) {
   });
 
   // Step 2: Wait for the OAuth Sheriff extension card to appear.
-  await page.getByText('JWT Token Validation').first().waitFor({
+  await page.getByText('OAuth Sheriff').first().waitFor({
     state: 'visible',
     timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
   });
