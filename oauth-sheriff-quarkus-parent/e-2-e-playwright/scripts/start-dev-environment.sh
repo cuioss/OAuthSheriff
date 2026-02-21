@@ -88,7 +88,8 @@ echo "[2/3] Quarkus dev mode started (PID: $QUARKUS_PID)"
 
 # --- Step 3: Wait for Quarkus Dev-UI ---
 echo "[3/3] Waiting for Quarkus Dev-UI..."
-DEVUI_URL="http://localhost:8080/q/dev-ui/"
+# Use 127.0.0.1 instead of localhost to avoid IPv6 resolution issues in CI
+DEVUI_URL="http://127.0.0.1:8080/q/dev-ui/"
 MAX_WAIT=120
 WAITED=0
 while [ $WAITED -lt $MAX_WAIT ]; do
@@ -100,26 +101,33 @@ while [ $WAITED -lt $MAX_WAIT ]; do
         exit 1
     fi
 
-    if curl -s -o /dev/null -w "%{http_code}" "$DEVUI_URL" 2>/dev/null | grep -qE "^(200|302)$"; then
-        echo "[3/3] Quarkus Dev-UI is ready (${WAITED}s)"
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$DEVUI_URL" 2>/dev/null || echo "000")
+    if echo "$HTTP_CODE" | grep -qE "^(200|301|302|303)$"; then
+        echo "[3/3] Quarkus Dev-UI is ready (${WAITED}s, HTTP $HTTP_CODE)"
         break
     fi
     sleep 2
     WAITED=$((WAITED + 2))
     if [ $((WAITED % 10)) -eq 0 ]; then
-        echo "[3/3] Still waiting for Quarkus Dev-UI... (${WAITED}s/${MAX_WAIT}s)"
+        echo "[3/3] Still waiting for Quarkus Dev-UI... (${WAITED}s/${MAX_WAIT}s, last HTTP=$HTTP_CODE)"
     fi
 done
 
 if [ $WAITED -ge $MAX_WAIT ]; then
     echo "[3/3] ERROR: Quarkus Dev-UI did not become ready within ${MAX_WAIT}s"
+    echo "[3/3] Last HTTP code: $HTTP_CODE"
     echo "Last 50 lines of log:"
     tail -50 "$TARGET_DIR/quarkus-dev.log"
     exit 1
 fi
 
+# Verify Keycloak well-known endpoint returns correct URLs
+echo "[3/3] Verifying Keycloak well-known endpoint..."
+WELL_KNOWN=$(curl -sk "https://localhost:1443/realms/benchmark/.well-known/openid-configuration" 2>/dev/null || echo "FAILED")
+echo "[3/3] Well-known issuer: $(echo "$WELL_KNOWN" | grep -o '"issuer":"[^"]*"' || echo 'N/A')"
+
 echo "=== E2E Dev-UI Test Environment Ready ==="
 echo "  Keycloak:    https://localhost:1443"
-echo "  Quarkus:     http://localhost:8080"
-echo "  Dev-UI:      http://localhost:8080/q/dev-ui/"
+echo "  Quarkus:     http://127.0.0.1:8080"
+echo "  Dev-UI:      http://127.0.0.1:8080/q/dev-ui/"
 echo "  Quarkus PID: $QUARKUS_PID"

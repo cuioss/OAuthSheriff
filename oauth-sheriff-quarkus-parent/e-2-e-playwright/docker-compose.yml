@@ -1,6 +1,6 @@
 # E2E Dev-UI Tests - Keycloak for Quarkus Dev Mode
 # Purpose: Provide a Keycloak instance accessible from the host for Dev-UI testing
-# Key difference from integration-tests: KC_HOSTNAME_PORT=1443 so tokens advertise the external port
+# Key difference from integration-tests: KC_HOSTNAME=https://localhost:1443 so tokens advertise the external URL
 
 services:
   keycloak:
@@ -26,12 +26,12 @@ services:
       - KC_METRICS_ENABLED=true
       - KC_LOG_LEVEL=INFO
       # Hostname configuration for well-known discovery endpoint
-      - KC_HOSTNAME_STRICT=false
+      # KC_HOSTNAME must be a full URL in Keycloak 26.x (v2 hostname provider)
+      # to include the external mapped port. KC_HOSTNAME_PORT is deprecated.
+      - KC_HOSTNAME=https://localhost:1443
+      - KC_HOSTNAME_STRICT=true
       - KC_HTTP_ENABLED=false
       - KC_HTTPS_PORT=8443
-      - KC_HOSTNAME=localhost
-      # External port so tokens advertise the host-accessible URL
-      - KC_HOSTNAME_PORT=1443
     healthcheck:
       test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && exec 3<&-"]
       interval: 5s
