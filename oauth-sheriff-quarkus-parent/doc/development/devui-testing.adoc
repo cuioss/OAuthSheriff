@@ -45,10 +45,8 @@ src/test/js/
 
 === Component Test Files
 
-* `qwc-jwt-validation-status.test.js`
-* `qwc-jwks-endpoints.test.js`
-* `qwc-jwt-debugger.test.js`
-* `qwc-jwt-config.test.js`
+* `qwc-jwt-status-config.test.js` -- Merged status and configuration viewer
+* `qwc-jwt-debugger.test.js` -- Token validation tool
 
 === Mock Framework
 
@@ -83,10 +81,8 @@ E2E tests verify the full DevUI integration with a running Quarkus dev instance 
 e-2-e-playwright/
 ├── tests/
 │   ├── self-devui-accessible.spec.js          # Environment gate-keeper tests
-│   ├── 01-verify-validation-status.spec.js    # Validation Status page
-│   ├── 02-verify-jwks-endpoints.spec.js       # JWKS Endpoints page
+│   ├── 01-verify-status-config.spec.js        # Status & Config page
 │   ├── 03-verify-token-debugger.spec.js       # Token Debugger page
-│   ├── 04-verify-configuration.spec.js        # Configuration page
 │   └── accessibility-wcag-compliance.spec.js  # WCAG 2.1 AA compliance
 ├── utils/
 │   ├── constants.js                           # URLs, timeouts, selectors
@@ -117,6 +113,6 @@ Quarkus DevUI is a SPA (Vaadin Router + Lit web components) where extension sub-
 
 === Test Coverage
 
-* **Self-tests (8)**: Environment validation (app accessible, DevUI accessible, extension visible, all 4 pages navigable, JSON-RPC runtime data)
-* **Functional tests (20)**: Data rendering, interactive features per component
-* **Accessibility tests (6)**: WCAG 2.1 AA compliance, keyboard navigation
+* **Self-tests (6)**: Environment validation (app accessible, DevUI accessible, extension visible, 2 pages navigable, JSON-RPC runtime data)
+* **Functional tests (20)**: Status & Config data rendering (13), Token Debugger interactive features (7)
+* **Accessibility tests (4)**: WCAG 2.1 AA compliance, keyboard navigation
