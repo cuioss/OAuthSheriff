@@ -9,14 +9,12 @@
 
 The Quarkus DevUI integration for the OAuth Sheriff extension provides read-only monitoring of JWT validation configuration and a convenience tool for token debugging during development. It is available only in Quarkus dev mode.
 
-The DevUI consists of four pages:
+The DevUI consists of two pages:
 
-* **Validation Status** -- Shows whether JWT validation is active and which issuers are enabled
-* **JWKS Endpoints** -- Displays configured issuer URIs and JWKS loader state
+* **Status & Config** -- Consolidated view of validation status, JWKS endpoints, issuers, and runtime configuration
 * **Token Debugger** -- Accepts a JWT token and validates it against the configured issuers
-* **Configuration** -- Displays the resolved runtime configuration (parser, HTTP loader, issuers)
 
-All pages except Token Debugger are read-only viewers. Token Debugger is the only interactive page -- it validates a user-provided JWT access token.
+Status & Config is a read-only viewer that merges data from all four JSON-RPC methods into a single page. Token Debugger is the only interactive page -- it validates a user-provided JWT access token.
 
 == Architecture
 
@@ -25,10 +23,8 @@ All pages except Token Debugger are read-only viewers. Token Debugger is the onl
 [source]
 ----
 oauth-sheriff-quarkus-deployment/src/main/resources/dev-ui/
-├── qwc-jwt-validation-status.js   # Validation status viewer
-├── qwc-jwks-endpoints.js          # JWKS endpoint configuration viewer
-├── qwc-jwt-debugger.js            # Token validation tool
-└── qwc-jwt-config.js              # Configuration viewer with health indicator
+├── qwc-jwt-status-config.js   # Merged status and configuration viewer
+└── qwc-jwt-debugger.js        # Token validation tool
 ----
 
 === Technology Stack
@@ -52,10 +48,14 @@ CardPageBuildItem createJwtDevUICard() {
 
     cardPageBuildItem.addPage(Page.webComponentPageBuilder()
         .icon("font-awesome-solid:shield-halved")
-        .title("Validation Status")
-        .componentLink("qwc-jwt-validation-status.js"));
+        .title("Status & Config")
+        .componentLink("qwc-jwt-status-config.js"));
 
-    // Additional pages: JWKS Endpoints, Token Debugger, Configuration
+    cardPageBuildItem.addPage(Page.webComponentPageBuilder()
+        .icon("font-awesome-solid:bug")
+        .title("Token Debugger")
+        .componentLink("qwc-jwt-debugger.js"));
+
     return cardPageBuildItem;
 }
 ----
@@ -106,24 +106,19 @@ NOTE: `validateToken` only validates access tokens (not ID or refresh tokens). C
 
 == Component Details
 
-=== Validation Status (`qwc-jwt-validation-status.js`)
+=== Status & Config (`qwc-jwt-status-config.js`)
 
-Read-only status display with auto-refresh.
+Merged read-only view that calls all four JSON-RPC methods in parallel on load, with auto-refresh every 30 seconds.
 
-* Status indicator dot (green = ACTIVE, red = INACTIVE) inline with status message
-* Metrics grid: Validation Enabled, Validator Available, Overall Status
-* Auto-refreshes every 30 seconds; manual refresh button available
-* Error state shows retry button
+**Sections (top-to-bottom):**
 
-=== JWKS Endpoints (`qwc-jwks-endpoints.js`)
+. **Status Overview** -- Status indicator dot (green = ACTIVE, red = INACTIVE), status message, and metrics grid (Enabled, Validator Available, Overall Status, security event counts)
+. **Issuers** -- Per-issuer cards with merged data: Name, Issuer URI, JWKS URI, Loader Status, Last Refresh (from JWKS status), plus Audience, Public Key Location, Algorithm Preference (from configuration)
+. **Parser Configuration** -- maxTokenSize, clockSkewSeconds, requireExpirationTime, requireNotBeforeTime, requireIssuedAtTime
+. **HTTP JWKS Loader** -- connectTimeoutSeconds, readTimeoutSeconds, sizeLimit, cacheTtlSeconds, cacheSize, backgroundRefreshEnabled
+. **General Settings** -- logLevel
 
-Read-only display of configured issuer JWKS information.
-
-* Overall status banner (green = configured, red = no issuers)
-* Per-issuer cards showing: Issuer URI, JWKS URI, loader status indicator, last refresh time
-* Manual refresh button in toolbar
-
-NOTE: This page displays configuration state, not live endpoint probing. The loader status reflects the `IssuerConfig.getLoaderStatus()` value from the runtime.
+Health indicator badge and refresh button in toolbar. Optional "Configuration Issues" section when health check detects problems.
 
 === Token Debugger (`qwc-jwt-debugger.js`)
 
@@ -134,15 +129,6 @@ Interactive tool for validating JWT tokens during development.
 * "Load Sample" button -- populates a sample HS256 JWT for experimentation
 * "Clear" button -- resets input and results
 * Result display: success shows token type and formatted JSON claims; failure shows error message and details
-
-=== Configuration (`qwc-jwt-config.js`)
-
-Read-only display of the resolved runtime configuration.
-
-* Health indicator badge in toolbar (Healthy / Issues Detected)
-* Sections: General Settings, Parser Configuration, HTTP JWKS Loader, Configured Issuers
-* Optional "Configuration Issues" section when health check detects problems
-* Manual refresh button in toolbar
 
 == Security Considerations
 
@@ -179,4 +165,4 @@ End-to-end tests in `e-2-e-playwright/` verify the full DevUI integration agains
 
 . Locate the "OAuth Sheriff" extension card
 
-. Access the four pages: Validation Status, JWKS Endpoints, Token Debugger, Configuration
+. Access the two pages: Status & Config, Token Debugger

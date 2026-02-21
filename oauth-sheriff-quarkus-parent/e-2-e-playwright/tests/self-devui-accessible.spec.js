@@ -35,25 +35,14 @@ test.describe('self-devui-accessible: Environment Validation', () => {
     });
   });
 
-  test('JWT Validation Status page is navigable', async ({ page }) => {
-    await navigateToDevUIPage(page, 'Validation Status');
-    // Verify the custom element is in the DOM
-    await expect(page.locator('qwc-jwt-validation-status')).toBeAttached();
-  });
-
-  test('JWKS Endpoints page is navigable', async ({ page }) => {
-    await navigateToDevUIPage(page, 'JWKS Endpoints');
-    await expect(page.locator('qwc-jwks-endpoints')).toBeAttached();
+  test('Status & Config page is navigable', async ({ page }) => {
+    await navigateToDevUIPage(page, 'Status & Config');
+    await expect(page.locator('qwc-jwt-status-config')).toBeAttached();
   });
 
   test('Token Debugger page is navigable', async ({ page }) => {
     await navigateToDevUIPage(page, 'Token Debugger');
     await expect(page.locator('qwc-jwt-debugger')).toBeAttached();
-  });
-
-  test('Configuration page is navigable', async ({ page }) => {
-    await navigateToDevUIPage(page, 'Configuration');
-    await expect(page.locator('qwc-jwt-config')).toBeAttached();
   });
 
   test('JSON-RPC returns runtime data (not BUILD_TIME)', async ({ page }) => {

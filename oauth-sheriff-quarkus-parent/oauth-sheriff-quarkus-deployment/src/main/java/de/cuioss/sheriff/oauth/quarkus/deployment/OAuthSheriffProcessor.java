@@ -341,29 +341,17 @@ public class OAuthSheriffProcessor {
     public CardPageBuildItem createJwtDevUICard() {
         CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
 
-        // JWT Validation Status page
+        // Status & Config page (merged view of validation status, JWKS endpoints, and configuration)
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
                 .icon("font-awesome-solid:shield-halved")
-                .title("Validation Status")
-                .componentLink("qwc-jwt-validation-status.js"));
-
-        // JWKS Endpoint Monitoring page
-        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-                .icon("font-awesome-solid:key")
-                .title("JWKS Endpoints")
-                .componentLink("qwc-jwks-endpoints.js"));
+                .title("Status & Config")
+                .componentLink("qwc-jwt-status-config.js"));
 
         // Token Debugging Tools page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
                 .icon("font-awesome-solid:bug")
                 .title("Token Debugger")
                 .componentLink("qwc-jwt-debugger.js"));
-
-        // Configuration Overview page
-        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-                .icon("font-awesome-solid:gear")
-                .title("Configuration")
-                .componentLink("qwc-jwt-config.js"));
 
         return cardPageBuildItem;
     }

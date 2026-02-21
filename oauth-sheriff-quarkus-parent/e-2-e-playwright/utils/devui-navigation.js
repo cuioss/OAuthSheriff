@@ -31,17 +31,15 @@ import { CONSTANTS } from './constants.js';
  * The page title matches the `displayName` attribute of `qwc-extension-link`.
  */
 const PAGES = {
-  'Validation Status': 'qwc-jwt-validation-status',
-  'JWKS Endpoints': 'qwc-jwks-endpoints',
+  'Status & Config': 'qwc-jwt-status-config',
   'Token Debugger': 'qwc-jwt-debugger',
-  Configuration: 'qwc-jwt-config',
 };
 
 /**
  * Navigate to a Dev-UI extension sub-page by clicking through the extension card.
  *
  * @param {import('@playwright/test').Page} page - Playwright page
- * @param {string} pageTitle - The page title as set by the processor (e.g. "Validation Status")
+ * @param {string} pageTitle - The page title as set by the processor (e.g. "Status & Config")
  * @param {string} [waitForSelector] - Optional CSS selector to wait for after navigation
  */
 export async function navigateToDevUIPage(page, pageTitle, waitForSelector) {
@@ -107,19 +105,11 @@ export async function navigateToDevUIPage(page, pageTitle, waitForSelector) {
 }
 
 /**
- * Navigate to the Validation Status page
+ * Navigate to the Status & Config page
  * @param {import('@playwright/test').Page} page
  */
-export async function goToValidationStatus(page) {
-  await navigateToDevUIPage(page, 'Validation Status');
-}
-
-/**
- * Navigate to the JWKS Endpoints page
- * @param {import('@playwright/test').Page} page
- */
-export async function goToJwksEndpoints(page) {
-  await navigateToDevUIPage(page, 'JWKS Endpoints');
+export async function goToStatusConfig(page) {
+  await navigateToDevUIPage(page, 'Status & Config');
 }
 
 /**
@@ -128,14 +118,6 @@ export async function goToJwksEndpoints(page) {
  */
 export async function goToTokenDebugger(page) {
   await navigateToDevUIPage(page, 'Token Debugger');
-}
-
-/**
- * Navigate to the Configuration page
- * @param {import('@playwright/test').Page} page
- */
-export async function goToConfiguration(page) {
-  await navigateToDevUIPage(page, 'Configuration');
 }
 
 /**

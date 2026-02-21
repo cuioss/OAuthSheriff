@@ -145,7 +145,7 @@ class OAuthSheriffProcessorBuildStepTest {
         // Assert
         assertNotNull(cardItem);
         assertFalse(cardItem.getPages().isEmpty());
-        assertEquals(4, cardItem.getPages().size());
+        assertEquals(2, cardItem.getPages().size());
     }
 
     @Test

@@ -9,10 +9,8 @@ import {
 } from "../fixtures/test-fixtures.js";
 import { CONSTANTS } from "../utils/constants.js";
 import {
-    goToValidationStatus,
-    goToJwksEndpoints,
+    goToStatusConfig,
     goToTokenDebugger,
-    goToConfiguration,
 } from "../utils/devui-navigation.js";
 
 test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
@@ -41,24 +39,11 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
         expect(critical).toEqual([]);
     });
 
-    test("JWT Validation Status page accessibility", async ({
+    test("Status & Config page accessibility", async ({
         page,
         accessibilityHelper,
     }) => {
-        await goToValidationStatus(page);
-
-        const results = await accessibilityHelper.analyze();
-        const critical = results.violations.filter(
-            (v) => v.impact === "critical",
-        );
-        expect(critical).toEqual([]);
-    });
-
-    test("JWKS Endpoints page accessibility", async ({
-        page,
-        accessibilityHelper,
-    }) => {
-        await goToJwksEndpoints(page);
+        await goToStatusConfig(page);
 
         const results = await accessibilityHelper.analyze();
         const critical = results.violations.filter(
@@ -72,19 +57,6 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
         accessibilityHelper,
     }) => {
         await goToTokenDebugger(page);
-
-        const results = await accessibilityHelper.analyze();
-        const critical = results.violations.filter(
-            (v) => v.impact === "critical",
-        );
-        expect(critical).toEqual([]);
-    });
-
-    test("Configuration page accessibility", async ({
-        page,
-        accessibilityHelper,
-    }) => {
-        await goToConfiguration(page);
 
         const results = await accessibilityHelper.analyze();
         const critical = results.violations.filter(

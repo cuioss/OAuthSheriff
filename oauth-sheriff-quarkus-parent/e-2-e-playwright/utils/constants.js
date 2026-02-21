@@ -21,33 +21,29 @@ export const CONSTANTS = {
     /** Dev-UI navigation paths for OAuth Sheriff extension pages.
      *  Namespace is the Maven artifactId; slugs are derived from page titles. */
     DEVUI_PAGES: {
-        VALIDATION_STATUS: `${BASE_URL}/q/dev-ui/oauth-sheriff-quarkus/jwt-validation-status`,
-        JWKS_ENDPOINTS: `${BASE_URL}/q/dev-ui/oauth-sheriff-quarkus/jwks-endpoints`,
+        STATUS_CONFIG: `${BASE_URL}/q/dev-ui/oauth-sheriff-quarkus/status-config`,
         TOKEN_DEBUGGER: `${BASE_URL}/q/dev-ui/oauth-sheriff-quarkus/token-debugger`,
-        CONFIGURATION: `${BASE_URL}/q/dev-ui/oauth-sheriff-quarkus/configuration`,
     },
 
     /** data-testid selectors for Playwright locators */
     SELECTORS: {
-        // Validation Status
-        VALIDATION_STATUS_CARD: '[data-testid="validation-status-card"]',
-        VALIDATION_STATUS_INDICATOR:
-            '[data-testid="validation-status-indicator"]',
-        VALIDATION_STATUS_MESSAGE: '[data-testid="validation-status-message"]',
+        // Status & Config (merged)
+        STATUS_CONFIG_CONTAINER: '[data-testid="status-config-container"]',
+        STATUS_CONFIG_HEALTH_INDICATOR: '[data-testid="status-config-health-indicator"]',
+        STATUS_CONFIG_REFRESH_BUTTON: '[data-testid="status-config-refresh-button"]',
+        STATUS_CONFIG_STATUS_INDICATOR: '[data-testid="status-config-status-indicator"]',
+        STATUS_CONFIG_STATUS_MESSAGE: '[data-testid="status-config-status-message"]',
+        STATUS_CONFIG_LOADING: '[data-testid="status-config-loading"]',
+        STATUS_CONFIG_ERROR: '[data-testid="status-config-error"]',
+        STATUS_OVERVIEW_SECTION: '[data-testid="status-overview-section"]',
+        STATUS_CONFIG_ISSUERS_SECTION: '[data-testid="status-config-issuers-section"]',
+        STATUS_CONFIG_ISSUER_CARD: '[data-testid="status-config-issuer-card"]',
+        STATUS_CONFIG_PARSER_SECTION: '[data-testid="status-config-parser-section"]',
+        STATUS_CONFIG_HTTP_SECTION: '[data-testid="status-config-http-section"]',
+        STATUS_CONFIG_GENERAL_SECTION: '[data-testid="status-config-general-section"]',
         METRIC_ENABLED: '[data-testid="metric-enabled"]',
         METRIC_VALIDATOR_PRESENT: '[data-testid="metric-validator-present"]',
         METRIC_OVERALL_STATUS: '[data-testid="metric-overall-status"]',
-        VALIDATION_REFRESH_BUTTON: '[data-testid="validation-refresh-button"]',
-        VALIDATION_LOADING: '[data-testid="validation-loading"]',
-        VALIDATION_ERROR: '[data-testid="validation-error"]',
-
-        // JWKS Endpoints
-        JWKS_ENDPOINTS_CONTAINER: '[data-testid="jwks-endpoints-container"]',
-        JWKS_STATUS_MESSAGE: '[data-testid="jwks-status-message"]',
-        JWKS_REFRESH_BUTTON: '[data-testid="jwks-refresh-button"]',
-        JWKS_ISSUER_CARD: '[data-testid="jwks-issuer-card"]',
-        JWKS_LOADING: '[data-testid="jwks-loading"]',
-        JWKS_ERROR: '[data-testid="jwks-error"]',
 
         // Token Debugger
         JWT_DEBUGGER_CONTAINER: '[data-testid="jwt-debugger-container"]',
@@ -60,19 +56,6 @@ export const CONSTANTS = {
         JWT_DEBUGGER_RESULT: '[data-testid="jwt-debugger-result"]',
         JWT_DEBUGGER_RESULT_TITLE: '[data-testid="jwt-debugger-result-title"]',
         JWT_DEBUGGER_CLAIMS: '[data-testid="jwt-debugger-claims"]',
-
-        // Configuration
-        JWT_CONFIG_CONTAINER: '[data-testid="jwt-config-container"]',
-        JWT_CONFIG_HEALTH_INDICATOR:
-            '[data-testid="jwt-config-health-indicator"]',
-        JWT_CONFIG_REFRESH_BUTTON: '[data-testid="jwt-config-refresh-button"]',
-        JWT_CONFIG_GENERAL_SECTION:
-            '[data-testid="jwt-config-general-section"]',
-        JWT_CONFIG_PARSER_SECTION: '[data-testid="jwt-config-parser-section"]',
-        JWT_CONFIG_ISSUERS_SECTION:
-            '[data-testid="jwt-config-issuers-section"]',
-        JWT_CONFIG_LOADING: '[data-testid="jwt-config-loading"]',
-        JWT_CONFIG_ERROR: '[data-testid="jwt-config-error"]',
     },
 
     /** Keycloak authentication credentials */
