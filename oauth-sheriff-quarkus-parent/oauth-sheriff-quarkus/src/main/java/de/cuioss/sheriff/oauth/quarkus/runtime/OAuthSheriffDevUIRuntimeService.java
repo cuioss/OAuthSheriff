@@ -31,11 +31,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Runtime JSON-RPC service for CUI JWT DevUI.
+ * Runtime JSON-RPC service for OAuth Sheriff DevUI.
  * <p>
- * This service provides runtime methods for JWT validation and status information
- * for the DevUI components. Unlike the build-time service, this provides actual
- * runtime functionality.
+ * Provides read-only status information and token validation for the DevUI
+ * components. All methods return {@link Map} structures serialized as JSON-RPC
+ * responses over WebSocket.
  * </p>
  */
 @ApplicationScoped

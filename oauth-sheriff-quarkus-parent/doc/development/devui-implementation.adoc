@@ -1,4 +1,4 @@
-= CUI JWT DevUI Implementation
+= OAuth Sheriff DevUI Implementation
 :toc: left
 :toclevels: 3
 :source-highlighter: highlight.js
@@ -7,29 +7,42 @@
 
 == Overview
 
-This document describes the Quarkus DevUI integration implementation for the CUI JWT validation extension. The DevUI provides comprehensive development tools for JWT validation monitoring, configuration debugging, and token testing.
+The Quarkus DevUI integration for the OAuth Sheriff extension provides read-only monitoring of JWT validation configuration and a convenience tool for token debugging during development. It is available only in Quarkus dev mode.
+
+The DevUI consists of four pages:
+
+* **Validation Status** -- Shows whether JWT validation is active and which issuers are enabled
+* **JWKS Endpoints** -- Displays configured issuer URIs and JWKS loader state
+* **Token Debugger** -- Accepts a JWT token and validates it against the configured issuers
+* **Configuration** -- Displays the resolved runtime configuration (parser, HTTP loader, issuers)
+
+All pages except Token Debugger are read-only viewers. Token Debugger is the only interactive page -- it validates a user-provided JWT access token.
 
 == Architecture
 
-=== Component Structure
-
-The DevUI implementation consists of frontend web components and backend services:
+=== File Structure
 
 [source]
 ----
 oauth-sheriff-quarkus-deployment/src/main/resources/dev-ui/
-└── components/
-    ├── qwc-jwt-validation-status.js  # Real-time validation status monitoring
-    ├── qwc-jwks-endpoints.js         # JWKS endpoint status and monitoring
-    ├── qwc-jwt-debugger.js           # Token validation and debugging tools
-    └── qwc-jwt-config.js             # Configuration viewer
+├── qwc-jwt-validation-status.js   # Validation status viewer
+├── qwc-jwks-endpoints.js          # JWKS endpoint configuration viewer
+├── qwc-jwt-debugger.js            # Token validation tool
+└── qwc-jwt-config.js              # Configuration viewer with health indicator
 ----
+
+=== Technology Stack
+
+* **Frontend**: Lit Element web components (standard for Quarkus DevUI)
+* **Communication**: JSON-RPC over WebSockets (provided by Quarkus DevUI framework)
+* **Styling**: CSS custom properties using Lumo theme variables
+* **Icons**: Font Awesome 6 Free (solid) via Vaadin iconset
 
 === Backend Integration
 
 ==== Build-Time Registration
 
-DevUI components are registered during build time in `OAuthSheriffProcessor.java`:
+DevUI pages are registered during build time in `OAuthSheriffProcessor.java`:
 
 [source,java]
 ----
@@ -37,185 +50,133 @@ DevUI components are registered during build time in `OAuthSheriffProcessor.java
 CardPageBuildItem createJwtDevUICard() {
     CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
 
-    // Register web component pages with icons and component links
     cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-        .icon("font-awesome-solid:shield-check")
-        .title("JWT Validation Status")
-        .componentLink("components/qwc-jwt-validation-status.js")
-        .staticLabel("View Status"));
+        .icon("font-awesome-solid:shield-halved")
+        .title("Validation Status")
+        .componentLink("qwc-jwt-validation-status.js"));
 
-    // Additional pages...
+    // Additional pages: JWKS Endpoints, Token Debugger, Configuration
     return cardPageBuildItem;
 }
 ----
 
 ==== JSON-RPC Service
 
-Backend data access is provided through `OAuthSheriffDevUIJsonRPCService.java`:
+Backend data is provided by `OAuthSheriffDevUIRuntimeService.java`, registered as:
 
 [source,java]
 ----
 @BuildStep(onlyIf = IsDevelopment.class)
 JsonRPCProvidersBuildItem createJwtDevUIJsonRPCService() {
-    return new JsonRPCProvidersBuildItem("OAuthSheriffDevUI", OAuthSheriffDevUIJsonRPCService.class);
+    return new JsonRPCProvidersBuildItem("OAuthSheriffDevUI",
+        OAuthSheriffDevUIRuntimeService.class);
 }
 ----
 
-== Web Components Implementation
-
-=== Technology Stack
-
-- **Frontend Framework**: Lit Element for reactive web components
-- **Communication**: JSON-RPC over WebSockets
-- **Styling**: CSS with responsive design
-- **Icons**: Font Awesome integration
-
-=== Component Details
-
-==== JWT Validation Status (`qwc-jwt-validation-status.js`)
-
-Provides real-time monitoring of JWT validation processes:
-
-- **Auto-refresh**: 5-second intervals for live status updates
-- **Status indicators**: Visual representation of validation health
-- **Security events**: Counter display for validation attempts
-- **Error handling**: Graceful degradation for connection issues
-
-==== JWKS Endpoints (`qwc-jwks-endpoints.js`)
-
-Monitors JWKS endpoint connectivity and health:
-
-- **Endpoint status**: Real-time connectivity verification
-- **Key refresh tracking**: Statistics on key loading operations
-- **Configuration validation**: Verification of JWKS settings
-- **Manual refresh**: On-demand endpoint testing
-
-==== Token Debugger (`qwc-jwt-debugger.js`)
-
-Interactive JWT token validation and debugging:
-
-- **Token input**: Multi-line text area for JWT tokens
-- **Claims visualization**: Structured display of token claims
-- **Validation results**: Detailed error reporting
-- **Sample tokens**: Pre-loaded examples for testing
-
-==== Configuration Viewer (`qwc-jwt-config.js`)
-
-Complete configuration overview and diagnostics:
-
-- **Hierarchical display**: Nested configuration structure
-- **Health indicators**: Visual status for configuration sections
-- **Issue detection**: Automatic identification of configuration problems
-- **Refresh capability**: Manual configuration reload
-
-== Development Features
-
-=== Build-Time vs Runtime Data
-
-The implementation distinguishes between build-time and runtime data access:
-
-- **Build-time**: Static configuration, placeholder status messages
-- **Runtime**: Live validation status, real-time health checks, active token validation
-
-=== Security Considerations
-
-- **No sensitive data exposure**: Tokens and keys are not logged or stored
-- **Development-only**: All DevUI components are excluded from production builds
-- **Graceful error handling**: Failed operations display user-friendly messages
-
-=== Testing Integration
-
-The DevUI components include comprehensive test coverage:
-
-- **Unit tests**: Individual component functionality testing
-- **Integration tests**: End-to-end DevUI workflow validation
-- **Mock services**: Isolated testing with stubbed JSON-RPC responses
+The service is `@ApplicationScoped` and injects `TokenValidator`, `List<IssuerConfig>`, and `ParserConfig` from the runtime CDI container.
 
 == JSON-RPC Methods
 
-The backend service provides the following methods for frontend components:
-
 [cols="2,3,4"]
 |===
-|Method |Purpose |Response Structure
+|Method |Purpose |Response Fields
 
 |`getValidationStatus()`
-|Current JWT validation status
-|`{ enabled, status, statusMessage, validatorPresent }`
-
-|`getConfiguration()`
-|Complete extension configuration
-|`{ enabled, healthEnabled, buildTime, parser, httpJwksLoader, issuers }`
+|Whether JWT validation is active
+|`enabled`, `status` (ACTIVE/INACTIVE), `statusMessage`, `validatorPresent`
 
 |`getJwksStatus()`
-|JWKS endpoint connectivity status
-|`{ status, message, issuers: {...} }`
+|Configured issuer endpoints
+|`status` (CONFIGURED/NO_ISSUERS), `issuers[]` with `name`, `issuerUri`, `jwksUri`, `loaderStatus`, `lastRefresh`
+
+|`getConfiguration()`
+|Resolved runtime configuration
+|`enabled`, `logLevel`, `parser{}`, `httpJwksLoader{}`, `issuers{}`
 
 |`validateToken(token)`
-|Token validation testing
-|`{ valid, error?, claims?, validatedBy? }`
+|Validate a JWT access token
+|`valid`, `error?`, `tokenType?`, `claims?`, `issuer?`, `details?`
 
 |`getHealthInfo()`
-|Overall extension health status
-|`{ configurationValid, tokenValidatorAvailable, overallStatus }`
+|Overall extension health
+|`configurationValid`, `tokenValidatorAvailable`, `overallStatus`, `message`, `healthStatus`
 |===
 
-== Usage Instructions
+NOTE: `validateToken` only validates access tokens (not ID or refresh tokens). ClaimValue objects are converted to simple strings for JSON-RPC serialization.
 
-=== Accessing the DevUI
+== Component Details
 
-. Start the Quarkus application in development mode:
+=== Validation Status (`qwc-jwt-validation-status.js`)
+
+Read-only status display with auto-refresh.
+
+* Status indicator dot (green = ACTIVE, red = INACTIVE) inline with status message
+* Metrics grid: Validation Enabled, Validator Available, Overall Status
+* Auto-refreshes every 30 seconds; manual refresh button available
+* Error state shows retry button
+
+=== JWKS Endpoints (`qwc-jwks-endpoints.js`)
+
+Read-only display of configured issuer JWKS information.
+
+* Overall status banner (green = configured, red = no issuers)
+* Per-issuer cards showing: Issuer URI, JWKS URI, loader status indicator, last refresh time
+* Manual refresh button in toolbar
+
+NOTE: This page displays configuration state, not live endpoint probing. The loader status reflects the `IssuerConfig.getLoaderStatus()` value from the runtime.
+
+=== Token Debugger (`qwc-jwt-debugger.js`)
+
+Interactive tool for validating JWT tokens during development.
+
+* Token input textarea for pasting JWT tokens
+* "Validate Token" button -- calls `validateToken()` JSON-RPC method
+* "Load Sample" button -- populates a sample HS256 JWT for experimentation
+* "Clear" button -- resets input and results
+* Result display: success shows token type and formatted JSON claims; failure shows error message and details
+
+=== Configuration (`qwc-jwt-config.js`)
+
+Read-only display of the resolved runtime configuration.
+
+* Health indicator badge in toolbar (Healthy / Issues Detected)
+* Sections: General Settings, Parser Configuration, HTTP JWKS Loader, Configured Issuers
+* Optional "Configuration Issues" section when health check detects problems
+* Manual refresh button in toolbar
+
+== Security Considerations
+
+* **Development-only**: All DevUI components are excluded from production builds (`@BuildStep(onlyIf = IsDevelopment.class)`)
+* **No sensitive data storage**: Validated tokens are not logged or persisted
+* **Claim serialization**: ClaimValue objects are converted to plain strings to avoid leaking internal types
+
+== Testing
+
+=== Unit Tests (Jest)
+
+JavaScript unit tests in `src/test/js/` test components in isolation with mocked JSON-RPC responses. Run with:
+
+[source,bash]
+----
+npm test
+npm run test:coverage
+----
+
+=== E2E Tests (Playwright)
+
+End-to-end tests in `e-2-e-playwright/` verify the full DevUI integration against a running Quarkus dev instance with Keycloak. Tests cover navigation, data rendering, interactive features, and WCAG 2.1 AA accessibility compliance.
+
+== Usage
+
+. Start Quarkus in development mode:
 +
 [source,bash]
 ----
 ./mvnw quarkus:dev
 ----
 
-. Navigate to the Quarkus DevUI:
-+
-[source]
-----
-http://localhost:8080/q/dev-ui/
-----
+. Open the DevUI at `http://localhost:8080/q/dev-ui/`
 
-. Locate the "CUI JWT" card in the extensions section
+. Locate the "OAuth Sheriff" extension card
 
-. Access the following pages:
-
-- **JWT Validation Status**: Real-time monitoring and statistics
-- **JWKS Endpoints**: Endpoint health and connectivity
-- **Token Debugger**: Interactive token validation testing
-- **Configuration**: Complete configuration overview
-
-=== Development Workflow
-
-. **Configuration Debugging**: Use the Configuration page to verify extension settings
-
-. **Endpoint Monitoring**: Monitor JWKS connectivity through the JWKS Endpoints page
-
-. **Token Testing**: Validate JWT tokens using the Token Debugger
-
-. **Status Monitoring**: Track validation performance via the Validation Status page
-
-== Implementation Notes
-
-=== Component Lifecycle
-
-- **Automatic registration**: Components are discovered and registered during build
-- **Lazy loading**: Web components are loaded on-demand when pages are accessed
-- **Auto-refresh**: Status components automatically update at regular intervals
-- **Resource cleanup**: Proper disposal of intervals and event listeners
-
-=== Error Handling Strategy
-
-- **Connection failures**: Graceful degradation with informative error messages
-- **Invalid responses**: Robust parsing with fallback to default values
-- **Component errors**: Isolated error boundaries prevent cascading failures
-- **User feedback**: Clear error messages with actionable guidance
-
-=== Performance Considerations
-
-- **Minimal footprint**: Components load only required resources
-- **Efficient updates**: Selective DOM updates based on data changes
-- **Background operations**: Non-blocking JSON-RPC calls
-- **Development-only**: Zero impact on production application performance
+. Access the four pages: Validation Status, JWKS Endpoints, Token Debugger, Configuration
