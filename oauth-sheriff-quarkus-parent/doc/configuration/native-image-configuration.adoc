@@ -7,7 +7,7 @@
 
 == Purpose
 
-This document defines the comprehensive native image configuration for the CUI JWT Quarkus extension, including reflection settings, resource inclusion, and build parameters for GraalVM compilation.
+This document defines the comprehensive native image configuration for the OAuth Sheriff Quarkus extension, including reflection settings, resource inclusion, and build parameters for GraalVM compilation.
 
 == Related Documentation
 
@@ -41,7 +41,7 @@ quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key
 
 **Automatic Reflection Registration**:
 
-The CUI JWT Quarkus deployment automatically registers the following classes for reflection:
+The OAuth Sheriff Quarkus deployment automatically registers the following classes for reflection:
 
 **JWT Validation Pipeline Classes**:
 

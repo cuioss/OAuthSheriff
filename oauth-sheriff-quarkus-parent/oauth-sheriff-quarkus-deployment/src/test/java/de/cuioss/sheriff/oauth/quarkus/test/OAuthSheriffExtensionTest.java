@@ -22,12 +22,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
- * Test to verify the CUI JWT extension is properly registered and configured.
+ * Test to verify the OAuth Sheriff extension is properly registered and configured.
  * 
  * Uses QuarkusUnitTest to properly test the extension in a Quarkus context.
  */
 @EnableTestLogger
-@DisplayName("CUI JWT Extension Registration Test")
+@DisplayName("OAuth Sheriff Extension Registration Test")
 class CuiJwtExtensionTest {
 
     @RegisterExtension

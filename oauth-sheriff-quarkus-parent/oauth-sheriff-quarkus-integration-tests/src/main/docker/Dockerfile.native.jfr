@@ -2,7 +2,7 @@
 # This approach is much faster as it avoids rebuilding the native image in Docker
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0@sha256:48087a7cc9e62e5eb86e787048ce898393efcbb758695effb65f3cb0caa79c3f
 
-LABEL org.opencontainers.image.title="CUI JWT Integration Tests - JFR"
+LABEL org.opencontainers.image.title="OAuth Sheriff Integration Tests - JFR"
 LABEL org.opencontainers.image.description="Quarkus native application with JFR profiling support"
 LABEL org.opencontainers.image.vendor="CUI"
 LABEL org.opencontainers.image.version="1.0.0-SNAPSHOT"

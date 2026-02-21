@@ -1,4 +1,4 @@
-= CUI JWT Quarkus Extension Documentation
+= OAuth Sheriff Quarkus Extension Documentation
 :toc: left
 :toclevels: 3
 :toc-title: Table of Contents
@@ -7,7 +7,7 @@
 
 == Overview
 
-Complete documentation for the CUI JWT Quarkus extension - a comprehensive JWT validation library integrated with the Quarkus framework. The extension provides automatic configuration, health checks, metrics integration, and development UI components.
+Complete documentation for the OAuth Sheriff Quarkus extension - a comprehensive JWT validation library integrated with the Quarkus framework. The extension provides automatic configuration, health checks, metrics integration, and development UI components.
 
 == Quick Links
 
@@ -18,7 +18,7 @@ Complete documentation for the CUI JWT Quarkus extension - a comprehensive JWT v
 
 === Core Extension Architecture
 
-The CUI JWT Quarkus extension provides comprehensive JWT validation capabilities through a modular architecture:
+The OAuth Sheriff Quarkus extension provides comprehensive JWT validation capabilities through a modular architecture:
 
 * **Extension Architecture**: Build-time vs runtime components
 * **CDI Integration**: Automatic bean discovery and configuration

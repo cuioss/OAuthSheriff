@@ -100,7 +100,7 @@ class ReportGeneratorTest {
 
         String htmlContent = Files.readString(indexFile);
         assertTrue(htmlContent.contains("<!DOCTYPE html>"));
-        assertTrue(htmlContent.contains("CUI JWT"));
+        assertTrue(htmlContent.contains("OAuth Sheriff"));
 
         // Verify data loader script is included
         assertTrue(htmlContent.contains("data-loader.js"));

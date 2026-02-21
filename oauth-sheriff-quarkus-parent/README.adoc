@@ -1,4 +1,4 @@
-= CUI JWT Quarkus Integration
+= OAuth Sheriff Quarkus Integration
 :toc: left
 :toclevels: 3
 :sectnumlevels: 1
@@ -7,7 +7,7 @@
 :sectnums:
 
 
-A Quarkus extension for the CUI JWT validation library, consisting of:
+A Quarkus extension for the OAuth Sheriff validation library, consisting of:
 
 * xref:oauth-sheriff-quarkus/README.adoc[oauth-sheriff-quarkus] - Runtime module with CDI producers and JWT validation
 * xref:oauth-sheriff-quarkus-deployment/README.adoc[oauth-sheriff-quarkus-deployment] - Build-time deployment processor
@@ -41,7 +41,7 @@ A Quarkus extension for the CUI JWT validation library, consisting of:
 
 == Core Concepts
 
-This module provides integration of the CUI JWT validation library into Quarkus applications. It includes:
+This module provides integration of the OAuth Sheriff validation library into Quarkus applications. It includes:
 
 * Quarkus configuration support
 * CDI producers for JWT validation components
@@ -182,7 +182,7 @@ Example Prometheus query to check for signature verification failures:
 
 [source]
 ----
-sum(cui_jwt_validation_errors_total{event_type="SIGNATURE_VERIFICATION_FAILED"})
+sum(sheriff_oauth_validation_errors_total{event_type="SIGNATURE_VERIFICATION_FAILED"})
 ----
 
 === Using Metrics in Your Application

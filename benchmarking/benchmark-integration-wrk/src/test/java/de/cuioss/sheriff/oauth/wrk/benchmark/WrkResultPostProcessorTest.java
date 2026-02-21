@@ -225,7 +225,7 @@ class WrkResultPostProcessorTest {
 
         // Verify HTML content structure
         String htmlContent = Files.readString(ghPagesDir.resolve("index.html"));
-        assertTrue(htmlContent.contains("CUI JWT"), "HTML should have correct title");
+        assertTrue(htmlContent.contains("OAuth Sheriff"), "HTML should have correct title");
         assertTrue(htmlContent.contains("data-loader.js"), "HTML should reference data loader");
     }
 

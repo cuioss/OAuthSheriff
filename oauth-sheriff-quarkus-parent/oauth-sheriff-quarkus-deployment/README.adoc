@@ -1,4 +1,4 @@
-= CUI JWT Quarkus Deployment
+= OAuth Sheriff Quarkus Deployment
 :toc: left
 :toclevels: 3
 :sectnumlevels: 1
@@ -76,7 +76,7 @@ Access DevUI components during development:
 ----
 ./mvnw quarkus:dev
 # Navigate to http://localhost:8080/q/dev/
-# Find "CUI JWT" section for JWT validation tools
+# Find "OAuth Sheriff" section for JWT validation tools
 ----
 
 == Configuration

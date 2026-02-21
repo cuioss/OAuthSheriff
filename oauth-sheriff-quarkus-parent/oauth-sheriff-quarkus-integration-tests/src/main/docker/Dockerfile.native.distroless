@@ -2,7 +2,7 @@
 # This approach is much faster as it avoids rebuilding the native image in Docker
 FROM quay.io/quarkus/quarkus-distroless-image:2.0@sha256:e4d9d9e93603827d965e3aa2735ab251aa5b79da262af7fb7ef061bc39f327ff
 
-LABEL org.opencontainers.image.title="CUI JWT Integration Tests - Distroless"
+LABEL org.opencontainers.image.title="OAuth Sheriff Integration Tests - Distroless"
 LABEL org.opencontainers.image.description="Security-hardened Quarkus native application"
 LABEL org.opencontainers.image.vendor="CUI"
 LABEL org.opencontainers.image.version="1.0.0-SNAPSHOT"

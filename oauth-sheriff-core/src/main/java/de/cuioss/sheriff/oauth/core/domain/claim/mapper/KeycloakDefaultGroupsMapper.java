@@ -28,7 +28,7 @@ import java.util.Optional;
  * A {@link ClaimMapper} implementation for mapping Keycloak's default groups structure.
  * <p>
  * This mapper extracts groups from Keycloak's standard {@code groups} claim and ensures
- * they are properly formatted for the CUI JWT library's authorization mechanisms.
+ * they are properly formatted for the OAuth Sheriff library's authorization mechanisms.
  * <p>
  * Keycloak typically includes groups in the token as:
  * <pre>
@@ -49,7 +49,7 @@ import java.util.Optional;
  * </ul>
  * <p>
  * This mapper provides a bridge between Keycloak's default group claim structure
- * and the CUI JWT library's expected format, ensuring seamless integration
+ * and the OAuth Sheriff library's expected format, ensuring seamless integration
  * without requiring custom protocol mappers in Keycloak.
  *
  * @since 1.0

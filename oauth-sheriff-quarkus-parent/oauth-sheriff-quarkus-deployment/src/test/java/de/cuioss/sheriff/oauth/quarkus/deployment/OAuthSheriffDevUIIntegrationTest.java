@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * Integration test for CUI JWT DevUI components.
+ * Integration test for OAuth Sheriff DevUI components.
  * <p>
  * This test verifies that DevUI build items are properly registered
  * when the extension is enabled in development mode.

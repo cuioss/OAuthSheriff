@@ -31,7 +31,7 @@ import org.eclipse.microprofile.config.Config;
  * </p>
  * <p>
  * When enabled, this mapper processes Keycloak's standard {@code groups} claim and
- * ensures they are properly formatted for the CUI JWT library's authorization mechanisms.
+ * ensures they are properly formatted for the OAuth Sheriff library's authorization mechanisms.
  * The mapper is applied globally to all configured issuers.
  * </p>
  *

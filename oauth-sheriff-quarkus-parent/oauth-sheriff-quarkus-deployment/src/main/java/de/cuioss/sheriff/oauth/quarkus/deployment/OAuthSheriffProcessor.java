@@ -39,7 +39,6 @@ import de.cuioss.sheriff.oauth.core.security.JwkAlgorithmPreferences;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.sheriff.oauth.core.security.SignatureAlgorithmPreferences;
 import de.cuioss.sheriff.oauth.quarkus.config.AccessLogFilterConfigProducer;
-import de.cuioss.sheriff.oauth.quarkus.runtime.OAuthSheriffDevUIRuntimeService;
 import de.cuioss.sheriff.oauth.quarkus.config.ParserConfigResolver;
 import de.cuioss.sheriff.oauth.quarkus.interceptor.BearerTokenInterceptor;
 import de.cuioss.sheriff.oauth.quarkus.logging.CustomAccessLogFilter;
@@ -50,6 +49,7 @@ import de.cuioss.sheriff.oauth.quarkus.mapper.keycloak.KeycloakRolesMapperBean;
 import de.cuioss.sheriff.oauth.quarkus.metrics.JwtMetricsCollector;
 import de.cuioss.sheriff.oauth.quarkus.producer.BearerTokenProducer;
 import de.cuioss.sheriff.oauth.quarkus.producer.TokenValidatorProducer;
+import de.cuioss.sheriff.oauth.quarkus.runtime.OAuthSheriffDevUIRuntimeService;
 import de.cuioss.sheriff.oauth.quarkus.servlet.VertxServletObjectsResolver;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.logging.LogRecord;
@@ -72,7 +72,7 @@ import io.quarkus.resteasy.common.spi.ResteasyJaxrsProviderBuildItem;
 import org.jboss.jandex.DotName;
 
 /**
- * Processor for the CUI JWT Quarkus extension.
+ * Processor for the OAuth Sheriff Quarkus extension.
  * <p>
  * This class handles the build-time processing for the extension, including
  * registering the feature, setting up reflection configuration, and providing
@@ -94,20 +94,20 @@ public class OAuthSheriffProcessor {
     /**
      * LogRecord for feature registration.
      */
-    private static final LogRecord CUI_JWT_FEATURE_REGISTERED = LogRecordModel.builder()
-            .template("CUI JWT feature registered")
-            .prefix("CUI_JWT_QUARKUS_DEPLOYMENT")
+    private static final LogRecord OAUTH_SHERIFF_FEATURE_REGISTERED = LogRecordModel.builder()
+            .template("OAuth Sheriff feature registered")
+            .prefix("OAUTH_SHERIFF_QUARKUS_DEPLOYMENT")
             .identifier(1)
             .build();
 
     /**
-     * Register the CUI JWT feature.
+     * Register the OAuth Sheriff feature.
      *
-     * @return A {@link FeatureBuildItem} for the CUI JWT feature
+     * @return A {@link FeatureBuildItem} for the OAuth Sheriff feature
      */
     @BuildStep
     public FeatureBuildItem feature() {
-        LOGGER.info(CUI_JWT_FEATURE_REGISTERED);
+        LOGGER.info(OAUTH_SHERIFF_FEATURE_REGISTERED);
         return new FeatureBuildItem(FEATURE);
     }
 

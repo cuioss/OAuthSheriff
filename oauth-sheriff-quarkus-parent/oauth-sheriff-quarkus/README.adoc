@@ -1,4 +1,4 @@
-= CUI JWT Quarkus Runtime
+= OAuth Sheriff Quarkus Runtime
 :toc: left
 :toclevels: 3
 :sectnumlevels: 1

@@ -7,7 +7,7 @@
 
 == Purpose
 
-This document defines testing configuration patterns and utilities for applications using the CUI JWT Quarkus extension. It provides test profile setup, token generation utilities, and validation testing approaches.
+This document defines testing configuration patterns and utilities for applications using the OAuth Sheriff Quarkus extension. It provides test profile setup, token generation utilities, and validation testing approaches.
 
 == Related Documentation
 

@@ -18,7 +18,7 @@ package de.cuioss.sheriff.oauth.quarkus.runtime;
 import io.quarkus.runtime.annotations.Recorder;
 
 /**
- * Recorder for the CUI JWT Quarkus extension.
+ * Recorder for the OAuth Sheriff Quarkus extension.
  * <p>
  * This class is currently empty as all runtime initialization is handled by CDI.
  * Health checks are automatically discovered by Quarkus through their annotations
