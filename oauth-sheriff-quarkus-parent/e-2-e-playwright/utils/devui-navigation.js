@@ -102,7 +102,6 @@ export async function navigateToDevUIPage(page, url, waitForSelector) {
             outletHTML: outlet?.innerHTML?.substring(0, 300) ?? "",
         };
     }, targetPath);
-    // eslint-disable-next-line no-console
     console.log(`[navigateToDevUIPage] ${slug}:`, JSON.stringify(navDebug));
 
     // Step 5: Wait for the route to resolve and the component to render.
