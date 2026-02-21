@@ -353,7 +353,7 @@ public class OAuthSheriffProcessor {
                 .icon("font-awesome-solid:key")
                 .title("JWKS Endpoints")
                 .componentLink("qwc-jwks-endpoints.js")
-                .dynamicLabelJsonRPCMethodName("getJwksStatus"));
+                .staticLabel("View Endpoints"));
 
         // Token Debugging Tools page
         cardPageBuildItem.addPage(Page.webComponentPageBuilder()
