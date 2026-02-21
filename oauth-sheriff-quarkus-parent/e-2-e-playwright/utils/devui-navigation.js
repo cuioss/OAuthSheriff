@@ -23,13 +23,10 @@ const SLUG_TO_ELEMENT = {
  * Extensions card grid renders (qwc-extensions._renderActives). Each card page
  * triggers import(page.componentRef) and routerController.addRouteForExtension(page).
  *
- * The Vaadin Router intercepts <a> clicks via event.composedPath() which traverses
- * shadow DOM boundaries, so clicking the extension link triggers proper SPA navigation.
- *
  * This helper:
  *   1. Navigates to the Dev-UI main page to fully initialize the SPA
  *   2. Waits for extension cards to render (confirming routes are registered)
- *   3. Clicks the extension sub-page <a> link (Vaadin Router intercepts the click)
+ *   3. Calls Router.go() via the SPA's import map to trigger client-side navigation
  *   4. Waits for the target custom element to appear in the DOM
  *
  * @param {import('@playwright/test').Page} page - Playwright page
@@ -52,20 +49,16 @@ export async function navigateToDevUIPage(page, url, waitForSelector) {
         timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
     });
 
-    // Step 3: Click the extension sub-page link.
-    // qwc-extension-link renders: <a class="extensionLink" href="${page.id}">
-    // where page.id is like "oauth-sheriff-quarkus/jwt-validation-status".
-    // The Vaadin Router intercepts the click via composedPath() (shadow DOM aware).
+    // Step 3: Navigate using the Vaadin Router API via the SPA's import map.
+    // The @vaadin/router module is available via the Dev-UI import map.
+    // Router.go() does pushState + popstate, which the Router listens for.
     const targetPath = new URL(url).pathname;
-    const pageId = targetPath.replace(/.*\/dev-ui\//, "");
     const slug = targetPath.split("/").pop();
 
-    const link = page.locator(`a.extensionLink[href="${pageId}"]`).first();
-    await link.waitFor({
-        state: "visible",
-        timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
-    });
-    await link.click();
+    await page.evaluate(async (path) => {
+        const { Router } = await import("@vaadin/router");
+        Router.go(path);
+    }, targetPath);
 
     // Step 4: Wait for the custom element to appear in the DOM.
     // The Router resolves the route, creates the element, and renders it in #page.
