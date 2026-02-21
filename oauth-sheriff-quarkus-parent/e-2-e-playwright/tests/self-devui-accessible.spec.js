@@ -84,7 +84,7 @@ test.describe("self-devui-accessible: Environment Validation", () => {
         // Wait for extension metadata to load (confirms WebSocket is connected
         // and SPA is fully initialized). The footer "Connected to" text may be
         // in a collapsed panel that is not visible.
-        await page.getByText("JWT Token Validation").waitFor({
+        await page.getByText("JWT Token Validation").first().waitFor({
             state: "visible",
             timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
         });
