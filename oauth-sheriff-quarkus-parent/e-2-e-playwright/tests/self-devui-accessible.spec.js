@@ -75,11 +75,24 @@ test.describe("self-devui-accessible: Environment Validation", () => {
     test("JSON-RPC returns RUNTIME status (not BUILD_TIME)", async ({
         page,
     }) => {
-        // Navigate to the validation status page which calls getValidationStatus() via JSON-RPC
-        await page.goto(CONSTANTS.DEVUI_PAGES.VALIDATION_STATUS, {
+        // Navigate to the Dev-UI extensions page first to fully initialize the SPA.
+        // Direct navigation to sub-page URLs fails because the Vaadin Router has not
+        // configured its routes yet when the page first loads.
+        await page.goto(CONSTANTS.URLS.DEVUI, {
             waitUntil: "networkidle",
             timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
         });
+
+        // Wait for the OAuth Sheriff extension card to appear in the extensions list
+        await page.getByText("JWT Token Validation").waitFor({
+            state: "visible",
+            timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
+        });
+
+        // Click through to the JWT Validation Status page via client-side routing
+        await page
+            .getByRole("link", { name: "JWT Validation Status" })
+            .click();
 
         // Wait for the component to finish loading via JSON-RPC
         await page
@@ -91,8 +104,12 @@ test.describe("self-devui-accessible: Environment Validation", () => {
                 timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
             });
 
-        // The page content should NOT contain BUILD_TIME if the bug fix is correct
-        const content = await page.content();
-        expect(content).not.toContain("BUILD_TIME");
+        // Verify the component does not show BUILD_TIME placeholder data.
+        // Use textContent() on the custom element because page.content() does not
+        // include shadow DOM content (LitElement renders inside shadow root).
+        const componentText = await page
+            .locator("qwc-jwt-validation-status")
+            .textContent();
+        expect(componentText).not.toContain("BUILD_TIME");
     });
 });

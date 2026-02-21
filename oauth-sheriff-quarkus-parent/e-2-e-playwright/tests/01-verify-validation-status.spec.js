@@ -35,8 +35,12 @@ test.describe("01 - JWT Validation Status Card", () => {
                 state: "visible",
                 timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
             });
-        const content = await page.content();
-        expect(content).not.toContain("BUILD_TIME");
+        // Use textContent() on the custom element because page.content() does not
+        // include shadow DOM content (LitElement renders inside shadow root).
+        const text = await page
+            .locator("qwc-jwt-validation-status")
+            .textContent();
+        expect(text).not.toContain("BUILD_TIME");
     });
 
     test("should display enabled/disabled metric", async ({ page }) => {

@@ -9,22 +9,31 @@ import { CONSTANTS } from "./constants.js";
  * Navigate to a Dev-UI extension page and wait for the custom element to render.
  * Quarkus Dev-UI uses Vaadin Router + Lit web components inside shadow DOM.
  *
+ * The Vaadin Router loads routes asynchronously, so direct URL navigation to
+ * sub-pages often fails (the router hasn't configured routes yet when the SPA
+ * first loads). This helper first navigates to the Dev-UI main page to fully
+ * initialize the SPA, then navigates to the target sub-page.
+ *
  * @param {import('@playwright/test').Page} page - Playwright page
  * @param {string} url - Full URL to navigate to
  * @param {string} [waitForSelector] - Optional CSS selector to wait for after navigation
  */
 export async function navigateToDevUIPage(page, url, waitForSelector) {
+    // Step 1: Navigate to the Dev-UI main page to fully initialize the SPA
+    await page.goto(CONSTANTS.URLS.DEVUI, {
+        waitUntil: "networkidle",
+        timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
+    });
+    await page.waitForFunction(() => document.readyState === "complete");
+
+    // Step 2: Navigate to the target sub-page (SPA is now initialized)
     await page.goto(url, {
         waitUntil: "networkidle",
         timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
     });
-
-    // Dev-UI pages load Lit components asynchronously; wait for DOM to stabilize
-    await page.waitForLoadState("networkidle");
     await page.waitForFunction(() => document.readyState === "complete");
 
     if (waitForSelector) {
-        // Dev-UI components render inside shadow DOM; use Playwright's pierce selector
         await page.locator(waitForSelector).waitFor({
             state: "visible",
             timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
