@@ -8,6 +8,12 @@ import {
     expect,
 } from "../fixtures/test-fixtures.js";
 import { CONSTANTS } from "../utils/constants.js";
+import {
+    goToValidationStatus,
+    goToJwksEndpoints,
+    goToTokenDebugger,
+    goToConfiguration,
+} from "../utils/devui-navigation.js";
 
 test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
     test("Full Dev-UI page WCAG compliance", async ({
@@ -39,11 +45,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
         page,
         accessibilityHelper,
     }) => {
-        await page.goto(CONSTANTS.DEVUI_PAGES.VALIDATION_STATUS, {
-            waitUntil: "networkidle",
-            timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
-        });
-        await page.waitForLoadState("networkidle");
+        await goToValidationStatus(page);
 
         const results = await accessibilityHelper.analyze();
         const critical = results.violations.filter(
@@ -56,11 +58,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
         page,
         accessibilityHelper,
     }) => {
-        await page.goto(CONSTANTS.DEVUI_PAGES.JWKS_ENDPOINTS, {
-            waitUntil: "networkidle",
-            timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
-        });
-        await page.waitForLoadState("networkidle");
+        await goToJwksEndpoints(page);
 
         const results = await accessibilityHelper.analyze();
         const critical = results.violations.filter(
@@ -73,11 +71,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
         page,
         accessibilityHelper,
     }) => {
-        await page.goto(CONSTANTS.DEVUI_PAGES.TOKEN_DEBUGGER, {
-            waitUntil: "networkidle",
-            timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
-        });
-        await page.waitForLoadState("networkidle");
+        await goToTokenDebugger(page);
 
         const results = await accessibilityHelper.analyze();
         const critical = results.violations.filter(
@@ -90,11 +84,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
         page,
         accessibilityHelper,
     }) => {
-        await page.goto(CONSTANTS.DEVUI_PAGES.CONFIGURATION, {
-            waitUntil: "networkidle",
-            timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
-        });
-        await page.waitForLoadState("networkidle");
+        await goToConfiguration(page);
 
         const results = await accessibilityHelper.analyze();
         const critical = results.violations.filter(
@@ -104,11 +94,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
     });
 
     test("Keyboard navigation works on Token Debugger", async ({ page }) => {
-        await page.goto(CONSTANTS.DEVUI_PAGES.TOKEN_DEBUGGER, {
-            waitUntil: "networkidle",
-            timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
-        });
-        await page.waitForLoadState("networkidle");
+        await goToTokenDebugger(page);
 
         // Tab through interactive elements
         await page.keyboard.press("Tab");

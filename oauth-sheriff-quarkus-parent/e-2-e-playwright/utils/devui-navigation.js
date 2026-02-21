@@ -7,7 +7,6 @@ import { CONSTANTS } from "./constants.js";
 
 /**
  * Map from URL slug to custom element tag name.
- * Used to wait for the web component to be defined before navigation.
  */
 const SLUG_TO_ELEMENT = {
     "jwt-validation-status": "qwc-jwt-validation-status",
@@ -20,15 +19,18 @@ const SLUG_TO_ELEMENT = {
  * Navigate to a Dev-UI extension page and wait for the custom element to render.
  * Quarkus Dev-UI uses Vaadin Router + Lit web components inside shadow DOM.
  *
- * Direct URL navigation to extension sub-pages fails because:
- *   - The Vaadin Router loads routes asynchronously via JSON-RPC WebSocket
- *   - Extension component JS files are lazily imported when the menu renders
+ * Extension sub-page routes are registered lazily by qwc-extensions when the
+ * Extensions card grid renders (qwc-extensions._renderActives). Each card page
+ * triggers import(page.componentRef) and routerController.addRouteForExtension(page).
+ *
+ * The Vaadin Router intercepts <a> clicks via event.composedPath() which traverses
+ * shadow DOM boundaries, so clicking the extension link triggers proper SPA navigation.
  *
  * This helper:
  *   1. Navigates to the Dev-UI main page to fully initialize the SPA
- *   2. Waits for extension metadata to load (confirming routes are registered)
- *   3. Waits for the target custom element to be defined (import complete)
- *   4. Triggers client-side navigation via history.pushState + PopStateEvent
+ *   2. Waits for extension cards to render (confirming routes are registered)
+ *   3. Clicks the extension sub-page <a> link (Vaadin Router intercepts the click)
+ *   4. Waits for the target custom element to appear in the DOM
  *
  * @param {import('@playwright/test').Page} page - Playwright page
  * @param {string} url - Full URL to navigate to
@@ -44,68 +46,40 @@ export async function navigateToDevUIPage(page, url, waitForSelector) {
     // Step 2: Wait for extension cards to load. This confirms:
     //   - JSON-RPC WebSocket is connected
     //   - Extension metadata has arrived
-    //   - Menu has rendered (which triggers route registration and component imports)
+    //   - qwc-extensions has rendered (which triggers route registration + component imports)
     await page.getByText("JWT Token Validation").first().waitFor({
         state: "visible",
         timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
     });
 
-    // Step 3: Wait for the target custom element to be defined.
-    // Extension component JS files are lazily imported when the menu renders.
-    // The import is async, so the custom element may not be registered yet.
-    // The Vaadin Router uses document.createElement(tagName) to instantiate
-    // the component — if the element isn't defined, it creates an HTMLUnknownElement.
+    // Step 3: Click the extension sub-page link.
+    // qwc-extension-link renders: <a class="extensionLink" href="${page.id}">
+    // where page.id is like "oauth-sheriff-quarkus/jwt-validation-status".
+    // The Vaadin Router intercepts the click via composedPath() (shadow DOM aware).
     const targetPath = new URL(url).pathname;
+    const pageId = targetPath.replace(/.*\/dev-ui\//, "");
     const slug = targetPath.split("/").pop();
+
+    const link = page.locator(`a.extensionLink[href="${pageId}"]`).first();
+    await link.waitFor({
+        state: "visible",
+        timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
+    });
+    await link.click();
+
+    // Step 4: Wait for the custom element to appear in the DOM.
+    // The Router resolves the route, creates the element, and renders it in #page.
+    // The async import(componentRef) may still be in progress, but custom elements
+    // get upgraded automatically once defined.
     const elementName = SLUG_TO_ELEMENT[slug];
-
     if (elementName) {
-        await page.evaluate(
-            async ({ el, timeoutMs }) => {
-                await Promise.race([
-                    customElements.whenDefined(el),
-                    new Promise((_, reject) =>
-                        setTimeout(
-                            () =>
-                                reject(
-                                    new Error(
-                                        `Custom element <${el}> not defined within ${timeoutMs}ms`,
-                                    ),
-                                ),
-                            timeoutMs,
-                        ),
-                    ),
-                ]);
-            },
-            { el: elementName, timeoutMs: 10_000 },
-        );
+        await page.locator(elementName).first().waitFor({
+            state: "attached",
+            timeout: CONSTANTS.TIMEOUTS.ELEMENT_VISIBLE,
+        });
+        // Give the Lit component time to initialize (connectedCallback -> firstUpdated -> render)
+        await page.waitForTimeout(1000);
     }
-
-    // Step 4: Trigger client-side navigation via the Vaadin Router.
-    // pushState updates the URL; PopStateEvent notifies the Router to re-evaluate.
-    // The Router reads window.location, matches against registered routes, and
-    // renders the component into the #page outlet.
-    const navDebug = await page.evaluate((path) => {
-        const outlet = document.querySelector("#page");
-        const router = outlet?.__router;
-        const routesBefore = router?.__routes?.length ?? -1;
-
-        history.pushState({}, "", path);
-        window.dispatchEvent(new PopStateEvent("popstate"));
-
-        return {
-            hasOutlet: !!outlet,
-            hasRouter: !!router,
-            routeCount: routesBefore,
-            currentPath: window.location.pathname,
-            outletChildren: outlet?.children?.length ?? 0,
-            outletHTML: outlet?.innerHTML?.substring(0, 300) ?? "",
-        };
-    }, targetPath);
-    console.log(`[navigateToDevUIPage] ${slug}:`, JSON.stringify(navDebug));
-
-    // Step 5: Wait for the route to resolve and the component to render.
-    await page.waitForTimeout(2000);
 
     if (waitForSelector) {
         await page.locator(waitForSelector).waitFor({
