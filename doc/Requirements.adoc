@@ -244,7 +244,7 @@ _See specification: xref:specification/technical-components.adoc#jwksloader[Jwks
 [#OAUTH-SHERIFF-4.5]
 ==== OAUTH-SHERIFF-4.5: Key Rotation Grace Period
 
-The library must support a configurable grace period for retired keys during key rotation to ensure uninterrupted service during the transition period, as recommended by https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JSON Web Token Best Current Practices] (February 2020) and general key management best practices.
+The library must support a configurable grace period for retired keys during key rotation to ensure uninterrupted service during the transition period, as recommended by general key management best practices.
 
 Key requirements:
 
@@ -342,7 +342,7 @@ _See specifications: xref:security/security-specifications.adoc[Security Specifi
 [#OAUTH-SHERIFF-8.1]
 ==== OAUTH-SHERIFF-8.1: Token Size Limits
 
-Implement token size limits to prevent denial of service attacks. Maximum token size should be 8KB as recommended by https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JSON Web Token Best Current Practices] and general industry practice.
+Implement token size limits to prevent denial of service attacks. Maximum token size should be 8KB as recommended by general industry practice and common HTTP server defaults.
 
 _See specifications: xref:specification/token-size-validation.adoc[Token Size Validation] and xref:specification/jwks-size-recommendations.adoc[JWKS Size Recommendations]_
 

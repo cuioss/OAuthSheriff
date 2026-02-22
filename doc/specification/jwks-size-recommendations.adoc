@@ -94,7 +94,7 @@ Based on analysis of the JWKS content generation in the project:
 
 === OAuth 2.0 JWT Best Current Practice (BCP)
 
-The https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JSON Web Token Best Current Practices] recommends a maximum token size of 8KB for JWT tokens. While this recommendation is specifically for JWT tokens, it provides a reference point for JSON-based security data.
+Industry best practices and common HTTP server configurations typically recommend a maximum token size of 8KB for JWT tokens. While this recommendation is often driven by infrastructure limits, it provides a reference point for JSON-based security data.
 
 === Major Identity Providers
 The typical sizes mentioned below are based on observations and may change. (Data last checked: 2025-06-02)
