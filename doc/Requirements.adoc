@@ -28,9 +28,34 @@ The following standards and specifications are referenced in this document:
 * https://datatracker.ietf.org/doc/html/rfc7516[RFC 7516 - JSON Web Encryption (JWE)] - May 2015
 * https://datatracker.ietf.org/doc/html/rfc6749[RFC 6749 - OAuth 2.0 Authorization Framework] - October 2012
 * https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect Core 1.0] - November 2014
-* https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09[OAuth 2.0 JWT Best Current Practices] - Latest draft, July 2023
+* https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JSON Web Token Best Current Practices] - February 2020 (updates RFC 7519)
+* https://datatracker.ietf.org/doc/html/rfc9068[RFC 9068 - JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens] - October 2021
+* https://datatracker.ietf.org/doc/html/rfc9449[RFC 9449 - OAuth 2.0 Demonstrating Proof of Possession (DPoP)] - September 2023
+* https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1[OAuth 2.1 Authorization Framework] - Draft, in progress
 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf[NIST SP 800-131A Revision 2] - March 2019
 * https://www.rfc-editor.org/rfc/rfc8017.html[RFC 8017 - PKCS #1: RSA Cryptography Specifications Version 2.2] - November 2016
+
+== OAuth 2.1 Compatibility
+
+OAuthSheriff is a **resource server token validation library**. It validates JWT tokens passed as strings and does not handle authorization flows, token issuance, redirect URIs, or HTTP transport.
+
+The major changes in https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1[OAuth 2.1] (mandatory PKCE, removal of implicit and ROPC grants, exact redirect URI matching, refresh token rotation) target **authorization servers and clients**, not resource servers. **Tokens issued by OAuth 2.1 compliant servers validate correctly with OAuthSheriff as-is**, since OAuth 2.1 does not change the JWT structure or introduce new mandatory claims for access tokens.
+
+OAuthSheriff already satisfies the OAuth 2.1 resource server requirements:
+
+* **Scope enforcement** - `scope` is mandatory for ACCESS_TOKEN type
+* **Audience validation** - Supported via `expected-audience` configuration; mandatory for ID tokens
+* **Token expiration check** - `exp` mandatory, with configurable clock skew tolerance
+* **Algorithm security** - Whitelisted RS/ES/PS families only; HMAC and "none" rejected per https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725]
+* **Issuer validation** - `iss` mandatory, matched against configured issuers
+* **Signature verification** - Full cryptographic validation pipeline
+
+=== Future Enhancements (Optional)
+
+The following optional enhancements are tracked as separate issues:
+
+* **https://datatracker.ietf.org/doc/html/rfc9068[RFC 9068] - `typ: at+jwt` header validation**: Optional per-issuer validation of the JWT `typ` header for access tokens. Not enabled by default since many authorization servers do not yet set this header.
+* **https://datatracker.ietf.org/doc/html/rfc9449[RFC 9449] - DPoP sender-constrained tokens**: Proof-of-possession mechanism where access tokens contain a `cnf.jkt` claim binding them to a client's public key. This is a major feature requiring HTTP context (DPoP header), not just a token string.
 
 == Functional Requirements
 
@@ -67,7 +92,7 @@ _See specification: xref:specification/technical-components.adoc#token-architect
 
 The library must validate token signatures using cryptographic algorithms as specified in https://datatracker.ietf.org/doc/html/rfc7518[RFC 7518 - JSON Web Algorithms (JWA)].
 
-For security reasons, only the following signature algorithms shall be supported (in accordance with https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09[OAuth 2.0 JWT Best Current Practices] (July 2023) and https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf[NIST SP 800-131A] (March 2019)):
+For security reasons, only the following signature algorithms shall be supported (in accordance with https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JSON Web Token Best Current Practices] (February 2020) and https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf[NIST SP 800-131A] (March 2019)):
 
 * RS256 (RSA Signature with SHA-256)
 * RS384 (RSA Signature with SHA-384)
@@ -79,13 +104,13 @@ For security reasons, only the following signature algorithms shall be supported
 The following algorithms shall NOT be supported due to security concerns:
 
 * HS256, HS384, HS512 (HMAC with SHA-2) - Vulnerable to https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/[key confusion attacks] (2015) when used in combination with RSA public keys
-* "none" algorithm - Explicitly forbidden by https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09#section-3.1[OAuth 2.0 JWT BCP Section 3.1] and https://cwe.mitre.org/data/definitions/347.html[CWE-347: Improper Verification of Cryptographic Signature]
+* "none" algorithm - Explicitly forbidden by https://datatracker.ietf.org/doc/html/rfc8725#section-3.1[RFC 8725 Section 3.1 - Perform Algorithm Verification] and https://cwe.mitre.org/data/definitions/347.html[CWE-347: Improper Verification of Cryptographic Signature]
 * RSA based algorithms (like RS256, RS384, RS512) with keys shorter than 2048 bits - Not compliant with https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf[NIST SP 800-131A] (2019)
 * All RSASSA-PKCS1-v1_5 algorithms - Considered legacy by https://www.rfc-editor.org/rfc/rfc8017.html#section-8.2[RFC 8017] (2016) in favor of RSASSA-PSS
 
 Additional security considerations:
 
-* The library must implement https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09#section-3.10[algorithm verification] to prevent algorithm substitution attacks (CVE-2015-9235)
+* The library must implement https://datatracker.ietf.org/doc/html/rfc8725#section-3.1[algorithm verification] to prevent algorithm substitution attacks (CVE-2015-9235)
 * The library must validate that the algorithm specified in the JWT header matches the expected algorithm for the key
 * The library must reject tokens with invalid signatures rather than falling back to less secure validation methods
 
@@ -219,7 +244,7 @@ _See specification: xref:specification/technical-components.adoc#jwksloader[Jwks
 [#OAUTH-SHERIFF-4.5]
 ==== OAUTH-SHERIFF-4.5: Key Rotation Grace Period
 
-The library must support a configurable grace period for retired keys during key rotation to ensure uninterrupted service during the transition period, as recommended by https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09#section-3.9[OAuth 2.0 JWT Best Current Practices Section 3.9] (July 2023).
+The library must support a configurable grace period for retired keys during key rotation to ensure uninterrupted service during the transition period, as recommended by https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JSON Web Token Best Current Practices] (February 2020) and general key management best practices.
 
 Key requirements:
 
@@ -317,7 +342,7 @@ _See specifications: xref:security/security-specifications.adoc[Security Specifi
 [#OAUTH-SHERIFF-8.1]
 ==== OAUTH-SHERIFF-8.1: Token Size Limits
 
-Implement token size limits to prevent denial of service attacks. Maximum token size should be 8KB as recommended by https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09#section-3.11[OAuth 2.0 JWT BCP Section 3.11].
+Implement token size limits to prevent denial of service attacks. Maximum token size should be 8KB as recommended by https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JSON Web Token Best Current Practices] and general industry practice.
 
 _See specifications: xref:specification/token-size-validation.adoc[Token Size Validation] and xref:specification/jwks-size-recommendations.adoc[JWKS Size Recommendations]_
 
@@ -357,7 +382,7 @@ _See specification: xref:security/security-specifications.adoc#claims-validation
 [#OAUTH-SHERIFF-8.5]
 ==== OAUTH-SHERIFF-8.5: Cryptographic Agility
 
-The library must support cryptographic agility as recommended by https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09#section-3.8[OAuth 2.0 JWT BCP Section 3.8], allowing for algorithm upgrades without breaking changes.
+The library must support cryptographic agility as recommended by https://datatracker.ietf.org/doc/html/rfc8725#section-3.2[RFC 8725 Section 3.2 - Use Appropriate Algorithms], allowing for algorithm upgrades without breaking changes.
 
 _See specification: xref:security/security-specifications.adoc#cryptographic-agility[Cryptographic Agility]_
 
@@ -425,7 +450,7 @@ Tests must verify compliance with:
 
 * https://openid.net/certification/[OpenID Connect Certification] requirements
 * https://www.rfc-editor.org/rfc/rfc7519[RFC 7519] JWT specification
-* https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09[OAuth 2.0 JWT Best Current Practices]
+* https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JSON Web Token Best Current Practices]
 
 _See specification: xref:specification/testing.adoc#compliance-testing[Compliance Testing]_
 
