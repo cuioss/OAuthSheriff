@@ -441,7 +441,7 @@ try {
 
 === External References
 
-* https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp - JWT Best Current Practices
+* https://datatracker.ietf.org/doc/html/rfc8725 - RFC 8725: JSON Web Token Best Current Practices
 * https://auth0.com/blog/a-look-at-the-latest-draft-for-jwt-bcp/ - A Look at the Latest Draft for JWT BCP
 * https://tools.ietf.org/html/rfc7519 - JSON Web Token (JWT) RFC
 * https://tools.ietf.org/html/rfc7515 - JSON Web Signature (JWS) RFC

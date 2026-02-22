@@ -56,7 +56,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * </ul>
  *
  * @author Oliver Wolff
- * @see <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-bcp-09">OAuth 2.0 JWT Best Current Practices</a>
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8725">RFC 8725 - JSON Web Token Best Current Practices</a>
  */
 @EnableGeneratorController
 @DisplayName("OAuth 2.0 JWT Best Practices Compliance Tests")
