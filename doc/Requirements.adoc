@@ -394,7 +394,7 @@ _See specification: xref:specification/testing.adoc[Testing Specification]_
 [#OAUTH-SHERIFF-12.1]
 ==== OAUTH-SHERIFF-12.1: Security Testing
 
-The library must undergo comprehensive security testing according to https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html[OWASP JWT Security Cheat Sheet for Java] (2023) and https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html[OWASP JWT Cheat Sheet for Java] (2023).
+The library must undergo comprehensive security testing according to https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html[OWASP JWT Security Cheat Sheet for Java] (2023).
 
 Key security tests must include:
 

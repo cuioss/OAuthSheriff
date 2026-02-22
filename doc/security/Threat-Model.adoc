@@ -216,7 +216,6 @@ The areas for improvement identified in the xref:threat-coverage-analysis.adoc[T
 == References
 
 * https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html[OWASP JWT Security Cheat Sheet for Java] (2023)
-* https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html[OWASP JWT Cheat Sheet for Java] (2023)
 * https://owasp.org/www-project-top-ten/[OWASP Top 10] (2021)
 * https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JSON Web Token Best Current Practices]
 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-52r2.pdf[NIST SP 800-52 Rev. 2] (2019)
