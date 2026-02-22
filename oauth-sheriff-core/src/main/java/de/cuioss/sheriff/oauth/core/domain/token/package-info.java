@@ -44,7 +44,7 @@
  * </ul>
  * <p>
  * For more details on token structure and usage, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#token-types">Token Types</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#token-types">Token Types</a>
  * specification.
  *
  * @author Oliver Wolff

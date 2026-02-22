@@ -48,7 +48,7 @@ import java.util.SortedSet;
  * caching or serialization scenarios.
  * <p>
  * For more details on JWT claim handling, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
  * specification.
  *
  * @author Oliver Wolff

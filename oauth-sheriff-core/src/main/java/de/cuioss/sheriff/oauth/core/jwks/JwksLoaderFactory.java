@@ -46,7 +46,7 @@ import lombok.experimental.UtilityClass;
  * Optional&lt;KeyInfo&gt; keyInfo = loader.getKeyInfo("kid123");
  * </pre>
  * <p>
- * See specification: <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification - JwksLoader</a>
+ * See specification: <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification - JwksLoader</a>
  *
  * @author Oliver Wolff
  * @since 1.0

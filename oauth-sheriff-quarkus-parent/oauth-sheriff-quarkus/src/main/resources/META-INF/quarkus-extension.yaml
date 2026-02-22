@@ -6,7 +6,7 @@ metadata:
     - token
     - validation
     - security
-  guide: https://github.com/cuioss/OAuth-Sheriff/tree/main/oauth-sheriff-quarkus-parent
+  guide: https://github.com/cuioss/OAuthSheriff/tree/main/oauth-sheriff-quarkus-parent
   categories:
     - "security"
   status: "preview"

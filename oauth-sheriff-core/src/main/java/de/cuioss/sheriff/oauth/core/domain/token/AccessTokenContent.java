@@ -48,13 +48,13 @@ import java.util.*;
  * <p>
  * This implementation follows the standards defined in:
  * <ul>
- *   <li><a href="https://tools.ietf.org/html/rfc6749">RFC 6749 - OAuth 2.0</a></li>
- *   <li><a href="https://tools.ietf.org/html/rfc7519">RFC 7519 - JWT</a></li>
- *   <li><a href="https://tools.ietf.org/html/rfc8693">RFC 8693 - Token Exchange</a></li>
+ *   <li><a href="https://datatracker.ietf.org/doc/html/rfc6749">RFC 6749 - OAuth 2.0</a></li>
+ *   <li><a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519 - JWT</a></li>
+ *   <li><a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693 - Token Exchange</a></li>
  * </ul>
  * <p>
  * For more details on token structure and usage, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#token-types">Token Types</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#token-types">Token Types</a>
  * specification.
  *
  * @author Oliver Wolff

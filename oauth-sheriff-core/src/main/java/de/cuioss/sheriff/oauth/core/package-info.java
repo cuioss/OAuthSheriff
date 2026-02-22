@@ -37,9 +37,9 @@
  * <p>
  * For detailed information about the library, see the following documentation:
  * <ul>
- *   <li><a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/Requirements.adoc">Requirements</a></li>
- *   <li><a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/Specification.adoc">Specification</a></li>
- *   <li><a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/oauth-sheriff-core/README.adoc">Usage Guide</a></li>
+ *   <li><a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/Requirements.adoc">Requirements</a></li>
+ *   <li><a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/Specification.adoc">Specification</a></li>
+ *   <li><a href="https://github.com/cuioss/OAuthSheriff/tree/main/oauth-sheriff-core/README.adoc">Usage Guide</a></li>
  * </ul>
  * <p>
  * Note: The implementation is primarily tested with Keycloak as the identity provider.

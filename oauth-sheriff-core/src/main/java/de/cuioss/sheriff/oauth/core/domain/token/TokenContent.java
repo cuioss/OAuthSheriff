@@ -40,11 +40,11 @@ import java.util.Optional;
  * </ul>
  * <p>
  * JWT tokens implementing this interface follow the standards defined in
- * <a href="https://tools.ietf.org/html/rfc7519">RFC 7519</a> for claim names
+ * <a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519</a> for claim names
  * and semantic behavior.
  * <p>
  * For more details on token structure, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
  * specification.
  *
  * @author Oliver Wolff

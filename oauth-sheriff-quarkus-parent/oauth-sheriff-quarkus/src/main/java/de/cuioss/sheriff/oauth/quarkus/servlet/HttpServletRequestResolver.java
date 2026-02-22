@@ -73,8 +73,8 @@ public interface HttpServletRequestResolver {
      * @throws jakarta.enterprise.inject.IllegalProductException if not in an active request context 
      *                               (CDI wraps underlying exceptions when @RequestScoped producer fails)
      * @throws IllegalStateException if the infrastructure is not available to resolve headers
-     * @see <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2: Header Fields</a>
-     * @see <a href="https://tools.ietf.org/html/rfc9113#section-8.1.2">RFC 9113 Section 8.1.2: HTTP Header Fields</a>
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc7230#section-3.2">RFC 7230 Section 3.2: Header Fields</a>
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc9113#section-8.1.2">RFC 9113 Section 8.1.2: HTTP Header Fields</a>
      */
    
     default Map<String, List<String>> resolveHeaderMap() throws IllegalStateException {

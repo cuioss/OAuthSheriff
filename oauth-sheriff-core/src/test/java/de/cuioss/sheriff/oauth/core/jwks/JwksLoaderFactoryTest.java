@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * </ul>
  *
  * @author Oliver Wolff
- * @see <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#jwks-integration">JWKS Integration Specification</a>
+ * @see <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#jwks-integration">JWKS Integration Specification</a>
  */
 @EnableTestLogger
 @DisplayName("Tests for JwksLoaderFactory")

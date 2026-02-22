@@ -49,11 +49,11 @@ import java.util.Optional;
  * This implementation follows the standards defined in:
  * <ul>
  *   <li><a href="https://openid.net/specs/openid-connect-core-1_0.html">OpenID Connect Core 1.0</a></li>
- *   <li><a href="https://tools.ietf.org/html/rfc7519">RFC 7519 - JWT</a></li>
+ *   <li><a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519 - JWT</a></li>
  * </ul>
  * <p>
  * For more details on token structure and usage, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#token-types">Token Types</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#token-types">Token Types</a>
  * specification.
  *
  * @author Oliver Wolff
