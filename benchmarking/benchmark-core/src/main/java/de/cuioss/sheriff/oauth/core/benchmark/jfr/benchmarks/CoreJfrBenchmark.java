@@ -72,17 +72,6 @@ public class CoreJfrBenchmark extends AbstractJfrBenchmark {
     }
 
     /**
-     * Measures concurrent validation performance with token rotation and JFR instrumentation.
-     */
-    @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
-    public AccessTokenContent measureConcurrentValidationWithJfr() {
-        return performValidationWithJfr("measureConcurrentValidationWithJfr", "rotation",
-                () -> coreValidationDelegate.validateWithRotation());
-    }
-
-    /**
      * Common method to perform validation with JFR instrumentation.
      *
      * @param operationName the name of the operation for JFR recording

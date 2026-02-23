@@ -23,7 +23,7 @@ import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Delegate for core validation benchmarks including average time, throughput, and concurrent validation.
+ * Delegate for core validation benchmarks including average time and throughput.
  *
  * @author Oliver Wolff
  * @since 1.0
@@ -50,23 +50,6 @@ public class CoreValidationDelegate extends BenchmarkDelegate {
             return validateToken(token);
         } catch (TokenValidationException e) {
             throw new IllegalStateException("Unexpected validation failure during full spectrum validation", e);
-        }
-    }
-
-    /**
-     * Performs concurrent validation with token rotation.
-     * Rotates through the token pool to simulate different tokens being validated.
-     *
-     * @return the validated access token content
-     * @throws IllegalStateException if validation fails unexpectedly
-     */
-    public AccessTokenContent validateWithRotation() {
-        try {
-            // Rotate through token pool to simulate different tokens
-            String token = tokenRepository.getToken(tokenIndex.getAndIncrement());
-            return validateToken(token);
-        } catch (TokenValidationException e) {
-            throw new IllegalStateException("Unexpected validation failure during concurrent validation", e);
         }
     }
 

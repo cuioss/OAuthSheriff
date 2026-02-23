@@ -49,7 +49,7 @@ public class UnifiedJfrBenchmark {
 
     // Token type constants
     private static final String TOKEN_TYPE_FULL_SPECTRUM = "full_spectrum";
-    private static final String TOKEN_TYPE_ROTATION = "rotation";
+
 
     // Issuer constants
     private static final String BENCHMARK_ISSUER = "benchmark-issuer";
@@ -158,25 +158,6 @@ public class UnifiedJfrBenchmark {
                     .withMetadata(ISSUER, tokenRepository.getTokenIssuer(token).orElse(null));
 
             AccessTokenContent result = coreValidationDelegate.validateWithFullSpectrum();
-            recorder.withSuccess(true);
-            return result;
-        }
-    }
-
-    /**
-     * Measures concurrent validation performance with token rotation and JFR instrumentation.
-     */
-    @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
-    public AccessTokenContent measureConcurrentValidationWithJfr() {
-        String token = coreValidationDelegate.getCurrentToken(TOKEN_TYPE_ROTATION);
-
-        try (var recorder = jfrInstrumentation.recordOperation("measureConcurrentValidationWithJfr", VALIDATION_OPERATION)) {
-            recorder.withPayloadSize(token.length())
-                    .withMetadata(ISSUER, tokenRepository.getTokenIssuer(token).orElse(null));
-
-            AccessTokenContent result = coreValidationDelegate.validateWithRotation();
             recorder.withSuccess(true);
             return result;
         }
