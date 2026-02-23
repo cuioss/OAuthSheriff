@@ -75,18 +75,4 @@ public class SimpleCoreValidationBenchmark extends AbstractBenchmark {
         return validationDelegate.validateWithFullSpectrum();
     }
 
-    /**
-     * Measures concurrent validation performance with token rotation.
-     * This benchmark tests validation performance using a pool of different tokens
-     * to simulate real-world scenarios where multiple different tokens are validated
-     * concurrently. This provides insight into caching behavior and token diversity impact.
-     *
-     * @return validated access token content
-     */
-    @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
-    public AccessTokenContent measureConcurrentValidation() {
-        return validationDelegate.validateWithRotation();
-    }
 }

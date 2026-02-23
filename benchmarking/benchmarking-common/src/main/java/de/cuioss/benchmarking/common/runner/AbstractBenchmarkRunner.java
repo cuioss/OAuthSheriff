@@ -131,7 +131,8 @@ public abstract class AbstractBenchmarkRunner {
 
         // Process results (generates reports and GitHub Pages)
         BenchmarkResultProcessor processor = new BenchmarkResultProcessor(
-                config.reportConfig().benchmarkType()
+                config.reportConfig().benchmarkType(),
+                config.reportConfig()
         );
         processor.processResults(results, config.resultsDirectory());
     }

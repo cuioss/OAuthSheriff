@@ -313,7 +313,7 @@ class BadgeGeneratorEnhancedTest {
 
         // Simulate CORRECT behavior after fix: latency already converted to milliseconds
         BenchmarkMetrics metricsWithMilliseconds = new BenchmarkMetrics(
-                "validateMixedTokens50", "measureConcurrentValidation",
+                "validateMixedTokens50", "measureAverageTime",
                 176662.03, 0.8674, // Latency CORRECTLY converted from 867.4 us to 0.8674 ms
                 50.0, "F"
         );

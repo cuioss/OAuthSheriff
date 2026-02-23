@@ -1,12 +1,12 @@
 [
     {
-        "jmhVersion" : "1.37",
-        "benchmark" : "de.cuioss.sheriff.oauth.core.benchmark.standard.SimpleCoreValidationBenchmark.measureThroughput",
-        "mode" : "thrpt",
-        "threads" : 100,
-        "forks" : 1,
-        "jvm" : "/Users/oliver/.sdkman/candidates/java/21.0.7-tem/bin/java",
-        "jvmArgs" : [
+        "jmhVersion": "1.37",
+        "benchmark": "de.cuioss.sheriff.oauth.core.benchmark.standard.SimpleCoreValidationBenchmark.measureThroughput",
+        "mode": "thrpt",
+        "threads": 100,
+        "forks": 1,
+        "jvm": "/Users/oliver/.sdkman/candidates/java/21.0.7-tem/bin/java",
+        "jvmArgs": [
             "-Djava.specification.version=21",
             "-Dsun.jnu.encoding=UTF-8",
             "-Djava.class.path=/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/classes:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-lang3-3.18.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/oauth-sheriff-validation-1.0.0-SNAPSHOT.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpcore-4.4.16.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-logging-1.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/xml-path-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jna-5.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/msg-simple-1.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-core-2.12.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-coreutils-2.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-jakarta-rs-json-provider-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-xml-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jopt-simple-5.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-core-spi-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.mail-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/gson-2.13.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-http-0.1.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-spi-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.json-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/annotations-17.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-compress-1.24.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/testcontainers-1.21.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jboss-logging-3.6.1.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/angus-mail-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jspecify-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-test-keycloak-integration-1.0.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/HdrHistogram-2.2.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/json-patch-1.13.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/btf-1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-transport-zerodep-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-module-jakarta-xmlbind-annotations-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/rest-assured-common-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.xml.bind-api-3.0.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-api-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-core-ui-model-2.3.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-api-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-test-generator-2.5.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-dom-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-java-tools-2.6.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-benchmarking-common-1.0.0-SNAPSHOT.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.activation-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-codec-1.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/keycloak-admin-client-26.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-math3-3.6.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/duct-tape-1.0.8.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-json-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/keycloak-client-common-synced-26.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/junit-jupiter-1.21.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/slf4j-api-2.0.17.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-api-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-jackson-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-datatype-jsr310-2.17.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/quarkus-junit4-mock-3.20.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-core-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/angus-activation-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/testcontainers-keycloak-3.7.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/reactive-streams-1.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-logging-jboss-logging-1.0.0.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/microprofile-openapi-api-3.1.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-datatype-jdk8-2.17.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-storage-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/rest-assured-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/error_prone_annotations-2.41.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-annotations-2.12.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/parsson-1.1.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-databind-2.12.7.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jmh-core-1.37.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/oauth-sheriff-validation-1.0.0-SNAPSHOT-generators.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-io-2.20.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-transport-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpclient-4.5.13.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/hamcrest-2.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-multipart-provider-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-impl-base-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-jakarta-rs-base-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-impl-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/dsl-json-2.0.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/tagsoup-1.2.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-core-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/asyncutil-0.1.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-jackson2-provider-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/json-path-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpmime-4.5.13.jar",
@@ -82,36 +82,36 @@
             "-XX:+UnlockDiagnosticVMOptions",
             "-XX:+DebugNonSafepoints"
         ],
-        "jdkVersion" : "21.0.7",
-        "vmName" : "OpenJDK 64-Bit Server VM",
-        "vmVersion" : "21.0.7+6-LTS",
-        "warmupIterations" : 3,
-        "warmupTime" : "1 s",
-        "warmupBatchSize" : 1,
-        "measurementIterations" : 5,
-        "measurementTime" : "4 s",
-        "measurementBatchSize" : 1,
-        "primaryMetric" : {
-            "score" : 127035.13705879333,
-            "scoreError" : 43609.66622537183,
-            "scoreConfidence" : [
+        "jdkVersion": "21.0.7",
+        "vmName": "OpenJDK 64-Bit Server VM",
+        "vmVersion": "21.0.7+6-LTS",
+        "warmupIterations": 3,
+        "warmupTime": "1 s",
+        "warmupBatchSize": 1,
+        "measurementIterations": 5,
+        "measurementTime": "4 s",
+        "measurementBatchSize": 1,
+        "primaryMetric": {
+            "score": 127035.13705879333,
+            "scoreError": 43609.66622537183,
+            "scoreConfidence": [
                 83425.47083342151,
                 170644.80328416516
             ],
-            "scorePercentiles" : {
-                "0.0" : 106920.34385125768,
-                "50.0" : 131744.6512937225,
-                "90.0" : 133475.50076231416,
-                "95.0" : 133475.50076231416,
-                "99.0" : 133475.50076231416,
-                "99.9" : 133475.50076231416,
-                "99.99" : 133475.50076231416,
-                "99.999" : 133475.50076231416,
-                "99.9999" : 133475.50076231416,
-                "100.0" : 133475.50076231416
+            "scorePercentiles": {
+                "0.0": 106920.34385125768,
+                "50.0": 131744.6512937225,
+                "90.0": 133475.50076231416,
+                "95.0": 133475.50076231416,
+                "99.0": 133475.50076231416,
+                "99.9": 133475.50076231416,
+                "99.99": 133475.50076231416,
+                "99.999": 133475.50076231416,
+                "99.9999": 133475.50076231416,
+                "100.0": 133475.50076231416
             },
-            "scoreUnit" : "ops/s",
-            "rawData" : [
+            "scoreUnit": "ops/s",
+            "rawData": [
                 [
                     106920.34385125768,
                     130000.79336648493,
@@ -121,17 +121,16 @@
                 ]
             ]
         },
-        "secondaryMetrics" : {
-        }
+        "secondaryMetrics": {}
     },
     {
-        "jmhVersion" : "1.37",
-        "benchmark" : "de.cuioss.sheriff.oauth.core.benchmark.standard.SimpleErrorLoadBenchmark.validateMixedTokens0",
-        "mode" : "thrpt",
-        "threads" : 100,
-        "forks" : 1,
-        "jvm" : "/Users/oliver/.sdkman/candidates/java/21.0.7-tem/bin/java",
-        "jvmArgs" : [
+        "jmhVersion": "1.37",
+        "benchmark": "de.cuioss.sheriff.oauth.core.benchmark.standard.SimpleErrorLoadBenchmark.validateMixedTokens0",
+        "mode": "thrpt",
+        "threads": 100,
+        "forks": 1,
+        "jvm": "/Users/oliver/.sdkman/candidates/java/21.0.7-tem/bin/java",
+        "jvmArgs": [
             "-Djava.specification.version=21",
             "-Dsun.jnu.encoding=UTF-8",
             "-Djava.class.path=/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/classes:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-lang3-3.18.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/oauth-sheriff-validation-1.0.0-SNAPSHOT.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpcore-4.4.16.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-logging-1.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/xml-path-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jna-5.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/msg-simple-1.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-core-2.12.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-coreutils-2.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-jakarta-rs-json-provider-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-xml-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jopt-simple-5.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-core-spi-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.mail-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/gson-2.13.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-http-0.1.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-spi-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.json-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/annotations-17.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-compress-1.24.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/testcontainers-1.21.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jboss-logging-3.6.1.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/angus-mail-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jspecify-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-test-keycloak-integration-1.0.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/HdrHistogram-2.2.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/json-patch-1.13.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/btf-1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-transport-zerodep-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-module-jakarta-xmlbind-annotations-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/rest-assured-common-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.xml.bind-api-3.0.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-api-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-core-ui-model-2.3.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-api-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-test-generator-2.5.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-dom-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-java-tools-2.6.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-benchmarking-common-1.0.0-SNAPSHOT.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.activation-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-codec-1.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/keycloak-admin-client-26.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-math3-3.6.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/duct-tape-1.0.8.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-json-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/keycloak-client-common-synced-26.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/junit-jupiter-1.21.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/slf4j-api-2.0.17.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-api-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-jackson-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-datatype-jsr310-2.17.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/quarkus-junit4-mock-3.20.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-core-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/angus-activation-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/testcontainers-keycloak-3.7.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/reactive-streams-1.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-logging-jboss-logging-1.0.0.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/microprofile-openapi-api-3.1.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-datatype-jdk8-2.17.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-storage-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/rest-assured-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/error_prone_annotations-2.41.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-annotations-2.12.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/parsson-1.1.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-databind-2.12.7.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jmh-core-1.37.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/oauth-sheriff-validation-1.0.0-SNAPSHOT-generators.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-io-2.20.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-transport-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpclient-4.5.13.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/hamcrest-2.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-multipart-provider-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-impl-base-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-jakarta-rs-base-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-impl-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/dsl-json-2.0.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/tagsoup-1.2.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-core-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/asyncutil-0.1.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-jackson2-provider-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/json-path-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpmime-4.5.13.jar",
@@ -207,36 +206,36 @@
             "-XX:+UnlockDiagnosticVMOptions",
             "-XX:+DebugNonSafepoints"
         ],
-        "jdkVersion" : "21.0.7",
-        "vmName" : "OpenJDK 64-Bit Server VM",
-        "vmVersion" : "21.0.7+6-LTS",
-        "warmupIterations" : 3,
-        "warmupTime" : "1 s",
-        "warmupBatchSize" : 1,
-        "measurementIterations" : 5,
-        "measurementTime" : "4 s",
-        "measurementBatchSize" : 1,
-        "primaryMetric" : {
-            "score" : 118957.3549121324,
-            "scoreError" : 74067.10599536449,
-            "scoreConfidence" : [
+        "jdkVersion": "21.0.7",
+        "vmName": "OpenJDK 64-Bit Server VM",
+        "vmVersion": "21.0.7+6-LTS",
+        "warmupIterations": 3,
+        "warmupTime": "1 s",
+        "warmupBatchSize": 1,
+        "measurementIterations": 5,
+        "measurementTime": "4 s",
+        "measurementBatchSize": 1,
+        "primaryMetric": {
+            "score": 118957.3549121324,
+            "scoreError": 74067.10599536449,
+            "scoreConfidence": [
                 44890.248916767916,
                 193024.4609074969
             ],
-            "scorePercentiles" : {
-                "0.0" : 84875.25909246117,
-                "50.0" : 127268.01106080944,
-                "90.0" : 130607.42571376091,
-                "95.0" : 130607.42571376091,
-                "99.0" : 130607.42571376091,
-                "99.9" : 130607.42571376091,
-                "99.99" : 130607.42571376091,
-                "99.999" : 130607.42571376091,
-                "99.9999" : 130607.42571376091,
-                "100.0" : 130607.42571376091
+            "scorePercentiles": {
+                "0.0": 84875.25909246117,
+                "50.0": 127268.01106080944,
+                "90.0": 130607.42571376091,
+                "95.0": 130607.42571376091,
+                "99.0": 130607.42571376091,
+                "99.9": 130607.42571376091,
+                "99.99": 130607.42571376091,
+                "99.999": 130607.42571376091,
+                "99.9999": 130607.42571376091,
+                "100.0": 130607.42571376091
             },
-            "scoreUnit" : "ops/s",
-            "rawData" : [
+            "scoreUnit": "ops/s",
+            "rawData": [
                 [
                     84875.25909246117,
                     123386.23747484367,
@@ -246,17 +245,16 @@
                 ]
             ]
         },
-        "secondaryMetrics" : {
-        }
+        "secondaryMetrics": {}
     },
     {
-        "jmhVersion" : "1.37",
-        "benchmark" : "de.cuioss.sheriff.oauth.core.benchmark.standard.SimpleErrorLoadBenchmark.validateMixedTokens50",
-        "mode" : "thrpt",
-        "threads" : 100,
-        "forks" : 1,
-        "jvm" : "/Users/oliver/.sdkman/candidates/java/21.0.7-tem/bin/java",
-        "jvmArgs" : [
+        "jmhVersion": "1.37",
+        "benchmark": "de.cuioss.sheriff.oauth.core.benchmark.standard.SimpleErrorLoadBenchmark.validateMixedTokens50",
+        "mode": "thrpt",
+        "threads": 100,
+        "forks": 1,
+        "jvm": "/Users/oliver/.sdkman/candidates/java/21.0.7-tem/bin/java",
+        "jvmArgs": [
             "-Djava.specification.version=21",
             "-Dsun.jnu.encoding=UTF-8",
             "-Djava.class.path=/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/classes:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-lang3-3.18.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/oauth-sheriff-validation-1.0.0-SNAPSHOT.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpcore-4.4.16.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-logging-1.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/xml-path-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jna-5.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/msg-simple-1.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-core-2.12.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-coreutils-2.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-jakarta-rs-json-provider-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-xml-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jopt-simple-5.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-core-spi-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.mail-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/gson-2.13.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-http-0.1.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-spi-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.json-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/annotations-17.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-compress-1.24.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/testcontainers-1.21.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jboss-logging-3.6.1.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/angus-mail-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jspecify-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-test-keycloak-integration-1.0.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/HdrHistogram-2.2.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/json-patch-1.13.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/btf-1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-transport-zerodep-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-module-jakarta-xmlbind-annotations-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/rest-assured-common-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.xml.bind-api-3.0.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-api-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-core-ui-model-2.3.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-api-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-test-generator-2.5.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-dom-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-java-tools-2.6.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-benchmarking-common-1.0.0-SNAPSHOT.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.activation-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-codec-1.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/keycloak-admin-client-26.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-math3-3.6.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/duct-tape-1.0.8.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-json-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/keycloak-client-common-synced-26.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/junit-jupiter-1.21.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/slf4j-api-2.0.17.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-api-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-jackson-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-datatype-jsr310-2.17.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/quarkus-junit4-mock-3.20.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-core-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/angus-activation-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/testcontainers-keycloak-3.7.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/reactive-streams-1.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-logging-jboss-logging-1.0.0.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/microprofile-openapi-api-3.1.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-datatype-jdk8-2.17.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-storage-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/rest-assured-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/error_prone_annotations-2.41.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-annotations-2.12.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/parsson-1.1.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-databind-2.12.7.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jmh-core-1.37.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/oauth-sheriff-validation-1.0.0-SNAPSHOT-generators.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-io-2.20.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-transport-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpclient-4.5.13.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/hamcrest-2.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-multipart-provider-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-impl-base-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-jakarta-rs-base-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-impl-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/dsl-json-2.0.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/tagsoup-1.2.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-core-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/asyncutil-0.1.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-jackson2-provider-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/json-path-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpmime-4.5.13.jar",
@@ -332,36 +330,36 @@
             "-XX:+UnlockDiagnosticVMOptions",
             "-XX:+DebugNonSafepoints"
         ],
-        "jdkVersion" : "21.0.7",
-        "vmName" : "OpenJDK 64-Bit Server VM",
-        "vmVersion" : "21.0.7+6-LTS",
-        "warmupIterations" : 3,
-        "warmupTime" : "1 s",
-        "warmupBatchSize" : 1,
-        "measurementIterations" : 5,
-        "measurementTime" : "4 s",
-        "measurementBatchSize" : 1,
-        "primaryMetric" : {
-            "score" : 175596.68488058654,
-            "scoreError" : 74339.3196189939,
-            "scoreConfidence" : [
+        "jdkVersion": "21.0.7",
+        "vmName": "OpenJDK 64-Bit Server VM",
+        "vmVersion": "21.0.7+6-LTS",
+        "warmupIterations": 3,
+        "warmupTime": "1 s",
+        "warmupBatchSize": 1,
+        "measurementIterations": 5,
+        "measurementTime": "4 s",
+        "measurementBatchSize": 1,
+        "primaryMetric": {
+            "score": 175596.68488058654,
+            "scoreError": 74339.3196189939,
+            "scoreConfidence": [
                 101257.36526159264,
                 249936.00449958045
             ],
-            "scorePercentiles" : {
-                "0.0" : 147940.24738257172,
-                "50.0" : 184729.91895164276,
-                "90.0" : 191392.0509569143,
-                "95.0" : 191392.0509569143,
-                "99.0" : 191392.0509569143,
-                "99.9" : 191392.0509569143,
-                "99.99" : 191392.0509569143,
-                "99.999" : 191392.0509569143,
-                "99.9999" : 191392.0509569143,
-                "100.0" : 191392.0509569143
+            "scorePercentiles": {
+                "0.0": 147940.24738257172,
+                "50.0": 184729.91895164276,
+                "90.0": 191392.0509569143,
+                "95.0": 191392.0509569143,
+                "99.0": 191392.0509569143,
+                "99.9": 191392.0509569143,
+                "99.99": 191392.0509569143,
+                "99.999": 191392.0509569143,
+                "99.9999": 191392.0509569143,
+                "100.0": 191392.0509569143
             },
-            "scoreUnit" : "ops/s",
-            "rawData" : [
+            "scoreUnit": "ops/s",
+            "rawData": [
                 [
                     147940.24738257172,
                     163008.37628933298,
@@ -371,17 +369,16 @@
                 ]
             ]
         },
-        "secondaryMetrics" : {
-        }
+        "secondaryMetrics": {}
     },
     {
-        "jmhVersion" : "1.37",
-        "benchmark" : "de.cuioss.sheriff.oauth.core.benchmark.standard.SimpleCoreValidationBenchmark.measureAverageTime",
-        "mode" : "avgt",
-        "threads" : 100,
-        "forks" : 1,
-        "jvm" : "/Users/oliver/.sdkman/candidates/java/21.0.7-tem/bin/java",
-        "jvmArgs" : [
+        "jmhVersion": "1.37",
+        "benchmark": "de.cuioss.sheriff.oauth.core.benchmark.standard.SimpleCoreValidationBenchmark.measureAverageTime",
+        "mode": "avgt",
+        "threads": 100,
+        "forks": 1,
+        "jvm": "/Users/oliver/.sdkman/candidates/java/21.0.7-tem/bin/java",
+        "jvmArgs": [
             "-Djava.specification.version=21",
             "-Dsun.jnu.encoding=UTF-8",
             "-Djava.class.path=/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/classes:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-lang3-3.18.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/oauth-sheriff-validation-1.0.0-SNAPSHOT.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpcore-4.4.16.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-logging-1.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/xml-path-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jna-5.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/msg-simple-1.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-core-2.12.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-coreutils-2.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-jakarta-rs-json-provider-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-xml-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jopt-simple-5.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-core-spi-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.mail-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/gson-2.13.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-http-0.1.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-spi-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.json-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/annotations-17.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-compress-1.24.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/testcontainers-1.21.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jboss-logging-3.6.1.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/angus-mail-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jspecify-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-test-keycloak-integration-1.0.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/HdrHistogram-2.2.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/json-patch-1.13.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/btf-1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-transport-zerodep-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-module-jakarta-xmlbind-annotations-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/rest-assured-common-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.xml.bind-api-3.0.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-api-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-core-ui-model-2.3.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-api-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-test-generator-2.5.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-dom-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-java-tools-2.6.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-benchmarking-common-1.0.0-SNAPSHOT.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.activation-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-codec-1.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/keycloak-admin-client-26.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-math3-3.6.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/duct-tape-1.0.8.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-json-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/keycloak-client-common-synced-26.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/junit-jupiter-1.21.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/slf4j-api-2.0.17.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-api-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-jackson-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-datatype-jsr310-2.17.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/quarkus-junit4-mock-3.20.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-core-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/angus-activation-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/testcontainers-keycloak-3.7.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/reactive-streams-1.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-logging-jboss-logging-1.0.0.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/microprofile-openapi-api-3.1.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-datatype-jdk8-2.17.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-storage-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/rest-assured-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/error_prone_annotations-2.41.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-annotations-2.12.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/parsson-1.1.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-databind-2.12.7.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jmh-core-1.37.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/oauth-sheriff-validation-1.0.0-SNAPSHOT-generators.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-io-2.20.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-transport-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpclient-4.5.13.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/hamcrest-2.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-multipart-provider-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-impl-base-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-jakarta-rs-base-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-impl-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/dsl-json-2.0.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/tagsoup-1.2.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-core-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/asyncutil-0.1.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-jackson2-provider-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/json-path-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpmime-4.5.13.jar",
@@ -457,36 +454,36 @@
             "-XX:+UnlockDiagnosticVMOptions",
             "-XX:+DebugNonSafepoints"
         ],
-        "jdkVersion" : "21.0.7",
-        "vmName" : "OpenJDK 64-Bit Server VM",
-        "vmVersion" : "21.0.7+6-LTS",
-        "warmupIterations" : 3,
-        "warmupTime" : "1 s",
-        "warmupBatchSize" : 1,
-        "measurementIterations" : 5,
-        "measurementTime" : "4 s",
-        "measurementBatchSize" : 1,
-        "primaryMetric" : {
-            "score" : 824.8266407673018,
-            "scoreError" : 519.7006963051847,
-            "scoreConfidence" : [
+        "jdkVersion": "21.0.7",
+        "vmName": "OpenJDK 64-Bit Server VM",
+        "vmVersion": "21.0.7+6-LTS",
+        "warmupIterations": 3,
+        "warmupTime": "1 s",
+        "warmupBatchSize": 1,
+        "measurementIterations": 5,
+        "measurementTime": "4 s",
+        "measurementBatchSize": 1,
+        "primaryMetric": {
+            "score": 824.8266407673018,
+            "scoreError": 519.7006963051847,
+            "scoreConfidence": [
                 305.1259444621171,
                 1344.5273370724865
             ],
-            "scorePercentiles" : {
-                "0.0" : 753.9052615431236,
-                "50.0" : 762.8368339955523,
-                "90.0" : 1065.284060649056,
-                "95.0" : 1065.284060649056,
-                "99.0" : 1065.284060649056,
-                "99.9" : 1065.284060649056,
-                "99.99" : 1065.284060649056,
-                "99.999" : 1065.284060649056,
-                "99.9999" : 1065.284060649056,
-                "100.0" : 1065.284060649056
+            "scorePercentiles": {
+                "0.0": 753.9052615431236,
+                "50.0": 762.8368339955523,
+                "90.0": 1065.284060649056,
+                "95.0": 1065.284060649056,
+                "99.0": 1065.284060649056,
+                "99.9": 1065.284060649056,
+                "99.99": 1065.284060649056,
+                "99.999": 1065.284060649056,
+                "99.9999": 1065.284060649056,
+                "100.0": 1065.284060649056
             },
-            "scoreUnit" : "us/op",
-            "rawData" : [
+            "scoreUnit": "us/op",
+            "rawData": [
                 [
                     1065.284060649056,
                     784.952263527557,
@@ -496,134 +493,6 @@
                 ]
             ]
         },
-        "secondaryMetrics" : {
-        }
-    },
-    {
-        "jmhVersion" : "1.37",
-        "benchmark" : "de.cuioss.sheriff.oauth.core.benchmark.standard.SimpleCoreValidationBenchmark.measureConcurrentValidation",
-        "mode" : "avgt",
-        "threads" : 100,
-        "forks" : 1,
-        "jvm" : "/Users/oliver/.sdkman/candidates/java/21.0.7-tem/bin/java",
-        "jvmArgs" : [
-            "-Djava.specification.version=21",
-            "-Dsun.jnu.encoding=UTF-8",
-            "-Djava.class.path=/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/classes:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-lang3-3.18.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/oauth-sheriff-validation-1.0.0-SNAPSHOT.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpcore-4.4.16.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-logging-1.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/xml-path-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jna-5.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/msg-simple-1.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-core-2.12.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-coreutils-2.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-jakarta-rs-json-provider-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-xml-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jopt-simple-5.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-core-spi-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.mail-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/gson-2.13.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-http-0.1.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-spi-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.json-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/annotations-17.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-compress-1.24.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/testcontainers-1.21.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jboss-logging-3.6.1.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/angus-mail-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jspecify-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-test-keycloak-integration-1.0.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/HdrHistogram-2.2.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/json-patch-1.13.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/btf-1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-transport-zerodep-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-module-jakarta-xmlbind-annotations-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/rest-assured-common-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.xml.bind-api-3.0.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-api-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-core-ui-model-2.3.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-api-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-test-generator-2.5.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-dom-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-java-tools-2.6.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/cui-benchmarking-common-1.0.0-SNAPSHOT.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jakarta.activation-api-2.1.3.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-codec-1.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/keycloak-admin-client-26.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-math3-3.6.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/duct-tape-1.0.8.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/groovy-json-4.0.22.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/keycloak-client-common-synced-26.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/junit-jupiter-1.21.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/slf4j-api-2.0.17.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-api-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-jackson-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-datatype-jsr310-2.17.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/quarkus-junit4-mock-3.20.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-core-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/angus-activation-1.0.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/testcontainers-keycloak-3.7.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/reactive-streams-1.0.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-logging-jboss-logging-1.0.0.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/microprofile-openapi-api-3.1.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-datatype-jdk8-2.17.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-storage-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/rest-assured-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/error_prone_annotations-2.41.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-annotations-2.12.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/parsson-1.1.7.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-databind-2.12.7.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jmh-core-1.37.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/oauth-sheriff-validation-1.0.0-SNAPSHOT-generators.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/commons-io-2.20.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/docker-java-transport-3.4.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpclient-4.5.13.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/hamcrest-2.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-multipart-provider-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/shrinkwrap-impl-base-2.0.0-beta-2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jackson-jakarta-rs-base-2.15.4.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/jjwt-impl-0.13.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/dsl-json-2.0.2.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/tagsoup-1.2.1.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/apache-mime4j-core-0.8.11.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/asyncutil-0.1.0.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/resteasy-jackson2-provider-6.2.10.Final.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/json-path-5.5.6.jar:/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library/target/dependency/httpmime-4.5.13.jar",
-            "-Djava.vm.vendor=Eclipse Adoptium",
-            "-Dsun.arch.data.model=64",
-            "-Djava.vendor.url=https://adoptium.net/",
-            "-Djava.vm.specification.version=21",
-            "-Dos.name=Mac OS X",
-            "-Dsun.java.launcher=SUN_STANDARD",
-            "-Duser.country=DE",
-            "-Dsun.boot.library.path=/Users/oliver/.sdkman/candidates/java/21.0.7-tem/lib",
-            "-Dsun.java.command=de.cuioss.sheriff.oauth.core.benchmark.LibraryBenchmarkRunner",
-            "-Dhttp.nonProxyHosts=local|*.local|169.254/16|*.169.254/16",
-            "-Djdk.debug=release",
-            "-Dsun.cpu.endian=little",
-            "-Duser.home=/Users/oliver",
-            "-Duser.language=de",
-            "-Djava.specification.vendor=Oracle Corporation",
-            "-Djava.version.date=2025-04-15",
-            "-Djava.home=/Users/oliver/.sdkman/candidates/java/21.0.7-tem",
-            "-Dfile.separator=/",
-            "-Djava.vm.compressedOopsMode=Zero based",
-            "-Dline.separator=",
-            "-Djava.vm.specification.vendor=Oracle Corporation",
-            "-Djava.specification.name=Java Platform API Specification",
-            "-Djmh.threads=100",
-            "-Djmh.include=de\\.cuioss\\.jwt\\.validation\\.benchmark\\.standard\\..*",
-            "-Djmh.result.filePrefix=target/benchmark-results/micro-result",
-            "-Dapple.awt.application.name=LibraryBenchmarkRunner",
-            "-Djmh.iterations=5",
-            "-Djava.util.logging.config.file=benchmark-logging.properties",
-            "-Dsun.management.compiler=HotSpot 64-Bit Tiered Compilers",
-            "-Djmh.forks=1",
-            "-Dftp.nonProxyHosts=local|*.local|169.254/16|*.169.254/16",
-            "-Djava.runtime.version=21.0.7+6-LTS",
-            "-Duser.name=oliver",
-            "-Dstdout.encoding=UTF-8",
-            "-Dpath.separator=:",
-            "-Dos.version=15.7.1",
-            "-Djava.runtime.name=OpenJDK Runtime Environment",
-            "-Dfile.encoding=UTF-8",
-            "-Djava.vm.name=OpenJDK 64-Bit Server VM",
-            "-Djava.vendor.version=Temurin-21.0.7+6",
-            "-Djava.vendor.url.bug=https://github.com/adoptium/adoptium-support/issues",
-            "-Djava.io.tmpdir=/var/folders/rg/lzg25fys41b1vp9p0gs01lb00000gn/T/",
-            "-Djava.version=21.0.7",
-            "-Duser.dir=/Users/oliver/git/oauth-sheriff/benchmarking/benchmark-library",
-            "-Dos.arch=aarch64",
-            "-Djava.vm.specification.name=Java Virtual Machine Specification",
-            "-Djmh.time=4s",
-            "-Djmh.warmupTime=1s",
-            "-Djmh.result.format=JSON",
-            "-Dnative.encoding=UTF-8",
-            "-Djava.library.path=/Users/oliver/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:.",
-            "-Djava.vm.info=mixed mode, sharing",
-            "-Dstderr.encoding=UTF-8",
-            "-Djava.vendor=Eclipse Adoptium",
-            "-Djava.vm.version=21.0.7+6-LTS",
-            "-Dsun.io.unicode.encoding=UnicodeBig",
-            "-DsocksNonProxyHosts=local|*.local|169.254/16|*.169.254/16",
-            "-Djava.class.version=65.0",
-            "-Djmh.warmupIterations=3",
-            "-Djmh.include=de\\.cuioss\\.jwt\\.validation\\.benchmark\\.standard\\..*",
-            "-Djmh.result.format=JSON",
-            "-Djmh.result.filePrefix=target/benchmark-results/micro-result",
-            "-Djmh.iterations=5",
-            "-Djmh.warmupIterations=3",
-            "-Djmh.forks=1",
-            "-Djmh.threads=100",
-            "-Djmh.time=4s",
-            "-Djmh.warmupTime=1s",
-            "-Djava.util.logging.config.file=benchmark-logging.properties",
-            "-XX:+UnlockDiagnosticVMOptions",
-            "-XX:+DebugNonSafepoints"
-        ],
-        "jdkVersion" : "21.0.7",
-        "vmName" : "OpenJDK 64-Bit Server VM",
-        "vmVersion" : "21.0.7+6-LTS",
-        "warmupIterations" : 3,
-        "warmupTime" : "1 s",
-        "warmupBatchSize" : 1,
-        "measurementIterations" : 5,
-        "measurementTime" : "4 s",
-        "measurementBatchSize" : 1,
-        "primaryMetric" : {
-            "score" : 1110.0972062600408,
-            "scoreError" : 1124.217276783803,
-            "scoreConfidence" : [
-                -14.120070523762251,
-                2234.314483043844
-            ],
-            "scorePercentiles" : {
-                "0.0" : 786.6145953436412,
-                "50.0" : 1233.4564965660259,
-                "90.0" : 1427.0514296163642,
-                "95.0" : 1427.0514296163642,
-                "99.0" : 1427.0514296163642,
-                "99.9" : 1427.0514296163642,
-                "99.99" : 1427.0514296163642,
-                "99.999" : 1427.0514296163642,
-                "99.9999" : 1427.0514296163642,
-                "100.0" : 1427.0514296163642
-            },
-            "scoreUnit" : "us/op",
-            "rawData" : [
-                [
-                    1427.0514296163642,
-                    1290.2286037116712,
-                    1233.4564965660259,
-                    813.1349060625021,
-                    786.6145953436412
-                ]
-            ]
-        },
-        "secondaryMetrics" : {
-        }
+        "secondaryMetrics": {}
     }
 ]
-
-

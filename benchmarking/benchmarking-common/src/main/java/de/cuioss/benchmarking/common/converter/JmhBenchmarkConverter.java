@@ -39,9 +39,18 @@ public class JmhBenchmarkConverter implements BenchmarkConverter {
     public static final String THRPT = "thrpt";
 
     private final BenchmarkType benchmarkType;
+    private final String configuredThroughputName;
+    private final String configuredLatencyName;
 
     public JmhBenchmarkConverter(BenchmarkType benchmarkType) {
+        this(benchmarkType, null, null);
+    }
+
+    public JmhBenchmarkConverter(BenchmarkType benchmarkType,
+            String configuredThroughputName, String configuredLatencyName) {
         this.benchmarkType = benchmarkType;
+        this.configuredThroughputName = configuredThroughputName;
+        this.configuredLatencyName = configuredLatencyName;
     }
 
     @Override
@@ -128,14 +137,19 @@ public class JmhBenchmarkConverter implements BenchmarkConverter {
     }
 
     private BenchmarkData.Overview createOverview(List<BenchmarkData.Benchmark> benchmarks) {
-        // Find best throughput and latency benchmarks
-        Optional<BenchmarkData.Benchmark> bestThroughput = benchmarks.stream()
-                .filter(b -> THRPT.equals(b.getMode()))
-                .max(Comparator.comparing(BenchmarkData.Benchmark::getRawScore));
+        // Find throughput benchmark: prefer configured name, fall back to max-score heuristic
+        Optional<BenchmarkData.Benchmark> bestThroughput = findByConfiguredName(
+                benchmarks, configuredThroughputName, THRPT)
+                .or(() -> benchmarks.stream()
+                        .filter(b -> THRPT.equals(b.getMode()))
+                        .max(Comparator.comparing(BenchmarkData.Benchmark::getRawScore)));
 
-        Optional<BenchmarkData.Benchmark> bestLatency = benchmarks.stream()
-                .filter(b -> "avgt".equals(b.getMode()) || "sample".equals(b.getMode()))
-                .min(Comparator.comparing(BenchmarkData.Benchmark::getRawScore));
+        // Find latency benchmark: prefer configured name, fall back to min-score heuristic
+        Optional<BenchmarkData.Benchmark> bestLatency = findByConfiguredName(
+                benchmarks, configuredLatencyName, "avgt")
+                .or(() -> benchmarks.stream()
+                        .filter(b -> "avgt".equals(b.getMode()) || "sample".equals(b.getMode()))
+                        .min(Comparator.comparing(BenchmarkData.Benchmark::getRawScore)));
 
         double throughput = bestThroughput.map(BenchmarkData.Benchmark::getRawScore).orElse(0.0);
         // IMPORTANT: Convert latency to milliseconds using the benchmark's unit
@@ -167,6 +181,17 @@ public class JmhBenchmarkConverter implements BenchmarkConverter {
                 .performanceGrade(grade)
                 .performanceGradeClass("grade-" + grade.toLowerCase())
                 .build();
+    }
+
+    private static Optional<BenchmarkData.Benchmark> findByConfiguredName(
+            List<BenchmarkData.Benchmark> benchmarks, String configuredName, String expectedMode) {
+        if (configuredName == null || configuredName.isBlank()) {
+            return Optional.empty();
+        }
+        return benchmarks.stream()
+                .filter(b -> expectedMode.equals(b.getMode()))
+                .filter(b -> b.getName().contains(configuredName) || b.getFullName().contains(configuredName))
+                .findFirst();
     }
 
     private String extractSimpleName(String fullName) {

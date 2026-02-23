@@ -16,6 +16,7 @@
 package de.cuioss.benchmarking.common.runner;
 
 import de.cuioss.benchmarking.common.config.BenchmarkType;
+import de.cuioss.benchmarking.common.config.ReportConfiguration;
 import de.cuioss.benchmarking.common.converter.JmhBenchmarkConverter;
 import de.cuioss.benchmarking.common.model.BenchmarkData;
 import de.cuioss.benchmarking.common.output.OutputDirectoryStructure;
@@ -54,6 +55,7 @@ public class BenchmarkResultProcessor {
 
 
     private final BenchmarkType benchmarkType;
+    private final ReportConfiguration reportConfig;
 
     /**
      * Creates a processor for the specified benchmark type.
@@ -61,7 +63,18 @@ public class BenchmarkResultProcessor {
      * @param benchmarkType the type of benchmarks being processed
      */
     public BenchmarkResultProcessor(BenchmarkType benchmarkType) {
+        this(benchmarkType, null);
+    }
+
+    /**
+     * Creates a processor with full report configuration including configured benchmark names.
+     *
+     * @param benchmarkType the type of benchmarks being processed
+     * @param reportConfig the report configuration with benchmark names (may be null)
+     */
+    public BenchmarkResultProcessor(BenchmarkType benchmarkType, ReportConfiguration reportConfig) {
         this.benchmarkType = benchmarkType;
+        this.reportConfig = reportConfig;
     }
 
     /**
@@ -95,8 +108,11 @@ public class BenchmarkResultProcessor {
                     ". The benchmark runner should have created this file.");
         }
 
-        // Convert JMH JSON to BenchmarkData using converter
-        JmhBenchmarkConverter converter = new JmhBenchmarkConverter(benchmarkType);
+        // Convert JMH JSON to BenchmarkData using converter, passing configured benchmark names
+        JmhBenchmarkConverter converter = reportConfig != null
+                ? new JmhBenchmarkConverter(benchmarkType,
+                        reportConfig.throughputBenchmarkName(), reportConfig.latencyBenchmarkName())
+                : new JmhBenchmarkConverter(benchmarkType);
         BenchmarkData benchmarkData;
         try {
             benchmarkData = converter.convert(jsonFile);
