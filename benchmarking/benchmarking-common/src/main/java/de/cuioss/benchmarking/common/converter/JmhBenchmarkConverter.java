@@ -190,7 +190,7 @@ public class JmhBenchmarkConverter implements BenchmarkConverter {
         }
         return benchmarks.stream()
                 .filter(b -> expectedMode.equals(b.getMode()))
-                .filter(b -> b.getName().contains(configuredName) || b.getFullName().contains(configuredName))
+                .filter(b -> b.getName().equals(configuredName) || b.getFullName().equals(configuredName))
                 .findFirst();
     }
 
