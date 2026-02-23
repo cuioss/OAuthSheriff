@@ -73,7 +73,7 @@ import java.util.*;
  * </ul>
  * <p>
  * For more detailed specifications, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#_issuerconfig_and_multi_issuer_support">Technical Components Specification - IssuerConfig and Multi-Issuer Support</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#_issuerconfig_and_multi_issuer_support">Technical Components Specification - IssuerConfig and Multi-Issuer Support</a>
  *
  * @since 1.0
  */
@@ -341,7 +341,7 @@ public class IssuerConfig implements LoadingStatusProvider {
          *
          * @param issuerIdentifier the issuer identifier that must match the "iss" claim in tokens
          * @return this builder instance for method chaining
-         * @see <a href="https://tools.ietf.org/html/rfc7519#section-4.1.1">RFC 7519 - "iss" (Issuer) Claim</a>
+         * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1">RFC 7519 - "iss" (Issuer) Claim</a>
          */
         public IssuerConfigBuilder issuerIdentifier(String issuerIdentifier) {
             this.issuerIdentifier = issuerIdentifier;
@@ -365,7 +365,7 @@ public class IssuerConfig implements LoadingStatusProvider {
          *
          * @param expectedAudience the audience value that tokens must match
          * @return this builder instance for method chaining
-         * @see <a href="https://tools.ietf.org/html/rfc7519#section-4.1.3">RFC 7519 - "aud" (Audience) Claim</a>
+         * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3">RFC 7519 - "aud" (Audience) Claim</a>
          */
         public IssuerConfigBuilder expectedAudience(String expectedAudience) {
             if (this.expectedAudience == null) {
@@ -384,7 +384,7 @@ public class IssuerConfig implements LoadingStatusProvider {
          *
          * @param expectedAudience the set of audience values that tokens must match
          * @return this builder instance for method chaining
-         * @see <a href="https://tools.ietf.org/html/rfc7519#section-4.1.3">RFC 7519 - "aud" (Audience) Claim</a>
+         * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3">RFC 7519 - "aud" (Audience) Claim</a>
          */
         public IssuerConfigBuilder expectedAudience(Set<String> expectedAudience) {
             this.expectedAudience = expectedAudience;
@@ -408,7 +408,7 @@ public class IssuerConfig implements LoadingStatusProvider {
          *
          * @param expectedClientId the client ID value that tokens must match
          * @return this builder instance for method chaining
-         * @see <a href="https://tools.ietf.org/html/rfc7519#section-4.1.4">RFC 7519 - Registered Claim Names</a>
+         * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4">RFC 7519 - Registered Claim Names</a>
          * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#IDToken">OpenID Connect Core - ID Token</a>
          */
         public IssuerConfigBuilder expectedClientId(String expectedClientId) {
@@ -428,7 +428,7 @@ public class IssuerConfig implements LoadingStatusProvider {
          *
          * @param expectedClientId the set of client ID values that tokens must match
          * @return this builder instance for method chaining
-         * @see <a href="https://tools.ietf.org/html/rfc7519#section-4.1.4">RFC 7519 - Registered Claim Names</a>
+         * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4">RFC 7519 - Registered Claim Names</a>
          * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#IDToken">OpenID Connect Core - ID Token</a>
          */
         public IssuerConfigBuilder expectedClientId(Set<String> expectedClientId) {

@@ -123,7 +123,7 @@ import java.util.Map;
  * </ul>
  * <p>
  * For more detailed specifications, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#_tokenvalidator">Technical Components Specification</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#_tokenvalidator">Technical Components Specification</a>
  *
  * @since 1.0
  */

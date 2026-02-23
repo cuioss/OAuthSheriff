@@ -11,10 +11,10 @@
 
 **Build & Quality**
 
-image:https://github.com/cuioss/OAuth-Sheriff/actions/workflows/maven.yml/badge.svg?branch=main[Java CI with Maven,link=https://github.com/cuioss/OAuth-Sheriff/actions/workflows/maven.yml]
-image:https://github.com/cuioss/OAuth-Sheriff/actions/workflows/integration-tests.yml/badge.svg?branch=main[Integration Tests,link=https://github.com/cuioss/OAuth-Sheriff/actions/workflows/integration-tests.yml]
+image:https://github.com/cuioss/OAuthSheriff/actions/workflows/maven.yml/badge.svg?branch=main[Java CI with Maven,link=https://github.com/cuioss/OAuthSheriff/actions/workflows/maven.yml]
+image:https://github.com/cuioss/OAuthSheriff/actions/workflows/integration-tests.yml/badge.svg?branch=main[Integration Tests,link=https://github.com/cuioss/OAuthSheriff/actions/workflows/integration-tests.yml]
 
-image:https://img.shields.io/github/last-commit/cuioss/OAuth-Sheriff/main[Last Build,link=https://github.com/cuioss/OAuth-Sheriff/commits/main]
+image:https://img.shields.io/github/last-commit/cuioss/OAuthSheriff/main[Last Build,link=https://github.com/cuioss/OAuthSheriff/commits/main]
 image:http://img.shields.io/:license-apache-blue.svg[License,link=http://www.apache.org/licenses/LICENSE-2.0.html]
 image:https://img.shields.io/maven-central/v/de.cuioss.sheriff.oauth/oauth-sheriff-parent.svg?label=Maven%20Central["Maven Central", link="https://central.sonatype.com/artifact/de.cuioss.sheriff.oauth/oauth-sheriff-parent"]
 
@@ -23,11 +23,11 @@ image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_OAuth-Sher
 image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_OAuth-Sheriff&metric=coverage[Coverage,link=https://sonarcloud.io/summary/new_code?id=cuioss_OAuth-Sheriff]
 
 image:https://www.bestpractices.dev/projects/11849/badge[OpenSSF Best Practices,link=https://www.bestpractices.dev/projects/11849]
-image:https://github.com/cuioss/OAuth-Sheriff/actions/workflows/github-code-scanning/codeql/badge.svg[CodeQL,link=https://github.com/cuioss/OAuth-Sheriff/security/code-scanning]
+image:https://github.com/cuioss/OAuthSheriff/actions/workflows/github-code-scanning/codeql/badge.svg[CodeQL,link=https://github.com/cuioss/OAuthSheriff/security/code-scanning]
 
 **Performance Benchmarks**
 
-image:https://github.com/cuioss/OAuth-Sheriff/actions/workflows/benchmark.yml/badge.svg[JMH Benchmarks,link=https://github.com/cuioss/OAuth-Sheriff/actions/workflows/benchmark.yml]
+image:https://github.com/cuioss/OAuthSheriff/actions/workflows/benchmark.yml/badge.svg[JMH Benchmarks,link=https://github.com/cuioss/OAuthSheriff/actions/workflows/benchmark.yml]
 image:https://img.shields.io/endpoint?url=https://cuioss.github.io/OAuth-Sheriff/benchmarks/badges/last-run-badge.json[Last Benchmark Run,link=https://cuioss.github.io/OAuth-Sheriff/benchmarks/]
 
 *Micro Benchmarks*

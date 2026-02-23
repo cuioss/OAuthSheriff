@@ -293,7 +293,7 @@ _See specification: xref:specification/technical-components.adoc#issuerconfig-an
 [#OAUTH-SHERIFF-7]
 === OAUTH-SHERIFF-7: Logging
 
-Implement comprehensive logging for troubleshooting and auditing, following the https://owasp.org/www-project-proactive-controls/v3/en/c9-implement-security-logging-monitoring[OWASP Proactive Controls C9: Implement Security Logging and Monitoring] guidelines.
+Implement comprehensive logging for troubleshooting and auditing, following the https://owasp.org/www-project-proactive-controls/v4/en/c9-security-logging-and-monitoring[OWASP Proactive Controls C9: Implement Security Logging and Monitoring] guidelines.
 
 _See specifications: xref:specification/technical-components.adoc#securityeventcounter[SecurityEventCounter] and xref:security/security-specifications.adoc#security-events-monitoring[Security Events]_
 
@@ -394,7 +394,7 @@ _See specification: xref:specification/testing.adoc[Testing Specification]_
 [#OAUTH-SHERIFF-12.1]
 ==== OAUTH-SHERIFF-12.1: Security Testing
 
-The library must undergo comprehensive security testing according to https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html[OWASP JWT Security Cheat Sheet for Java] (2023) and https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/JSON_Web_Token_Cheat_Sheet.md[OWASP JWT Cheat Sheet] (2023).
+The library must undergo comprehensive security testing according to https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html[OWASP JWT Security Cheat Sheet for Java] (2023).
 
 Key security tests must include:
 

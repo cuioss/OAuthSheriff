@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * ensuring excellent compatibility with GraalVM native image compilation.
  * <p>
  * For more details on the security aspects, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  * @since 1.0

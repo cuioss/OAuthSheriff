@@ -41,7 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * </ul>
  *
  * @author Oliver Wolff
- * @see <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
+ * @see <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
  */
 @EnableTestLogger
 @DisplayName("Tests TokenValidator security event counting")

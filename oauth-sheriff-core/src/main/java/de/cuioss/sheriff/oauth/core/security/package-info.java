@@ -48,7 +48,7 @@
  * </ul>
  * <p>
  * For more details on the security aspects, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  * @see de.cuioss.sheriff.oauth.core.pipeline.validator.TokenSignatureValidator

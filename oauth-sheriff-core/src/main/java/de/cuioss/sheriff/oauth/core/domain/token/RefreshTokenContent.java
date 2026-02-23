@@ -46,8 +46,8 @@ import java.util.Map;
  * <p>
  * This implementation follows guidance from:
  * <ul>
- *   <li><a href="https://tools.ietf.org/html/rfc6749">RFC 6749 - OAuth 2.0</a></li>
- *   <li><a href="https://tools.ietf.org/html/rfc7519">RFC 7519 - JWT</a></li>
+ *   <li><a href="https://datatracker.ietf.org/doc/html/rfc6749">RFC 6749 - OAuth 2.0</a></li>
+ *   <li><a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519 - JWT</a></li>
  * </ul>
  *
  * @author Oliver Wolff

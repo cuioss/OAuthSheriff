@@ -72,7 +72,7 @@ public class TestTokenHolder implements TokenContent {
      * <p>In OAuth2/OIDC semantics, the audience identifies the resource server(s) that should
      * accept and validate the token. This is typically a service URL or identifier.</p>
      *
-     * @see <a href="https://tools.ietf.org/html/rfc7519#section-4.1.3">RFC 7519 Section 4.1.3</a>
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3">RFC 7519 Section 4.1.3</a>
      */
     public static final String TEST_AUDIENCE = "test-audience";
 
@@ -86,7 +86,7 @@ public class TestTokenHolder implements TokenContent {
      * OAuth2/OIDC scenarios where clients and resource servers are different entities.</p>
      *
      * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html#IDToken">OpenID Connect Core</a>
-     * @see <a href="https://tools.ietf.org/html/rfc9068">RFC 9068 - JWT Profile for OAuth 2.0</a>
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc9068">RFC 9068 - JWT Profile for OAuth 2.0</a>
      */
     public static final String TEST_CLIENT_ID = "test-client-app";
 

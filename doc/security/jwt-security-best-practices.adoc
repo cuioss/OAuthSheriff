@@ -443,8 +443,8 @@ try {
 
 * https://datatracker.ietf.org/doc/html/rfc8725 - RFC 8725: JSON Web Token Best Current Practices
 * https://auth0.com/blog/a-look-at-the-latest-draft-for-jwt-bcp/ - A Look at the Latest Draft for JWT BCP
-* https://tools.ietf.org/html/rfc7519 - JSON Web Token (JWT) RFC
-* https://tools.ietf.org/html/rfc7515 - JSON Web Signature (JWS) RFC
-* https://tools.ietf.org/html/rfc7518 - JSON Web Algorithms (JWA) RFC
+* https://datatracker.ietf.org/doc/html/rfc7519 - JSON Web Token (JWT) RFC
+* https://datatracker.ietf.org/doc/html/rfc7515 - JSON Web Signature (JWS) RFC
+* https://datatracker.ietf.org/doc/html/rfc7518 - JSON Web Algorithms (JWA) RFC
 * https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide - The Ultimate Guide to JWT Vulnerabilities and Attacks
 * https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html - Common OAuth Vulnerabilities

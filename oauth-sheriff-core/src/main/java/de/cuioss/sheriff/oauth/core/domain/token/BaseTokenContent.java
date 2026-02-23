@@ -42,7 +42,7 @@ import java.util.Map;
  * via Lombok's {@code @EqualsAndHashCode} and {@code @ToString}.
  * <p>
  * For more details on token structure, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#token-structure">Token Structure</a>
  * specification.
  *
  * @author Oliver Wolff

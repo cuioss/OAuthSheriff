@@ -171,7 +171,7 @@ These tests cover:
 
 The implementation uses:
 
-* Official Keycloak TestContainer: https://www.testcontainers.org/modules/keycloak/
+* Official Keycloak TestContainer: https://testcontainers.com/modules/keycloak/
 * CUI Keycloak Integration: `de.cuioss.test:cui-test-keycloak-integration` (Maven dependency) - See https://github.com/cuioss/cui-test-keycloak-integration[cui-test-keycloak-integration repository]
 
 The `KeycloakITBase` class from the `cui-test-keycloak-integration` library provides automatic setup and teardown of a Keycloak container, methods to get the Keycloak URLs, test realm and user configuration, and helper methods for token requests and validation.

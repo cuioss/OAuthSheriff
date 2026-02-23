@@ -56,7 +56,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Oliver Wolff
  * @see <a href="../../../../../../../../../../../../doc/Requirements.adoc#OAUTH-SHERIFF-4.5">OAUTH-SHERIFF-4.5: Key Rotation Grace Period</a>
- * @see <a href="https://github.com/cuioss/OAuth-Sheriff/issues/110">Issue #110: Key rotation grace period</a>
+ * @see <a href="https://github.com/cuioss/OAuthSheriff/issues/110">Issue #110: Key rotation grace period</a>
  */
 @EnableTestLogger
 @EnableMockWebServer

@@ -37,7 +37,7 @@ import lombok.Builder;
  * The validator logs appropriate warning messages for validation failures.
  * <p>
  * For more details on the validation process, see the
- * <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#token-validation-pipeline">Token Validation Pipeline</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#token-validation-pipeline">Token Validation Pipeline</a>
  *
  * @author Oliver Wolff
  * @since 1.0

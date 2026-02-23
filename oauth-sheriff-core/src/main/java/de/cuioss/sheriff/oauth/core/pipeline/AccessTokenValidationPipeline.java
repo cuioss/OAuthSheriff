@@ -66,7 +66,7 @@ import java.util.Optional;
  * <p>
  * <strong>Critical Optimization:</strong> The cache check happens at step 3, after
  * minimal parsing but before expensive cryptographic operations. This addresses
- * <a href="https://github.com/cuioss/OAuth-Sheriff/issues/131">issue #131</a> by maximizing
+ * <a href="https://github.com/cuioss/OAuthSheriff/issues/131">issue #131</a> by maximizing
  * cache hit performance.
  * <p>
  * This class is thread-safe after construction. All validators are pre-created

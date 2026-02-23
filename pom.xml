@@ -19,7 +19,7 @@
         with a focus on security and ease of use, leveraging standard JDK cryptographic providers.
     </description>
 
-    <url>https://github.com/cuioss/OAuth-Sheriff/</url>
+    <url>https://github.com/cuioss/OAuthSheriff/</url>
     <modules>
         <module>bom</module>
         <module>oauth-sheriff-core</module>
@@ -27,17 +27,17 @@
         <module>benchmarking</module>
     </modules>
     <scm>
-        <url>https://github.com/cuioss/OAuth-Sheriff/</url>
+        <url>https://github.com/cuioss/OAuthSheriff/</url>
         <connection>
-            scm:git:https://github.com/cuioss/OAuth-Sheriff.git
+            scm:git:https://github.com/cuioss/OAuthSheriff.git
         </connection>
         <developerConnection>
-            scm:git:https://github.com/cuioss/OAuth-Sheriff/
+            scm:git:https://github.com/cuioss/OAuthSheriff/
         </developerConnection>
         <tag>HEAD</tag>
     </scm>
     <issueManagement>
-        <url>https://github.com/cuioss/OAuth-Sheriff/issues</url>
+        <url>https://github.com/cuioss/OAuthSheriff/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
 

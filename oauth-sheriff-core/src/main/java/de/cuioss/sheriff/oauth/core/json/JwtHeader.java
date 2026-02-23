@@ -42,8 +42,8 @@ import java.util.Optional;
  * <p>
  * For more details on JWT header structure, see:
  * <ul>
- *   <li><a href="https://tools.ietf.org/html/rfc7515#section-4">RFC 7515 - 4. JWS Header</a></li>
- *   <li><a href="https://tools.ietf.org/html/rfc7519#section-5">RFC 7519 - 5. JWT Header</a></li>
+ *   <li><a href="https://datatracker.ietf.org/doc/html/rfc7515#section-4">RFC 7515 - 4. JWS Header</a></li>
+ *   <li><a href="https://datatracker.ietf.org/doc/html/rfc7519#section-5">RFC 7519 - 5. JWT Header</a></li>
  * </ul>
  *
  * @param alg The "alg" (algorithm) Header Parameter identifies the cryptographic algorithm used to secure the JWS.

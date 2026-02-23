@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Supports requirement <a href="../../../../../../../../../doc/Requirements.adoc#OAUTH-SHERIFF-3">OAUTH-SHERIFF-3: Multi-Issuer Support</a>.
  *
  * @author Oliver Wolff
- * @see <a href="https://github.com/cuioss/OAuth-Sheriff/tree/main/doc/specification/technical-components.adoc#multi-issuer">Multi-Issuer Specification</a>
+ * @see <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#multi-issuer">Multi-Issuer Specification</a>
  */
 @EnableTestLogger
 @DisplayName("Tests for IssuerConfig")
