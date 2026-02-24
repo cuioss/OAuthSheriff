@@ -1,18 +1,23 @@
 /**
  * @fileoverview E2E tests for JWT Token Debugger Dev-UI card
  * Verifies the qwc-jwt-debugger component for token validation functionality.
+ *
+ * Uses serial mode with a shared page — navigation happens once in the fixture.
+ * Tests are ordered: read-only checks first, then mutating interactions.
  */
 
-import { test, expect, takeStartScreenshot } from "../fixtures/test-fixtures.js";
+import { serialTokenDebuggerTest as test, expect, takeStartScreenshot } from "../fixtures/test-fixtures.js";
 import { CONSTANTS } from "../utils/constants.js";
-import { goToTokenDebugger } from "../utils/devui-navigation.js";
 import { getKeycloakTokenInsecure } from "../utils/keycloak-token-service.js";
 
+test.describe.configure({ mode: "serial" });
+
 test.describe("03 - Token Debugger Card", () => {
-    test.beforeEach(async ({ page }, testInfo) => {
-        await goToTokenDebugger(page);
+    test.beforeEach(async ({ page, _tokenDebuggerState }, testInfo) => {
         await takeStartScreenshot(page, testInfo);
     });
+
+    // --- Read-only checks ---
 
     test("should display the token debugger container", async ({ page }) => {
         const container = page.locator(
@@ -50,6 +55,8 @@ test.describe("03 - Token Debugger Card", () => {
         await expect(sampleButton).toBeVisible();
     });
 
+    // --- Mutating interactions ---
+
     test("should show error when validating empty token", async ({ page }) => {
         const validateButton = page.locator(
             CONSTANTS.SELECTORS.JWT_DEBUGGER_VALIDATE_BUTTON,
@@ -67,6 +74,12 @@ test.describe("03 - Token Debugger Card", () => {
     });
 
     test("should load sample token via button", async ({ page }) => {
+        // Clear first to reset state from previous test
+        const clearButton = page.locator(
+            CONSTANTS.SELECTORS.JWT_DEBUGGER_CLEAR_BUTTON,
+        );
+        await clearButton.click();
+
         const sampleButton = page.locator(
             CONSTANTS.SELECTORS.JWT_DEBUGGER_SAMPLE_BUTTON,
         );
