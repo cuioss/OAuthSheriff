@@ -107,10 +107,10 @@ export const accessibilityTest = test.extend({
 });
 
 /**
- * Serial test fixture for Status & Config page.
- * Shares a single browser page across all tests in a worker, navigating once.
+ * Base serial test fixture sharing a single browser page across all tests in a worker.
+ * Provides worker-scoped _sharedPage and per-test logging via the page override.
  */
-export const serialStatusConfigTest = base.extend({
+const serialBaseTest = base.extend({
     /** Worker-scoped shared page, reused across all tests */
     _sharedPage: [
         async ({ browser }, use) => {
@@ -152,8 +152,13 @@ export const serialStatusConfigTest = base.extend({
             .catch(() => {});
         testLogger.writeLogs(testInfo);
     },
+});
 
-    /** Worker-scoped: navigates to Status & Config page once */
+/**
+ * Serial test fixture for Status & Config page.
+ * Navigates to the page once per worker via _statusConfigState.
+ */
+export const serialStatusConfigTest = serialBaseTest.extend({
     _statusConfigState: [
         async ({ _sharedPage }, use) => {
             await goToStatusConfig(_sharedPage);
@@ -165,52 +170,9 @@ export const serialStatusConfigTest = base.extend({
 
 /**
  * Serial test fixture for Token Debugger page.
- * Shares a single browser page across all tests in a worker, navigating once.
+ * Navigates to the page once per worker via _tokenDebuggerState.
  */
-export const serialTokenDebuggerTest = base.extend({
-    /** Worker-scoped shared page, reused across all tests */
-    _sharedPage: [
-        async ({ browser }, use) => {
-            const context = await browser.newContext();
-            const page = await context.newPage();
-            await use(page);
-            await context.close();
-        },
-        { scope: "worker" },
-    ],
-
-    /** Override page to delegate to shared page with per-test logging */
-    page: async ({ _sharedPage }, use, testInfo) => {
-        const t0 = Date.now();
-        testLogger.startTest(testInfo.testId);
-        testLogger.setupBrowserCapture(_sharedPage);
-        testLogger.info(
-            "Lifecycle",
-            `START  ${testInfo.titlePath.join(" > ")}`,
-        );
-
-        await use(_sharedPage);
-
-        const duration = ((Date.now() - t0) / 1000).toFixed(1);
-        const status = testInfo.status ?? "unknown";
-        testLogger.info(
-            "Lifecycle",
-            `END    ${status.toUpperCase()} (${duration}s) – ${testInfo.title}`,
-        );
-        if (testInfo.error) {
-            testLogger.error("Lifecycle", testInfo.error.message);
-        }
-        mkdirSync(testInfo.outputDir, { recursive: true });
-        await _sharedPage
-            .screenshot({
-                path: join(testInfo.outputDir, "after.png"),
-                fullPage: true,
-            })
-            .catch(() => {});
-        testLogger.writeLogs(testInfo);
-    },
-
-    /** Worker-scoped: navigates to Token Debugger page once */
+export const serialTokenDebuggerTest = serialBaseTest.extend({
     _tokenDebuggerState: [
         async ({ _sharedPage }, use) => {
             await goToTokenDebugger(_sharedPage);
