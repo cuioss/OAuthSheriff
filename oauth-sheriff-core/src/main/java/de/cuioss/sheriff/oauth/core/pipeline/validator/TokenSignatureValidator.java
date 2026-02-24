@@ -39,11 +39,12 @@ import java.security.*;
  * performed by {@link TokenHeaderValidator}.
  * <p>
  * This class uses standard JDK cryptographic providers for signature verification, supporting
- * all standard JOSE algorithms as defined in RFC 7518:
+ * all standard JOSE algorithms as defined in RFC 7518 and RFC 8037:
  * <ul>
  *   <li>RSA signatures: RS256, RS384, RS512</li>
  *   <li>ECDSA signatures: ES256, ES384, ES512</li>
  *   <li>RSA-PSS signatures: PS256, PS384, PS512</li>
+ *   <li>EdDSA signatures: EdDSA (Ed25519/Ed448)</li>
  * </ul>
  * <p>
  * All algorithms are supported by the standard JDK cryptographic providers in Java 11+,
@@ -253,6 +254,10 @@ public class TokenSignatureValidator {
         // For EC keys
         if ("EC".equals(keyAlgorithm)) {
             return tokenAlgorithm.startsWith("ES");
+        }
+        // For OKP keys (EdDSA)
+        if ("OKP".equals(keyAlgorithm)) {
+            return "EdDSA".equals(tokenAlgorithm);
         }
         // For exact matches
         return tokenAlgorithm.equals(keyAlgorithm);

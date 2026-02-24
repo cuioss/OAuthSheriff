@@ -88,7 +88,7 @@ class SignatureAlgorithmPreferencesTest {
             assertNotNull(defaultAlgorithms, "Default algorithms should not be null");
             assertFalse(defaultAlgorithms.isEmpty(), "Default algorithms should not be empty");
             var expectedAlgorithms = List.of(
-                    "ES512", "ES384", "ES256", "PS512", "PS384", "PS256", "RS512", "RS384", "RS256");
+                    "ES512", "ES384", "ES256", "EdDSA", "PS512", "PS384", "PS256", "RS512", "RS384", "RS256");
             assertEquals(expectedAlgorithms, defaultAlgorithms,
                     "Default algorithms should match the expected list");
         }
@@ -102,7 +102,7 @@ class SignatureAlgorithmPreferencesTest {
 
         @ParameterizedTest
         @DisplayName("Return true for supported algorithms")
-        @ValueSource(strings = {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "PS256", "PS384", "PS512"})
+        @ValueSource(strings = {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512"})
         void shouldReturnTrueForSupported(String algorithm) {
             var preferences = new SignatureAlgorithmPreferences();
             assertTrue(preferences.isSupported(algorithm), "Algorithm " + algorithm + " should be supported");

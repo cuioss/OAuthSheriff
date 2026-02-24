@@ -31,6 +31,7 @@ import de.cuioss.test.juli.junit5.EnableTestLogger;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -91,8 +92,9 @@ class TokenSignatureValidatorAlgorithmTest {
     @ParameterizedTest
     // Note: EC algorithms (ES256, ES384, ES512) are excluded because JJWT generates IEEE P1363 format signatures
     // but the JDK expects ASN.1/DER format, causing validation failures. This will be fixed with signature format conversion.
-    @EnumSource(value = InMemoryKeyMaterialHandler.Algorithm.class, names = {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512"})
-    @DisplayName("Should validate token with valid signature for RSA algorithms")
+    // EdDSA uses raw signature format natively (no conversion needed) and is included here.
+    @EnumSource(value = InMemoryKeyMaterialHandler.Algorithm.class, names = {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "EdDSA"})
+    @DisplayName("Should validate token with valid signature for RSA and EdDSA algorithms")
     void shouldValidateTokenWithValidSignature(InMemoryKeyMaterialHandler.Algorithm algorithm) {
         // Create a valid token with the specified algorithm
         String token = createToken(algorithm);
@@ -109,6 +111,8 @@ class TokenSignatureValidatorAlgorithmTest {
     @ParameterizedTest
     // Note: EC algorithms (ES256, ES384, ES512) are excluded because JJWT generates IEEE P1363 format signatures
     // but the JDK expects ASN.1/DER format, causing validation failures. This will be fixed with signature format conversion.
+    // EdDSA is excluded because the JDK EdDSA Signature.verify() throws SignatureException instead of returning false
+    // for tampered signatures, which results in a different error message. See separate EdDSA tampered test below.
     @EnumSource(value = InMemoryKeyMaterialHandler.Algorithm.class, names = {"RS256", "RS384", "RS512", "PS256", "PS384", "PS512"})
     @DisplayName("Should reject token with tampered signature for RSA algorithms")
     void shouldRejectTokenWithTamperedSignature(InMemoryKeyMaterialHandler.Algorithm algorithm) {
@@ -156,5 +160,30 @@ class TokenSignatureValidatorAlgorithmTest {
         // This should now succeed with signature format conversion
         assertDoesNotThrow(() -> validator.validateSignature(decodedJwt),
                 "Token with valid " + algorithm + " signature should be validated without exceptions");
+    }
+
+    @Test
+    @DisplayName("Should reject EdDSA token with tampered signature")
+    void shouldRejectEdDsaTokenWithTamperedSignature() {
+        // EdDSA Signature.verify() throws SignatureException for tampered signatures
+        // (e.g. "s is too large") instead of returning false like RSA/PSS algorithms.
+        long initialCount = securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED);
+
+        String validToken = createToken(InMemoryKeyMaterialHandler.Algorithm.EdDSA);
+        String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(
+                validToken, JwtTokenTamperingUtil.TamperingStrategy.MODIFY_SIGNATURE_LAST_CHAR);
+
+        DecodedJwt decodedJwt = jwtParser.decode(tamperedToken);
+        assertNotNull(decodedJwt, "Tampered token should be decoded successfully");
+
+        TokenValidationException exception = assertThrows(TokenValidationException.class,
+                () -> validator.validateSignature(decodedJwt),
+                "Token with tampered EdDSA signature should be rejected");
+
+        assertEquals(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED, exception.getEventType(),
+                "Exception should have SIGNATURE_VALIDATION_FAILED event type");
+
+        assertTrue(securityEventCounter.getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED) > initialCount,
+                "SIGNATURE_VALIDATION_FAILED event should be incremented");
     }
 }

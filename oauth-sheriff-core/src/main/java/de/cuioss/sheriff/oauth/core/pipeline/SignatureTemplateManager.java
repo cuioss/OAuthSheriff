@@ -140,6 +140,7 @@ public final class SignatureTemplateManager {
             case "ES256" -> jdkAlgorithm = "SHA256withECDSA";
             case "ES384" -> jdkAlgorithm = "SHA384withECDSA";
             case "ES512" -> jdkAlgorithm = "SHA512withECDSA";
+            case "EdDSA" -> jdkAlgorithm = "EdDSA";
             case "PS256" -> {
                 jdkAlgorithm = RSASSA_PSS;
                 pssParams = new PSSParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, 32, 1);

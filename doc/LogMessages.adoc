@@ -53,7 +53,7 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-010 |ISSUER |Issuer configuration loaded successfully: %s |Logged when an issuer configuration is successfully loaded
 |===
 
-== WARN Level (100-146)
+== WARN Level (100-147)
 
 [cols="1,1,2,2", options="header"]
 |===
@@ -105,6 +105,7 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-144 |JWKS |Using insecure HTTP protocol for JWKS endpoint: %s - HTTPS should be used in production |Logged when an insecure HTTP protocol is used for JWKS endpoint instead of HTTPS
 |JWTValidation-145 |JWKS |DSL-JSON returned null for JWKS parsing |Logged when DSL-JSON parser returns null while parsing JWKS content
 |JWTValidation-146 |JWKS |Failed to parse JWKS content: %s |Logged when JWKS content parsing fails due to IO error or invalid JSON structure
+|JWTValidation-147 |JWKS |Failed to parse OKP key with ID %s: %s |Logged when OKP (EdDSA) key parsing fails for a specific key ID
 |===
 
 == ERROR Level (200-211)

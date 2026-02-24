@@ -483,6 +483,12 @@ public final class JWTValidationLogMessages {
                 .identifier(146)
                 .template("Failed to parse JWKS content: %s")
                 .build();
+
+        public static final LogRecord OKP_KEY_PARSE_FAILED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(147)
+                .template("Failed to parse OKP key with ID %s: %s")
+                .build();
     }
 
 }
