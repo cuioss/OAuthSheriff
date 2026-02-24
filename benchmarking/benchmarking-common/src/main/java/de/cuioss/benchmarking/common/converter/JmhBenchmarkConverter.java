@@ -103,9 +103,17 @@ public class JmhBenchmarkConverter implements BenchmarkConverter {
             JsonObject scorePercentiles = primaryMetric.getAsJsonObject("scorePercentiles");
             for (Map.Entry<String, JsonElement> entry : scorePercentiles.entrySet()) {
                 double percentileValue = entry.getValue().getAsDouble();
-                // Apply same conversion to percentiles
+                // Apply same unit conversions to percentiles
                 if (THRPT.equals(mode) && "ops/ms".equals(scoreUnit)) {
                     percentileValue = percentileValue * 1000;
+                } else {
+                    // Convert latency percentiles to milliseconds
+                    percentileValue = switch (scoreUnit) {
+                        case "us/op" -> percentileValue / 1000.0;
+                        case "ns/op" -> percentileValue / 1_000_000.0;
+                        case "s/op" -> percentileValue * 1000.0;
+                        default -> percentileValue;
+                    };
                 }
                 percentiles.put(entry.getKey(), percentileValue);
             }
