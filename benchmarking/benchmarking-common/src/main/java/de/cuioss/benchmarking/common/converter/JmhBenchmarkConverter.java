@@ -21,6 +21,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import de.cuioss.benchmarking.common.config.BenchmarkType;
 import de.cuioss.benchmarking.common.model.BenchmarkData;
+import de.cuioss.benchmarking.common.report.MetricConversionUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -172,7 +173,7 @@ public class JmhBenchmarkConverter implements BenchmarkConverter {
 
         return BenchmarkData.Overview.builder()
                 .throughput(bestThroughput.map(BenchmarkData.Benchmark::getScore).orElse("N/A"))
-                .latency(bestLatency.map(BenchmarkData.Benchmark::getScore).orElse("N/A"))
+                .latency(latency > 0 ? MetricConversionUtil.formatLatency(latency) : "N/A")
                 .throughputOpsPerSec(throughput)  // Store numeric value used for score calculation
                 .latencyMs(latency)               // Store numeric value used for score calculation
                 .throughputBenchmarkName(bestThroughput.map(BenchmarkData.Benchmark::getName).orElse(""))
