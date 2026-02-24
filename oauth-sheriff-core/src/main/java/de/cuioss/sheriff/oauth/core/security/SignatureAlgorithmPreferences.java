@@ -76,7 +76,7 @@ public class SignatureAlgorithmPreferences {
         LOGGER.debug("Getting default preferred signature algorithms");
 
         // Order algorithms by preference (most secure first)
-        return List.of("ES512", "ES384", "ES256", "PS512", "PS384", "PS256", "RS512", "RS384", "RS256");
+        return List.of("ES512", "ES384", "ES256", "EdDSA", "PS512", "PS384", "PS256", "RS512", "RS384", "RS256");
     }
 
     /**

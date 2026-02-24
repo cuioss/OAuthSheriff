@@ -42,6 +42,7 @@ public class KeyProcessor {
     private static final CuiLogger LOGGER = new CuiLogger(KeyProcessor.class);
     private static final String RSA_KEY_TYPE = "RSA";
     private static final String EC_KEY_TYPE = "EC";
+    private static final String OKP_KEY_TYPE = "OKP";
 
 
     private final SecurityEventCounter securityEventCounter;
@@ -80,6 +81,7 @@ public class KeyProcessor {
         KeyInfo keyInfo = switch (kty) {
             case RSA_KEY_TYPE -> processRsaKey(jwk, kid);
             case EC_KEY_TYPE -> processEcKey(jwk, kid);
+            case OKP_KEY_TYPE -> processOkpKey(jwk, kid);
             default -> {
                 LOGGER.debug("Unsupported key type: %s for key ID: %s", kty, kid);
                 yield null;
@@ -106,7 +108,7 @@ public class KeyProcessor {
         String keyType = jwkKey.kty();
 
         // Validate key type is supported
-        if (!"RSA".equals(keyType) && !"EC".equals(keyType)) {
+        if (!"RSA".equals(keyType) && !"EC".equals(keyType) && !"OKP".equals(keyType)) {
             LOGGER.warn(WARN.JWK_UNSUPPORTED_KEY_TYPE, keyType);
             securityEventCounter.increment(EventType.JWKS_JSON_PARSE_FAILED);
             return false;
@@ -172,6 +174,28 @@ public class KeyProcessor {
             return new KeyInfo(publicKey, alg, kid);
         } catch (InvalidKeySpecException | IllegalStateException e) {
             LOGGER.warn(e, WARN.EC_KEY_PARSE_FAILED, kid, e.getMessage());
+            securityEventCounter.increment(EventType.JWKS_JSON_PARSE_FAILED);
+            return null;
+        }
+    }
+
+    /**
+     * Process an OKP (Octet Key Pair) key and create a KeyInfo object.
+     * OKP keys are used for EdDSA signatures (Ed25519/Ed448) as defined in RFC 8037.
+     *
+     * @param jwk the JWK object
+     * @param kid the key ID
+     * @return the KeyInfo object or null if processing failed
+     */
+    private KeyInfo processOkpKey(JwkKey jwk, String kid) {
+        try {
+            var publicKey = JwkKeyHandler.parseOkpKey(jwk);
+            // EdDSA always uses the single algorithm identifier "EdDSA"
+            String alg = jwk.alg() != null ? jwk.alg() : "EdDSA";
+            LOGGER.debug("Parsed OKP key with ID: %s and algorithm: %s", kid, alg);
+            return new KeyInfo(publicKey, alg, kid);
+        } catch (InvalidKeySpecException | IllegalStateException e) {
+            LOGGER.warn(e, WARN.OKP_KEY_PARSE_FAILED, kid, e.getMessage());
             securityEventCounter.increment(EventType.JWKS_JSON_PARSE_FAILED);
             return null;
         }

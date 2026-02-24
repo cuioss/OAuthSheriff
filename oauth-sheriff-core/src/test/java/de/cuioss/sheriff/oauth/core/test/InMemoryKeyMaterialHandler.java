@@ -24,12 +24,15 @@ import io.jsonwebtoken.security.SignatureAlgorithm;
 import lombok.Getter;
 import lombok.NonNull;
 
+import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.EdECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.ECPoint;
+import java.security.spec.EdECPoint;
 import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,7 +72,8 @@ public class InMemoryKeyMaterialHandler {
         ES512(Jwts.SIG.ES512),
         PS256(Jwts.SIG.PS256),
         PS384(Jwts.SIG.PS384),
-        PS512(Jwts.SIG.PS512);
+        PS512(Jwts.SIG.PS512),
+        EdDSA(Jwts.SIG.EdDSA);
 
         @Getter
         private final SignatureAlgorithm algorithm;
@@ -246,6 +250,8 @@ public class InMemoryKeyMaterialHandler {
         } else if (algorithm.startsWith("PS")) {
             // PS algorithms use RSA keys with RSASSA-PSS signature scheme
             return createJwksFromRsaKey((RSAPublicKey) publicKey, keyId, algorithm);
+        } else if ("EdDSA".equals(algorithm)) {
+            return createJwksFromOkpKey((EdECPublicKey) publicKey, keyId);
         } else {
             throw new IllegalArgumentException("Unsupported key type for algorithm: " + algorithm);
         }
@@ -329,6 +335,49 @@ public class InMemoryKeyMaterialHandler {
         // Create JWKS JSON with the specified key ID, algorithm, curve, and coordinates
         return "{\"keys\":[{\"kty\":\"EC\",\"kid\":\"%s\",\"crv\":\"%s\",\"x\":\"%s\",\"y\":\"%s\",\"alg\":\"%s\"}]}".formatted(
                 keyId, curve, x, y, algorithm);
+    }
+
+    /**
+     * Creates a JWKS string from an EdDSA (OKP) public key.
+     *
+     * @param publicKey the EdEC public key
+     * @param keyId     the key ID
+     * @return a JWKS string
+     */
+    private static String createJwksFromOkpKey(EdECPublicKey publicKey, String keyId) {
+        // Determine curve from key parameters
+        String curve = publicKey.getParams().getName();
+
+        // Extract the EdEC point and reconstruct RFC 8032 encoding
+        EdECPoint point = publicKey.getPoint();
+        BigInteger y = point.getY();
+        boolean xOdd = point.isXOdd();
+
+        // Determine the expected key size based on curve
+        int keySize = "Ed25519".equals(curve) ? 32 : 57; // Ed25519: 32 bytes, Ed448: 57 bytes
+
+        // Convert y to little-endian byte array
+        byte[] yBytes = y.toByteArray();
+        byte[] rawKey = new byte[keySize];
+
+        // Copy y bytes in reverse (big-endian to little-endian)
+        // yBytes may have a leading zero byte for sign
+        int srcStart = yBytes.length > 0 && yBytes[0] == 0 ? 1 : 0;
+        int srcLen = yBytes.length - srcStart;
+        for (int i = 0; i < srcLen && i < keySize; i++) {
+            rawKey[i] = yBytes[yBytes.length - 1 - i];
+        }
+
+        // Set the sign bit (MSB of last byte)
+        if (xOdd) {
+            rawKey[keySize - 1] |= (byte) 0x80;
+        }
+
+        // Base64 URL encode
+        String x = Base64.getUrlEncoder().withoutPadding().encodeToString(rawKey);
+
+        return "{\"keys\":[{\"kty\":\"OKP\",\"kid\":\"%s\",\"crv\":\"%s\",\"x\":\"%s\",\"alg\":\"EdDSA\"}]}".formatted(
+                keyId, curve, x);
     }
 
     /**
@@ -481,6 +530,37 @@ public class InMemoryKeyMaterialHandler {
                         .append("\",\"x\":\"").append(x)
                         .append("\",\"y\":\"").append(y)
                         .append("\",\"alg\":\"").append(algName).append("\"}");
+            } else if ("EdDSA".equals(algName)) {
+                // OKP (EdDSA) key
+                if (!(publicKey instanceof EdECPublicKey edKey)) {
+                    throw new IllegalArgumentException("Expected EdECPublicKey for algorithm: " + algName);
+                }
+
+                String curve = edKey.getParams().getName();
+                EdECPoint point = edKey.getPoint();
+                BigInteger yVal = point.getY();
+                boolean xOdd = point.isXOdd();
+
+                int keySize = "Ed25519".equals(curve) ? 32 : 57;
+                byte[] yValBytes = yVal.toByteArray();
+                byte[] rawKey = new byte[keySize];
+
+                int srcStart = yValBytes.length > 0 && yValBytes[0] == 0 ? 1 : 0;
+                int srcLen = yValBytes.length - srcStart;
+                for (int i = 0; i < srcLen && i < keySize; i++) {
+                    rawKey[i] = yValBytes[yValBytes.length - 1 - i];
+                }
+
+                if (xOdd) {
+                    rawKey[keySize - 1] |= (byte) 0x80;
+                }
+
+                String xEncoded = Base64.getUrlEncoder().withoutPadding().encodeToString(rawKey);
+
+                jwksBuilder.append("{\"kty\":\"OKP\",\"kid\":\"").append(alg.name())
+                        .append("\",\"crv\":\"").append(curve)
+                        .append("\",\"x\":\"").append(xEncoded)
+                        .append("\",\"alg\":\"EdDSA\"}");
             } else {
                 throw new IllegalArgumentException("Unsupported algorithm type: " + algName);
             }
