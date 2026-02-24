@@ -190,10 +190,9 @@ class BenchmarkDataLoader {
 
         const ctx = canvas.getContext('2d');
 
-        // Use logarithmic scale for micro benchmarks (wide value range),
-        // linear for integration benchmarks (narrow value range)
-        const benchmarkType = (data.metadata?.benchmarkType || '').toLowerCase();
-        const useLogScale = benchmarkType.includes('micro');
+        // Always use linear scale starting at zero for percentile distribution charts.
+        // Percentile data spans a narrow range (e.g. 1.9-2.4ms) where logarithmic
+        // scale distorts the visual representation.
 
         // Create datasets for each percentile level
         const percentileLabels = percentilesData.percentileLabels || [];
@@ -259,8 +258,8 @@ class BenchmarkDataLoader {
                             display: true,
                             text: 'Latency (ms/op)'
                         },
-                        type: useLogScale ? 'logarithmic' : 'linear',
-                        beginAtZero: !useLogScale,
+                        type: 'linear',
+                        beginAtZero: true,
                         ticks: {
                             callback: function(value) {
                                 if (value >= 1000) {
