@@ -345,39 +345,38 @@ public class InMemoryKeyMaterialHandler {
      * @return a JWKS string
      */
     private static String createJwksFromOkpKey(EdECPublicKey publicKey, String keyId) {
-        // Determine curve from key parameters
-        String curve = publicKey.getParams().getName();
+        return "{\"keys\":[%s]}".formatted(createOkpJwkObject(publicKey, keyId));
+    }
 
-        // Extract the EdEC point and reconstruct RFC 8032 encoding
+    /**
+     * Creates a single OKP JWK JSON object string from an EdDSA public key.
+     *
+     * @param publicKey the EdEC public key
+     * @param keyId     the key ID
+     * @return a JWK JSON object string (without surrounding array)
+     */
+    private static String createOkpJwkObject(EdECPublicKey publicKey, String keyId) {
+        String curve = publicKey.getParams().getName();
         EdECPoint point = publicKey.getPoint();
         BigInteger y = point.getY();
         boolean xOdd = point.isXOdd();
 
-        // Determine the expected key size based on curve
-        int keySize = "Ed25519".equals(curve) ? 32 : 57; // Ed25519: 32 bytes, Ed448: 57 bytes
-
-        // Convert y to little-endian byte array
+        int keySize = "Ed25519".equals(curve) ? 32 : 57;
         byte[] yBytes = y.toByteArray();
         byte[] rawKey = new byte[keySize];
 
-        // Copy y bytes in reverse (big-endian to little-endian)
-        // yBytes may have a leading zero byte for sign
         int srcStart = yBytes.length > 0 && yBytes[0] == 0 ? 1 : 0;
         int srcLen = yBytes.length - srcStart;
         for (int i = 0; i < srcLen && i < keySize; i++) {
             rawKey[i] = yBytes[yBytes.length - 1 - i];
         }
 
-        // Set the sign bit (MSB of last byte)
         if (xOdd) {
             rawKey[keySize - 1] |= (byte) 0x80;
         }
 
-        // Base64 URL encode
         String x = Base64.getUrlEncoder().withoutPadding().encodeToString(rawKey);
-
-        return "{\"keys\":[{\"kty\":\"OKP\",\"kid\":\"%s\",\"crv\":\"%s\",\"x\":\"%s\",\"alg\":\"EdDSA\"}]}".formatted(
-                keyId, curve, x);
+        return "{\"kty\":\"OKP\",\"kid\":\"%s\",\"crv\":\"%s\",\"x\":\"%s\",\"alg\":\"EdDSA\"}".formatted(keyId, curve, x);
     }
 
     /**
@@ -535,32 +534,7 @@ public class InMemoryKeyMaterialHandler {
                 if (!(publicKey instanceof EdECPublicKey edKey)) {
                     throw new IllegalArgumentException("Expected EdECPublicKey for algorithm: " + algName);
                 }
-
-                String curve = edKey.getParams().getName();
-                EdECPoint point = edKey.getPoint();
-                BigInteger yVal = point.getY();
-                boolean xOdd = point.isXOdd();
-
-                int keySize = "Ed25519".equals(curve) ? 32 : 57;
-                byte[] yValBytes = yVal.toByteArray();
-                byte[] rawKey = new byte[keySize];
-
-                int srcStart = yValBytes.length > 0 && yValBytes[0] == 0 ? 1 : 0;
-                int srcLen = yValBytes.length - srcStart;
-                for (int i = 0; i < srcLen && i < keySize; i++) {
-                    rawKey[i] = yValBytes[yValBytes.length - 1 - i];
-                }
-
-                if (xOdd) {
-                    rawKey[keySize - 1] |= (byte) 0x80;
-                }
-
-                String xEncoded = Base64.getUrlEncoder().withoutPadding().encodeToString(rawKey);
-
-                jwksBuilder.append("{\"kty\":\"OKP\",\"kid\":\"").append(alg.name())
-                        .append("\",\"crv\":\"").append(curve)
-                        .append("\",\"x\":\"").append(xEncoded)
-                        .append("\",\"alg\":\"EdDSA\"}");
+                jwksBuilder.append(createOkpJwkObject(edKey, alg.name()));
             } else {
                 throw new IllegalArgumentException("Unsupported algorithm type: " + algName);
             }

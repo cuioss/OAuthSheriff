@@ -182,7 +182,7 @@ String y      // EC y coordinate (Base64url-encoded, EC only)
      * @return Optional containing the decoded byte array, empty if null, blank, or invalid
      */
     private Optional<byte[]> decodeBase64UrlToBytes(String base64String) {
-        if (base64String == null || base64String.trim().isEmpty()) {
+        if (base64String == null || base64String.isBlank()) {
             return Optional.empty();
         }
 
@@ -206,23 +206,7 @@ String y      // EC y coordinate (Base64url-encoded, EC only)
      * @return Optional containing the decoded BigInteger, empty if null, blank, or invalid
      */
     private Optional<BigInteger> decodeBase64UrlToBigInteger(String base64String) {
-        if (base64String == null || base64String.trim().isEmpty()) {
-            return Optional.empty();
-        }
-
-        // Validate Base64 URL format
-        if (!BASE64_URL_PATTERN.matcher(base64String).matches()) {
-            LOGGER.warn(WARN.INVALID_BASE64_URL_ENCODING, base64String);
-            return Optional.empty();
-        }
-
-        try {
-            byte[] decoded = Base64.getUrlDecoder().decode(base64String);
-            return Optional.of(new BigInteger(1, decoded));
-        } catch (IllegalArgumentException e) {
-            // Invalid Base64 URL encoding (e.g., contains padding or invalid characters)
-            LOGGER.warn(WARN.INVALID_BASE64_URL_ENCODING, base64String);
-            return Optional.empty();
-        }
+        return decodeBase64UrlToBytes(base64String)
+                .map(decoded -> new BigInteger(1, decoded));
     }
 }
