@@ -357,6 +357,20 @@ public class InMemoryKeyMaterialHandler {
      */
     private static String createOkpJwkObject(EdECPublicKey publicKey, String keyId) {
         String curve = publicKey.getParams().getName();
+        String x = encodeEdECPublicKey(publicKey);
+        return "{\"kty\":\"OKP\",\"kid\":\"%s\",\"crv\":\"%s\",\"x\":\"%s\",\"alg\":\"EdDSA\"}".formatted(keyId, curve, x);
+    }
+
+    /**
+     * Encodes an EdEC public key to its RFC 8032 little-endian representation as a base64url string.
+     * Converts from BigInteger's big-endian format to EdDSA's little-endian format with the
+     * x-coordinate parity bit set in the high bit of the last byte.
+     *
+     * @param publicKey the EdEC public key
+     * @return the base64url-encoded key material (JWK "x" parameter)
+     */
+    public static String encodeEdECPublicKey(EdECPublicKey publicKey) {
+        String curve = publicKey.getParams().getName();
         EdECPoint point = publicKey.getPoint();
         BigInteger y = point.getY();
         boolean xOdd = point.isXOdd();
@@ -365,6 +379,7 @@ public class InMemoryKeyMaterialHandler {
         byte[] yBytes = y.toByteArray();
         byte[] rawKey = new byte[keySize];
 
+        // Reverse byte order: BigInteger is big-endian, EdDSA uses little-endian
         int srcStart = yBytes.length > 0 && yBytes[0] == 0 ? 1 : 0;
         int srcLen = yBytes.length - srcStart;
         for (int i = 0; i < srcLen && i < keySize; i++) {
@@ -375,8 +390,7 @@ public class InMemoryKeyMaterialHandler {
             rawKey[keySize - 1] |= (byte) 0x80;
         }
 
-        String x = Base64.getUrlEncoder().withoutPadding().encodeToString(rawKey);
-        return "{\"kty\":\"OKP\",\"kid\":\"%s\",\"crv\":\"%s\",\"x\":\"%s\",\"alg\":\"EdDSA\"}".formatted(keyId, curve, x);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(rawKey);
     }
 
     /**
