@@ -255,8 +255,8 @@ public class TokenSignatureValidator {
         if ("EC".equals(keyAlgorithm)) {
             return tokenAlgorithm.startsWith("ES");
         }
-        // For OKP keys (EdDSA)
-        if ("OKP".equals(keyAlgorithm)) {
+        // For EdDSA keys (OKP key type)
+        if ("EdDSA".equals(keyAlgorithm)) {
             return "EdDSA".equals(tokenAlgorithm);
         }
         // For exact matches

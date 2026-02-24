@@ -158,8 +158,6 @@ public final class JwkKeyHandler {
             EdECPublicKeySpec keySpec = new EdECPublicKeySpec(paramSpec, point);
             KeyFactory factory = getKeyFactory(EDDSA_ALGORITHM);
             return factory.generatePublic(keySpec);
-        } catch (InvalidKeySpecException e) {
-            throw e;
         } catch (IllegalStateException e) {
             throw new InvalidKeySpecException("Failed to reconstruct EdDSA public key for curve " + curve, e);
         }
