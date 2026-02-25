@@ -22,6 +22,8 @@ import de.cuioss.sheriff.oauth.core.domain.context.RefreshTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.domain.token.IdTokenContent;
 import de.cuioss.sheriff.oauth.core.domain.token.RefreshTokenContent;
+import de.cuioss.sheriff.oauth.core.dpop.DpopProofValidator;
+import de.cuioss.sheriff.oauth.core.dpop.DpopReplayProtection;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.metrics.*;
 import de.cuioss.sheriff.oauth.core.pipeline.*;
@@ -255,6 +257,26 @@ public class TokenValidator {
         Map<String, TokenClaimValidator> claimValidators = Map.copyOf(claimValidatorsMap);
         Map<String, TokenHeaderValidator> headerValidators = Map.copyOf(headerValidatorsMap);
 
+        // Initialize DPoP validators for issuers that have DPoP configured
+        // Shared replay protection across all issuers (jti must be globally unique per RFC 9449)
+        Map<String, DpopProofValidator> dpopValidatorsMap = new HashMap<>();
+        DpopReplayProtection sharedReplayProtection = null;
+        for (IssuerConfig issuerConfig : issuerConfigs) {
+            if (issuerConfig.getDpopConfig() != null) {
+                if (sharedReplayProtection == null) {
+                    // Lazy-create shared replay protection on first DPoP-enabled issuer
+                    sharedReplayProtection = new DpopReplayProtection(
+                            issuerConfig.getDpopConfig().getNonceCacheTtlSeconds(),
+                            issuerConfig.getDpopConfig().getNonceCacheSize());
+                }
+                DpopProofValidator dpopValidator = new DpopProofValidator(
+                        issuerConfig, this.securityEventCounter, sharedReplayProtection);
+                dpopValidatorsMap.put(issuerConfig.getIssuerIdentifier(), dpopValidator);
+                LOGGER.debug("Pre-created DpopProofValidator for issuer: %s", issuerConfig.getIssuerIdentifier());
+            }
+        }
+        Map<String, DpopProofValidator> dpopValidators = Map.copyOf(dpopValidatorsMap);
+
         // Use default cache config if not provided
         if (cacheConfig == null) {
             cacheConfig = AccessTokenCacheConfig.defaultConfig();
@@ -290,6 +312,7 @@ public class TokenValidator {
                 tokenBuilders,
                 claimValidators,
                 headerValidators,
+                dpopValidators,
                 cacheConfig,
                 this.securityEventCounter,
                 this.performanceMonitor);
