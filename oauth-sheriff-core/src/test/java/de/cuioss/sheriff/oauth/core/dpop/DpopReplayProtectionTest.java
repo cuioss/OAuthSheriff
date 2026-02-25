@@ -168,6 +168,6 @@ class DpopReplayProtectionTest {
         protection.checkAndStore("some-jti");
         protection.close();
         // After close, the scheduler is shut down - this should not throw
-        assertDoesNotThrow(() -> protection.close());
+        assertDoesNotThrow(protection::close);
     }
 }

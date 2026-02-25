@@ -88,16 +88,9 @@ public class DpopReplayProtection implements Closeable {
         Entry existing = seenJti.putIfAbsent(jti, newEntry);
 
         if (existing != null) {
-            // Entry exists - check if it has expired
-            if ((now - existing.timestampMillis()) >= ttlMillis) {
-                // Expired: try to replace with new entry atomically
-                if (seenJti.replace(jti, existing, newEntry)) {
-                    return true; // Successfully replaced expired entry
-                }
-                // Another thread replaced it first - treat as replay
-                return false;
-            }
-            return false; // Replay detected (not expired)
+            // Entry exists - check if it has expired and try atomic replacement
+            return (now - existing.timestampMillis()) >= ttlMillis
+                    && seenJti.replace(jti, existing, newEntry);
         }
 
         // Successfully stored new jti - evict oldest if needed
