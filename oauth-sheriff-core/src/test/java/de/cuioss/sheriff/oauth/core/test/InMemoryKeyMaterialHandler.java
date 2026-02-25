@@ -375,7 +375,14 @@ public class InMemoryKeyMaterialHandler {
         BigInteger y = point.getY();
         boolean xOdd = point.isXOdd();
 
-        int keySize = "Ed25519".equals(curve) ? 32 : 57;
+        int keySize;
+        if ("Ed25519".equals(curve)) {
+            keySize = 32;
+        } else if ("Ed448".equals(curve)) {
+            keySize = 57;
+        } else {
+            throw new IllegalArgumentException("Unsupported EdDSA curve: " + curve);
+        }
         byte[] yBytes = y.toByteArray();
         byte[] rawKey = new byte[keySize];
 
