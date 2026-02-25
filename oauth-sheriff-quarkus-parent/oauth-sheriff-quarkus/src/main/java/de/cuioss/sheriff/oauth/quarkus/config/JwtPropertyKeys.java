@@ -207,6 +207,19 @@ public final class JwtPropertyKeys {
          */
         public static final String CLAIM_SUB_OPTIONAL = BASE + "claim-sub-optional";
 
+        /**
+         * Expected JWT "typ" header value for this issuer (e.g., "at+jwt").
+         * Template: "sheriff.oauth.issuers.%s.expected-token-type"
+         * <p>
+         * When configured, tokens with a missing or mismatched "typ" header will be rejected.
+         * When not set (default), no token type validation is performed.
+         * </p>
+         *
+         * @see <a href="https://datatracker.ietf.org/doc/html/rfc9068">RFC 9068</a>
+         * @see de.cuioss.sheriff.oauth.core.IssuerConfig#getExpectedTokenType()
+         */
+        public static final String EXPECTED_TOKEN_TYPE = BASE + "expected-token-type";
+
         // === JWKS Source Configuration (Mutually Exclusive) ===
 
         /**

@@ -53,7 +53,7 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-010 |ISSUER |Issuer configuration loaded successfully: %s |Logged when an issuer configuration is successfully loaded
 |===
 
-== WARN Level (100-147)
+== WARN Level (100-148)
 
 [cols="1,1,2,2", options="header"]
 |===
@@ -106,6 +106,7 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-145 |JWKS |DSL-JSON returned null for JWKS parsing |Logged when DSL-JSON parser returns null while parsing JWKS content
 |JWTValidation-146 |JWKS |Failed to parse JWKS content: %s |Logged when JWKS content parsing fails due to IO error or invalid JSON structure
 |JWTValidation-147 |JWKS |Failed to parse OKP key with ID %s: %s |Logged when OKP (EdDSA) key parsing fails for a specific key ID
+|JWTValidation-148 |TOKEN |Token type '%s' does not match expected type '%s' |Logged when the JWT typ header does not match the expected token type configured for the issuer (RFC 9068 validation)
 |===
 
 == ERROR Level (200-211)

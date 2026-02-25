@@ -49,12 +49,12 @@ OAuthSheriff already satisfies the OAuth 2.1 resource server requirements:
 * **Algorithm security** - Whitelisted RS/ES/PS families only; HMAC and "none" rejected per https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725]
 * **Issuer validation** - `iss` mandatory, matched against configured issuers
 * **Signature verification** - Full cryptographic validation pipeline
+* **RFC 9068 token type validation** - Optional per-issuer `typ: at+jwt` header validation (see xref:#OAUTH-SHERIFF-8.6[OAUTH-SHERIFF-8.6])
 
 === Future Enhancements (Optional)
 
 The following optional enhancements are tracked as separate issues:
 
-* **https://datatracker.ietf.org/doc/html/rfc9068[RFC 9068] - `typ: at+jwt` header validation**: Optional per-issuer validation of the JWT `typ` header for access tokens. Not enabled by default since many authorization servers do not yet set this header.
 * **https://datatracker.ietf.org/doc/html/rfc9449[RFC 9449] - DPoP sender-constrained tokens**: Proof-of-possession mechanism where access tokens contain a `cnf.jkt` claim binding them to a client's public key. This is a major feature requiring HTTP context (DPoP header), not just a token string.
 
 == Functional Requirements
@@ -390,6 +390,18 @@ _See specification: xref:security/security-specifications.adoc#claims-validation
 The library must support cryptographic agility as recommended by https://datatracker.ietf.org/doc/html/rfc8725#section-3.2[RFC 8725 Section 3.2 - Use Appropriate Algorithms], allowing for algorithm upgrades without breaking changes.
 
 _See specification: xref:security/security-specifications.adoc#cryptographic-agility[Cryptographic Agility]_
+
+[#OAUTH-SHERIFF-8.6]
+==== OAUTH-SHERIFF-8.6: Token Type Header Validation (RFC 9068)
+
+The library must support optional per-issuer validation of the JWT `typ` header parameter as defined in https://datatracker.ietf.org/doc/html/rfc9068[RFC 9068 - JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens] (October 2021).
+
+* When `expected-token-type` is configured for an issuer, tokens with a missing or mismatched `typ` header are rejected
+* When not configured (default), no token type validation is performed for backward compatibility
+* Comparison is case-insensitive per RFC convention
+* Validation occurs in the `TokenHeaderValidator` as part of the header validation pipeline step
+
+_See specification: xref:specification/technical-components.adoc#token-validation-pipeline[Token Validation Pipeline]_
 
 [#OAUTH-SHERIFF-12]
 === OAUTH-SHERIFF-12: Testing and Quality Assurance

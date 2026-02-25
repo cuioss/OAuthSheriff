@@ -79,6 +79,7 @@ public class SecurityEventCounter {
         AZP_MISMATCH(JWTValidationLogMessages.WARN.AZP_MISMATCH, EventCategory.SEMANTIC_ISSUES),
         NO_ISSUER_CONFIG(JWTValidationLogMessages.WARN.NO_ISSUER_CONFIG, EventCategory.SEMANTIC_ISSUES),
         ISSUER_MISMATCH(JWTValidationLogMessages.WARN.ISSUER_MISMATCH, EventCategory.SEMANTIC_ISSUES),
+        TOKEN_TYPE_MISMATCH(JWTValidationLogMessages.WARN.TOKEN_TYPE_MISMATCH, EventCategory.SEMANTIC_ISSUES),
 
         // Signature issues
         SIGNATURE_VALIDATION_FAILED(JWTValidationLogMessages.ERROR.SIGNATURE_VALIDATION_FAILED, EventCategory.INVALID_SIGNATURE),

@@ -445,4 +445,165 @@ class TokenHeaderValidatorTest {
         }
     }
 
+    @Nested
+    @DisplayName("Token Type Validation Tests (RFC 9068)")
+    class TokenTypeValidationTests {
+
+        @Test
+        @DisplayName("Should accept token when no expected token type is configured")
+        void shouldAcceptTokenWhenNoExpectedTokenTypeConfigured() {
+            // Given a validator with no expectedTokenType configured (default)
+            var issuerConfig = IssuerConfig.builder()
+                    .issuerIdentifier("test-issuer")
+                    .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
+                    .build();
+            TokenHeaderValidator validator = createValidator(issuerConfig);
+
+            // And a token with typ: JWT
+            var header = new JwtHeader(
+                    "RS256", "JWT", "key-1",
+                    null, null, null, null, null, null, null, null
+            );
+            DecodedJwt decodedJwt = new DecodedJwt(
+                    header, MapRepresentation.empty(), "fake-signature",
+                    new String[]{"header", "payload", "signature"}, "header.payload.signature"
+            );
+
+            // When validating, it should pass (no token type check)
+            assertDoesNotThrow(() -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
+        }
+
+        @Test
+        @DisplayName("Should accept token with matching token type")
+        void shouldAcceptTokenWithMatchingTokenType() {
+            // Given a validator with expectedTokenType="at+jwt"
+            var issuerConfig = IssuerConfig.builder()
+                    .issuerIdentifier("test-issuer")
+                    .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
+                    .expectedTokenType("at+jwt")
+                    .build();
+            TokenHeaderValidator validator = createValidator(issuerConfig);
+
+            // And a token with typ: at+jwt
+            var header = new JwtHeader(
+                    "RS256", "at+jwt", "key-1",
+                    null, null, null, null, null, null, null, null
+            );
+            DecodedJwt decodedJwt = new DecodedJwt(
+                    header, MapRepresentation.empty(), "fake-signature",
+                    new String[]{"header", "payload", "signature"}, "header.payload.signature"
+            );
+
+            // When validating, it should pass
+            assertDoesNotThrow(() -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
+        }
+
+        @Test
+        @DisplayName("Should accept token with matching token type (case-insensitive)")
+        void shouldAcceptTokenWithMatchingTokenTypeCaseInsensitive() {
+            // Given a validator with expectedTokenType="at+jwt"
+            var issuerConfig = IssuerConfig.builder()
+                    .issuerIdentifier("test-issuer")
+                    .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
+                    .expectedTokenType("at+jwt")
+                    .build();
+            TokenHeaderValidator validator = createValidator(issuerConfig);
+
+            // And a token with typ: AT+JWT (uppercase)
+            var header = new JwtHeader(
+                    "RS256", "AT+JWT", "key-1",
+                    null, null, null, null, null, null, null, null
+            );
+            DecodedJwt decodedJwt = new DecodedJwt(
+                    header, MapRepresentation.empty(), "fake-signature",
+                    new String[]{"header", "payload", "signature"}, "header.payload.signature"
+            );
+
+            // When validating, it should pass (case-insensitive comparison)
+            assertDoesNotThrow(() -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
+        }
+
+        @Test
+        @DisplayName("Should reject token with mismatched token type")
+        void shouldRejectTokenWithMismatchedTokenType() {
+            // Get initial count
+            long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.TOKEN_TYPE_MISMATCH);
+
+            // Given a validator with expectedTokenType="at+jwt"
+            var issuerConfig = IssuerConfig.builder()
+                    .issuerIdentifier("test-issuer")
+                    .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
+                    .expectedTokenType("at+jwt")
+                    .build();
+            TokenHeaderValidator validator = createValidator(issuerConfig);
+
+            // And a token with typ: JWT (mismatched)
+            var header = new JwtHeader(
+                    "RS256", "JWT", "key-1",
+                    null, null, null, null, null, null, null, null
+            );
+            DecodedJwt decodedJwt = new DecodedJwt(
+                    header, MapRepresentation.empty(), "fake-signature",
+                    new String[]{"header", "payload", "signature"}, "header.payload.signature"
+            );
+
+            // When validating, it should throw TokenValidationException
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
+
+            // Verify exception details
+            assertEquals(SecurityEventCounter.EventType.TOKEN_TYPE_MISMATCH, exception.getEventType());
+            assertTrue(exception.getMessage().contains("JWT"));
+            assertTrue(exception.getMessage().contains("at+jwt"));
+
+            // Verify warning was logged
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN,
+                    JWTValidationLogMessages.WARN.TOKEN_TYPE_MISMATCH.resolveIdentifierString());
+
+            // Verify security event was recorded
+            assertEquals(initialCount + 1, SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.TOKEN_TYPE_MISMATCH));
+        }
+
+        @Test
+        @DisplayName("Should reject token with missing token type when expected")
+        void shouldRejectTokenWithMissingTokenType() {
+            // Get initial count
+            long initialCount = SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.TOKEN_TYPE_MISMATCH);
+
+            // Given a validator with expectedTokenType="at+jwt"
+            var issuerConfig = IssuerConfig.builder()
+                    .issuerIdentifier("test-issuer")
+                    .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
+                    .expectedTokenType("at+jwt")
+                    .build();
+            TokenHeaderValidator validator = createValidator(issuerConfig);
+
+            // And a token with no typ header
+            var header = new JwtHeader(
+                    "RS256", null, "key-1",
+                    null, null, null, null, null, null, null, null
+            );
+            DecodedJwt decodedJwt = new DecodedJwt(
+                    header, MapRepresentation.empty(), "fake-signature",
+                    new String[]{"header", "payload", "signature"}, "header.payload.signature"
+            );
+
+            // When validating, it should throw TokenValidationException
+            var exception = assertThrows(TokenValidationException.class,
+                    () -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
+
+            // Verify exception details
+            assertEquals(SecurityEventCounter.EventType.TOKEN_TYPE_MISMATCH, exception.getEventType());
+            assertTrue(exception.getMessage().contains("(missing)"));
+            assertTrue(exception.getMessage().contains("at+jwt"));
+
+            // Verify warning was logged
+            LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN,
+                    JWTValidationLogMessages.WARN.TOKEN_TYPE_MISMATCH.resolveIdentifierString());
+
+            // Verify security event was recorded
+            assertEquals(initialCount + 1, SECURITY_EVENT_COUNTER.getCount(SecurityEventCounter.EventType.TOKEN_TYPE_MISMATCH));
+        }
+    }
+
 }

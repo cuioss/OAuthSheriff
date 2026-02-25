@@ -145,6 +145,18 @@ public class IssuerConfig implements LoadingStatusProvider {
      */
     boolean claimSubOptional;
 
+    /**
+     * The expected value for the JWT "typ" header parameter.
+     * When configured, the {@link de.cuioss.sheriff.oauth.core.pipeline.validator.TokenHeaderValidator}
+     * will validate that the token's "typ" header matches this value
+     * (e.g., "at+jwt" per RFC 9068).
+     * When {@code null}, no token type validation is performed (default, backward compatible).
+     *
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc9068">RFC 9068</a>
+     */
+    @Nullable
+    String expectedTokenType;
+
     SignatureAlgorithmPreferences algorithmPreferences;
 
     /**
@@ -297,6 +309,7 @@ public class IssuerConfig implements LoadingStatusProvider {
         private Set<String> expectedAudience;
         private Set<String> expectedClientId;
         private boolean claimSubOptional = false;
+        private String expectedTokenType;
         private SignatureAlgorithmPreferences algorithmPreferences = new SignatureAlgorithmPreferences();
         private Map<String, ClaimMapper> claimMappers;
         private JwksLoader jwksLoader;
@@ -459,6 +472,26 @@ public class IssuerConfig implements LoadingStatusProvider {
          */
         public IssuerConfigBuilder claimSubOptional(boolean claimSubOptional) {
             this.claimSubOptional = claimSubOptional;
+            return this;
+        }
+
+        /**
+         * Sets the expected JWT "typ" header parameter value for this issuer.
+         * <p>
+         * When configured, the {@link de.cuioss.sheriff.oauth.core.pipeline.validator.TokenHeaderValidator}
+         * will validate that the token's "typ" header matches this value (e.g., "at+jwt" per RFC 9068).
+         * The comparison is case-insensitive per RFC convention.
+         * </p>
+         * <p>
+         * When not set (default), no token type validation is performed for backward compatibility.
+         * </p>
+         *
+         * @param expectedTokenType the expected token type value (e.g., "at+jwt")
+         * @return this builder instance for method chaining
+         * @see <a href="https://datatracker.ietf.org/doc/html/rfc9068">RFC 9068</a>
+         */
+        public IssuerConfigBuilder expectedTokenType(String expectedTokenType) {
+            this.expectedTokenType = expectedTokenType;
             return this;
         }
 
@@ -745,7 +778,7 @@ public class IssuerConfig implements LoadingStatusProvider {
             }
 
             return new IssuerConfig(enabled, issuerIdentifier, expectedAudience, expectedClientId,
-                    claimSubOptional, algorithmPreferences, claimMappers, jwksLoader);
+                    claimSubOptional, expectedTokenType, algorithmPreferences, claimMappers, jwksLoader);
         }
 
         private void validateConfiguration() {
@@ -793,13 +826,15 @@ public class IssuerConfig implements LoadingStatusProvider {
      */
     @SuppressWarnings("java:S107") // ok for private constructor
     private IssuerConfig(boolean enabled, @Nullable String issuerIdentifier, @Nullable Set<String> expectedAudience,
-            @Nullable Set<String> expectedClientId, boolean claimSubOptional, @Nullable SignatureAlgorithmPreferences algorithmPreferences,
+            @Nullable Set<String> expectedClientId, boolean claimSubOptional, @Nullable String expectedTokenType,
+            @Nullable SignatureAlgorithmPreferences algorithmPreferences,
             @Nullable Map<String, ClaimMapper> claimMappers, @Nullable JwksLoader jwksLoader) {
         this.enabled = enabled;
         this.issuerIdentifier = issuerIdentifier;
         this.expectedAudience = expectedAudience != null ? expectedAudience : Set.of();
         this.expectedClientId = expectedClientId != null ? expectedClientId : Set.of();
         this.claimSubOptional = claimSubOptional;
+        this.expectedTokenType = expectedTokenType;
         this.algorithmPreferences = algorithmPreferences != null ? algorithmPreferences : new SignatureAlgorithmPreferences();
         this.claimMappers = claimMappers != null ? claimMappers : Map.of();
         this.jwksLoader = jwksLoader;

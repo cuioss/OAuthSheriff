@@ -33,6 +33,7 @@ import lombok.Builder;
  *   <li>Algorithm (alg) - against configured SignatureAlgorithmPreferences</li>
  *   <li>Issuer (iss) - against configured expected issuer</li>
  *   <li>Absence of embedded JWK - to prevent CVE-2018-0114 attacks</li>
+ *   <li>Token type (typ) - optional per-issuer validation per RFC 9068</li>
  * </ul>
  * <p>
  * The validator logs appropriate warning messages for validation failures.
@@ -95,6 +96,7 @@ public class TokenHeaderValidator {
         validateKeyId(decodedJwt);
         // Issuer validation removed - now handled in TokenValidator.resolveIssuerConfig()
         validateNoEmbeddedJwk(decodedJwt);
+        validateTokenType(decodedJwt);
 
         LOGGER.debug("Token header is valid");
     }
@@ -192,6 +194,40 @@ public class TokenHeaderValidator {
             );
         }
         LOGGER.debug("Key ID is valid: %s", kid.get());
+    }
+
+    /**
+     * Validates the token's "typ" header against the expected token type configured in the issuer.
+     * <p>
+     * This validation is optional and only performed when {@code expectedTokenType} is configured
+     * in the {@link IssuerConfig}. When not configured, this method is a no-op for backward
+     * compatibility.
+     * </p>
+     * <p>
+     * The comparison is case-insensitive per RFC convention.
+     * </p>
+     *
+     * @param decodedJwt the decoded JWT Token
+     * @throws TokenValidationException if the token type does not match the expected type
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc9068">RFC 9068</a>
+     */
+    private void validateTokenType(DecodedJwt decodedJwt) {
+        var expectedType = issuerConfig.getExpectedTokenType();
+        if (expectedType == null || expectedType.isBlank()) {
+            return; // No token type validation configured - backward compatible
+        }
+
+        var actualType = decodedJwt.getHeader().getTyp();
+        if (actualType.isEmpty() || !expectedType.equalsIgnoreCase(actualType.get())) {
+            String actual = actualType.orElse("(missing)");
+            LOGGER.warn(JWTValidationLogMessages.WARN.TOKEN_TYPE_MISMATCH, actual, expectedType);
+            securityEventCounter.increment(SecurityEventCounter.EventType.TOKEN_TYPE_MISMATCH);
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.TOKEN_TYPE_MISMATCH,
+                    "Token type '%s' does not match expected type '%s'".formatted(actual, expectedType)
+            );
+        }
+        LOGGER.debug("Token type is valid: %s", actualType.get());
     }
 
 }

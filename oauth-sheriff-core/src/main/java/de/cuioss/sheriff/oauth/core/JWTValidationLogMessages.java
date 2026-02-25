@@ -489,6 +489,12 @@ public final class JWTValidationLogMessages {
                 .identifier(147)
                 .template("Failed to parse OKP key with ID %s: %s")
                 .build();
+
+        public static final LogRecord TOKEN_TYPE_MISMATCH = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(148)
+                .template("Token type '%s' does not match expected type '%s'")
+                .build();
     }
 
 }
