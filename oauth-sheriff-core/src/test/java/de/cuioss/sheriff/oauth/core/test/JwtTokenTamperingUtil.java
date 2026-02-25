@@ -71,7 +71,37 @@ public class JwtTokenTamperingUtil {
             attempts++;
         } while (newChar == originalChar && attempts < MAX_ATTEMPTS);
 
+        // Fallback: if the generator didn't produce a different character,
+        // use deterministic replacement
+        if (newChar == originalChar) {
+            newChar = deterministicDifferentChar(originalChar);
+        }
+
         return newChar;
+    }
+
+    /**
+     * Deterministically produces a different valid base64url character.
+     * Unlike the generator-based approach, this always succeeds because it uses
+     * a wide range of replacement characters.
+     *
+     * @param original the character to replace
+     * @return a character that is guaranteed to be different from the original
+     */
+    private static char deterministicDifferentChar(char original) {
+        if (original >= 'A' && original <= 'Z') {
+            return 'a'; // always different from any uppercase letter
+        } else if (original >= 'a' && original <= 'z') {
+            return 'A'; // always different from any lowercase letter
+        } else if (Character.isDigit(original)) {
+            return 'A';
+        } else if (original == '-') {
+            return '_';
+        } else if (original == '_') {
+            return '-';
+        } else {
+            return 'A';
+        }
     }
 
     /**
@@ -193,18 +223,21 @@ public class JwtTokenTamperingUtil {
                     + newSecondLastChar + newLastChar;
             return parts[0] + "." + parts[1] + "." + tamperedSignature;
         } else {
-            // For longer signatures, modify the last character and a character in the middle
-            char lastChar = signature.charAt(signature.length() - 1);
+            // For longer signatures, modify the second-to-last character and a character
+            // in the middle. We avoid the last character because in base64url encoding,
+            // the last character may have padding bits that don't affect the decoded bytes
+            // (e.g., for RS256 with 256 bytes, the last char has 4 padding bits).
+            int endIndex = signature.length() - 2;
             int middleIndex = signature.length() / 2;
+            char endChar = signature.charAt(endIndex);
             char middleChar = signature.charAt(middleIndex);
 
-            char newLastChar = generateDifferentChar(lastChar, CHAR_GENERATOR_A_B);
+            char newEndChar = generateDifferentChar(endChar, CHAR_GENERATOR_A_B);
             char newMiddleChar = generateDifferentChar(middleChar, CHAR_GENERATOR_X_Y);
 
-            String tamperedSignature = signature.substring(0, middleIndex)
-                    + newMiddleChar
-                    + signature.substring(middleIndex + 1, signature.length() - 1)
-                    + newLastChar;
+            StringBuilder tamperedSignature = new StringBuilder(signature);
+            tamperedSignature.setCharAt(middleIndex, newMiddleChar);
+            tamperedSignature.setCharAt(endIndex, newEndChar);
 
             LOGGER.debug("Original signature: %s, Tampered signature: %s", signature, tamperedSignature);
             return parts[0] + "." + parts[1] + "." + tamperedSignature;

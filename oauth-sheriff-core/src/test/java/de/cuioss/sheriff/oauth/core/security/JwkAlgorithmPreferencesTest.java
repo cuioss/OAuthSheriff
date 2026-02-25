@@ -72,8 +72,10 @@ class JwkAlgorithmPreferencesTest {
         assertTrue(defaultAlgorithms.contains("PS384"));
         assertTrue(defaultAlgorithms.contains("PS512"));
 
+        assertTrue(defaultAlgorithms.contains("EdDSA"));
+
         // Verify total count
-        assertEquals(9, defaultAlgorithms.size());
+        assertEquals(10, defaultAlgorithms.size());
     }
 
     @Test
@@ -87,6 +89,7 @@ class JwkAlgorithmPreferencesTest {
         assertTrue(preferences.isSupported("ES256"));
         assertTrue(preferences.isSupported("ES384"));
         assertTrue(preferences.isSupported("ES512"));
+        assertTrue(preferences.isSupported("EdDSA"));
         assertTrue(preferences.isSupported("PS256"));
         assertTrue(preferences.isSupported("PS384"));
         assertTrue(preferences.isSupported("PS512"));

@@ -19,11 +19,11 @@ jobs:
     with:
       report-name: e-2-e-playwright
       maven-args-input: |
-        install -DskipTests
+        install -DskipTests -T 1C -pl bom,oauth-sheriff-core,oauth-sheriff-quarkus-parent,oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus,oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-deployment,oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
         verify -Pe2e-tests -pl oauth-sheriff-quarkus-parent/e-2-e-playwright
       install-playwright: true
       npm-cache: true
-      timeout-minutes: 25
+      timeout-minutes: 30
       reports-folder: |
         oauth-sheriff-quarkus-parent/e-2-e-playwright/target/test-results
       report-logs: |

@@ -53,7 +53,7 @@ export async function navigateToDevUIPage(page, pageTitle, waitForSelector) {
 
   // Step 1: Navigate to Dev-UI extensions page
   await page.goto(CONSTANTS.URLS.DEVUI, {
-    waitUntil: 'networkidle',
+    waitUntil: 'domcontentloaded',
     timeout: CONSTANTS.TIMEOUTS.NAVIGATION,
   });
 
@@ -97,9 +97,6 @@ export async function navigateToDevUIPage(page, pageTitle, waitForSelector) {
     throw err;
   }
   testLogger.info('Navigation', `Page "${pageTitle}" ready (<${elementName}> attached)`);
-
-  // Give the Lit component time to initialize (connectedCallback -> firstUpdated -> render)
-  await page.waitForTimeout(1000);
 
   if (waitForSelector) {
     await page.locator(waitForSelector).waitFor({

@@ -26,20 +26,25 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.*;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Utility class for handling JWK (JSON Web Key) operations.
  * <p>
- * This class provides methods for parsing and validating RSA and EC keys from JWK format.
+ * This class provides methods for parsing and validating RSA, EC, and OKP keys from JWK format.
  * It isolates the low-level cryptographic operations from the JWKSKeyLoader class.
  * <p>
  * This class uses standard JDK cryptographic providers for key parsing and validation.
- * It supports all standard elliptic curves (P-256, P-384, P-521) and RSA keys
- * as defined in RFC 7517 (JSON Web Key) and RFC 7518 (JSON Web Algorithms).
+ * It supports all standard elliptic curves (P-256, P-384, P-521), RSA keys,
+ * and OKP (Octet Key Pair) keys for EdDSA (Ed25519, Ed448)
+ * as defined in RFC 7517 (JSON Web Key), RFC 7518 (JSON Web Algorithms),
+ * and RFC 8037 (CFRG Elliptic Curve Diffie-Hellman (ECDH) and Signatures in JOSE).
  * <p>
- * All operations use the standard JDK cryptographic providers available in Java 11+,
+ * All operations use the standard JDK cryptographic providers available in Java 21+,
  * ensuring excellent compatibility with GraalVM native image compilation.
+ * EdDSA support leverages JEP 339 (Edwards-Curve Digital Signature Algorithm)
+ * available natively in Java 15+.
  * <p>
  * For more details on the security aspects, see the
  * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
@@ -53,6 +58,9 @@ public final class JwkKeyHandler {
     private static final String MESSAGE = "Invalid Base64 URL encoded value for '%s'";
     private static final String RSA_KEY_TYPE = "RSA";
     private static final String EC_KEY_TYPE = "EC";
+    private static final String OKP_KEY_TYPE = "OKP";
+    private static final String EDDSA_ALGORITHM = "EdDSA";
+    private static final Set<String> SUPPORTED_OKP_CURVES = Set.of("Ed25519", "Ed448");
 
     // Cache for KeyFactory instances to improve performance
     private static final Map<String, KeyFactory> KEY_FACTORY_CACHE = new ConcurrentHashMap<>();
@@ -105,6 +113,78 @@ public final class JwkKeyHandler {
         ECPublicKeySpec spec = new ECPublicKeySpec(point, params);
         KeyFactory factory = getKeyFactory(EC_KEY_TYPE);
         return factory.generatePublic(spec);
+    }
+
+    /**
+     * Parses an OKP (Octet Key Pair) public key from a JwkKey record.
+     * OKP keys are used for EdDSA signatures (Ed25519/Ed448) as defined in
+     * <a href="https://datatracker.ietf.org/doc/html/rfc8037">RFC 8037</a>.
+     * <p>
+     * The key reconstruction follows the EdDSA public key format:
+     * the {@code x} field contains the raw public key bytes in little-endian order,
+     * with the sign bit encoded in the most significant bit of the last byte.
+     *
+     * @param jwk the JwkKey record containing OKP parameters (crv, x)
+     * @return the parsed EdDSA public key
+     * @throws InvalidKeySpecException if the key specification is invalid or the curve is unsupported
+     * @since 1.0
+     */
+    public static PublicKey parseOkpKey(JwkKey jwk) throws InvalidKeySpecException {
+        // Validate curve
+        String curve = jwk.getCrv()
+                .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("crv")));
+        if (!SUPPORTED_OKP_CURVES.contains(curve)) {
+            throw new InvalidKeySpecException("OKP curve %s is not supported. Supported curves: %s".formatted(
+                    curve, SUPPORTED_OKP_CURVES));
+        }
+
+        // Get raw public key bytes
+        byte[] rawBytes = jwk.getXCoordinateAsBytes()
+                .orElseThrow(() -> new InvalidKeySpecException(MESSAGE.formatted("x")));
+
+        // Reconstruct EdECPublicKey from raw bytes (RFC 8032 encoding)
+        // The last byte contains the sign bit in its MSB
+        boolean xOdd = (rawBytes[rawBytes.length - 1] & 0x80) != 0;
+
+        // Clear the sign bit and reverse byte order (little-endian to big-endian for BigInteger)
+        byte[] yBytes = rawBytes.clone();
+        yBytes[yBytes.length - 1] &= 0x7F;
+        reverseByteArray(yBytes);
+        BigInteger y = new BigInteger(1, yBytes);
+
+        try {
+            NamedParameterSpec paramSpec = new NamedParameterSpec(curve);
+            EdECPoint point = new EdECPoint(xOdd, y);
+            EdECPublicKeySpec keySpec = new EdECPublicKeySpec(paramSpec, point);
+            KeyFactory factory = getKeyFactory(EDDSA_ALGORITHM);
+            return factory.generatePublic(keySpec);
+        } catch (IllegalStateException e) {
+            throw new InvalidKeySpecException("Failed to reconstruct EdDSA public key for curve " + curve, e);
+        }
+    }
+
+    /**
+     * Determines the EdDSA algorithm name for an OKP curve.
+     * Both Ed25519 and Ed448 use the single JWS algorithm identifier "EdDSA"
+     * as defined in RFC 8037. The actual curve is determined by the key.
+     *
+     * @param curve the OKP curve name (Ed25519 or Ed448)
+     * @return always "EdDSA" for supported OKP curves
+     * @since 1.0
+     */
+    public static String determineOkpAlgorithm(String curve) {
+        return EDDSA_ALGORITHM;
+    }
+
+    /**
+     * Reverses a byte array in place (for little-endian to big-endian conversion).
+     */
+    private static void reverseByteArray(byte[] array) {
+        for (int i = 0, j = array.length - 1; i < j; i++, j--) {
+            byte tmp = array[i];
+            array[i] = array[j];
+            array[j] = tmp;
+        }
     }
 
     /**

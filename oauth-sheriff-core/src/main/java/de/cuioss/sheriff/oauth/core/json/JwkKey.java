@@ -164,29 +164,49 @@ String y      // EC y coordinate (Base64url-encoded, EC only)
     }
 
     /**
-     * Helper method to decode Base64 URL encoded string to BigInteger with validation.
-     * 
-     * @param base64String the Base64 URL encoded string
-     * @return Optional containing the decoded BigInteger, empty if null, blank, or invalid
+     * Gets the x coordinate as raw bytes with Base64 URL decoding and validation.
+     * This is needed for OKP (Octet Key Pair) keys where the x coordinate
+     * represents the raw public key bytes rather than a BigInteger coordinate.
+     *
+     * @return Optional containing the decoded x coordinate as byte array, empty if null or invalid
+     * @since 1.0
      */
-    private Optional<BigInteger> decodeBase64UrlToBigInteger(String base64String) {
-        if (base64String == null || base64String.trim().isEmpty()) {
+    public Optional<byte[]> getXCoordinateAsBytes() {
+        return decodeBase64UrlToBytes(x);
+    }
+
+    /**
+     * Helper method to decode Base64 URL encoded string to byte array with validation.
+     *
+     * @param base64String the Base64 URL encoded string
+     * @return Optional containing the decoded byte array, empty if null, blank, or invalid
+     */
+    private Optional<byte[]> decodeBase64UrlToBytes(String base64String) {
+        if (base64String == null || base64String.isBlank()) {
             return Optional.empty();
         }
 
-        // Validate Base64 URL format
         if (!BASE64_URL_PATTERN.matcher(base64String).matches()) {
             LOGGER.warn(WARN.INVALID_BASE64_URL_ENCODING, base64String);
             return Optional.empty();
         }
 
         try {
-            byte[] decoded = Base64.getUrlDecoder().decode(base64String);
-            return Optional.of(new BigInteger(1, decoded));
+            return Optional.of(Base64.getUrlDecoder().decode(base64String));
         } catch (IllegalArgumentException e) {
-            // Invalid Base64 URL encoding (e.g., contains padding or invalid characters)
             LOGGER.warn(WARN.INVALID_BASE64_URL_ENCODING, base64String);
             return Optional.empty();
         }
+    }
+
+    /**
+     * Helper method to decode Base64 URL encoded string to BigInteger with validation.
+     *
+     * @param base64String the Base64 URL encoded string
+     * @return Optional containing the decoded BigInteger, empty if null, blank, or invalid
+     */
+    private Optional<BigInteger> decodeBase64UrlToBigInteger(String base64String) {
+        return decodeBase64UrlToBytes(base64String)
+                .map(decoded -> new BigInteger(1, decoded));
     }
 }

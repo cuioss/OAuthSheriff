@@ -2,15 +2,17 @@
  * @fileoverview E2E tests for the merged Status & Config Dev-UI page
  * Verifies the qwc-jwt-status-config component renders correctly with runtime data
  * from all four JSON-RPC methods (validation status, JWKS status, configuration, health).
+ *
+ * Uses serial mode with a shared page — navigation happens once in the fixture.
  */
 
-import { test, expect, takeStartScreenshot } from "../fixtures/test-fixtures.js";
+import { serialStatusConfigTest as test, expect, takeStartScreenshot } from "../fixtures/test-fixtures.js";
 import { CONSTANTS } from "../utils/constants.js";
-import { goToStatusConfig } from "../utils/devui-navigation.js";
+
+test.describe.configure({ mode: "serial" });
 
 test.describe("01 - Status & Config Page", () => {
-    test.beforeEach(async ({ page }, testInfo) => {
-        await goToStatusConfig(page);
+    test.beforeEach(async ({ page, _statusConfigState }, testInfo) => {
         await takeStartScreenshot(page, testInfo);
     });
 
@@ -261,7 +263,7 @@ test.describe("01 - Status & Config Page", () => {
         }
     });
 
-    // --- Refresh ---
+    // --- Refresh (mutating - keep last) ---
 
     test("should have a working refresh button", async ({ page }) => {
         const container = page.locator(

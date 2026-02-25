@@ -183,6 +183,7 @@ The library supports the following signature algorithms as specified in the requ
 * ES256 (ECDSA using P-256 and SHA-256)
 * ES384 (ECDSA using P-384 and SHA-384)
 * ES512 (ECDSA using P-521 and SHA-512)
+* EdDSA (Edwards-curve Digital Signature Algorithm using Ed25519/Ed448, https://datatracker.ietf.org/doc/html/rfc8037[RFC 8037])
 
 ==== Rejected Algorithms
 
@@ -302,7 +303,7 @@ The following classes implement this specification:
 
 The cryptographic agility features include:
 
-1. Support for multiple signature algorithms (RSA, ECDSA, RSA-PSS)
+1. Support for multiple signature algorithms (RSA, ECDSA, RSA-PSS, EdDSA)
 2. Configuration of preferred algorithms through IssuerConfig
 3. Key rotation and algorithm migration capabilities
 4. Storage of algorithm information with keys
@@ -449,13 +450,15 @@ The following classes use standard JDK providers:
 ** Retrieving EC curve parameters via `AlgorithmParameters.getInstance("EC")`
 ** Supporting standard elliptic curves (P-256, P-384, P-521) using `ECGenParameterSpec`
 ** Converting JWK curve names to standard JDK curve specifications
+** Parsing OKP (Octet Key Pair) keys for EdDSA via `EdECPublicKeySpec` (JEP 339)
 
 * link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenSignatureValidator.java[TokenSignatureValidator] - Uses standard JDK for:
 ** Signature verification of JWT tokens via `Signature.getInstance(algorithm)`
-** Supporting all RFC 7518 signature algorithms:
+** Supporting all RFC 7518 and RFC 8037 signature algorithms:
 *** RSA signatures (RS256, RS384, RS512)
 *** ECDSA signatures (ES256, ES384, ES512)
 *** RSA-PSS signatures (PS256, PS384, PS512)
+*** EdDSA signatures (Ed25519, Ed448) via `Signature.getInstance("EdDSA")`
 
 ==== Algorithm Support
 
@@ -463,6 +466,7 @@ All algorithms are supported by the standard JDK cryptographic providers in Java
 
 * **RSA algorithms**: Full support for RSA-PKCS1 (RS256/384/512) and RSA-PSS (PS256/384/512)
 * **ECDSA algorithms**: Complete support for all standard curves (P-256, P-384, P-521)
+* **EdDSA algorithms**: Full support for Ed25519 and Ed448 via JEP 339 (Java 15+), no additional dependencies required
 * **Enhanced security**: Java 21 provides enhanced default key sizes and cryptographic hardening
 
 ==== Security Considerations
