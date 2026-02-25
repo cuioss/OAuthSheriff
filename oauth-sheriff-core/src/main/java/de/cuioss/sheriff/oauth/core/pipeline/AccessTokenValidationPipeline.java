@@ -23,6 +23,7 @@ import de.cuioss.sheriff.oauth.core.cache.AccessTokenCacheConfig;
 import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.context.ValidationContext;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
+import de.cuioss.sheriff.oauth.core.dpop.DpopProofValidator;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.metrics.MeasurementType;
 import de.cuioss.sheriff.oauth.core.metrics.MetricsTicker;
@@ -86,6 +87,7 @@ public class AccessTokenValidationPipeline {
     private final Map<String, TokenBuilder> tokenBuilders;
     private final Map<String, TokenClaimValidator> claimValidators;
     private final Map<String, TokenHeaderValidator> headerValidators;
+    private final Map<String, DpopProofValidator> dpopValidators;
     private final AccessTokenCache cache;
     private final SecurityEventCounter securityEventCounter;
     private final TokenValidatorMonitor performanceMonitor;
@@ -99,6 +101,7 @@ public class AccessTokenValidationPipeline {
      * @param tokenBuilders pre-created token builders keyed by issuer
      * @param claimValidators pre-created claim validators keyed by issuer
      * @param headerValidators pre-created header validators keyed by issuer
+     * @param dpopValidators pre-created DPoP validators keyed by issuer (may be empty)
      * @param cacheConfig the cache configuration for access token caching
      * @param securityEventCounter the security event counter for tracking operations
      * @param performanceMonitor the monitor for recording performance metrics
@@ -110,6 +113,7 @@ public class AccessTokenValidationPipeline {
             Map<String, TokenBuilder> tokenBuilders,
             Map<String, TokenClaimValidator> claimValidators,
             Map<String, TokenHeaderValidator> headerValidators,
+            Map<String, DpopProofValidator> dpopValidators,
             AccessTokenCacheConfig cacheConfig,
             SecurityEventCounter securityEventCounter,
             TokenValidatorMonitor performanceMonitor) {
@@ -119,6 +123,7 @@ public class AccessTokenValidationPipeline {
         this.tokenBuilders = tokenBuilders;
         this.claimValidators = claimValidators;
         this.headerValidators = headerValidators;
+        this.dpopValidators = dpopValidators;
         this.cache = new AccessTokenCache(cacheConfig, securityEventCounter);
         this.securityEventCounter = securityEventCounter;
         this.performanceMonitor = performanceMonitor;
@@ -147,6 +152,8 @@ public class AccessTokenValidationPipeline {
         Optional<AccessTokenContent> cached = cache.get(tokenString, performanceMonitor);
         if (cached.isPresent()) {
             LOGGER.debug("Access token retrieved from cache");
+            // Still validate DPoP proof even for cached tokens (proofs must be fresh per request)
+            runDpopValidation(request, cached.get().getIssuer(), tokenString);
             return cached.get();
         }
 
@@ -236,11 +243,38 @@ public class AccessTokenValidationPipeline {
             claimsTicker.stopAndRecord();
         }
 
+        // 8.5 Validate DPoP proof (after claims validation, before cache store)
+        runDpopValidation(request, decodedJwt, issuerConfig.getIssuerIdentifier(), tokenString);
+
         LOGGER.debug("Token successfully validated");
 
         // 9. Store in cache for future lookups
         cache.put(tokenString, validatedToken, performanceMonitor);
 
         return validatedToken;
+    }
+
+    /**
+     * Runs DPoP validation for a full (non-cached) validation flow.
+     */
+    private void runDpopValidation(AccessTokenRequest request, DecodedJwt decodedJwt,
+            String issuerIdentifier, String tokenString) {
+        DpopProofValidator dpopValidator = dpopValidators.get(issuerIdentifier);
+        if (dpopValidator != null) {
+            dpopValidator.validate(request, decodedJwt, tokenString);
+        }
+    }
+
+    /**
+     * Runs DPoP validation for cached tokens by re-parsing the token minimally.
+     * For cached tokens, we still need to validate the DPoP proof since proofs must be fresh.
+     */
+    private void runDpopValidation(AccessTokenRequest request, String issuerIdentifier, String tokenString) {
+        DpopProofValidator dpopValidator = dpopValidators.get(issuerIdentifier);
+        if (dpopValidator != null) {
+            // Re-decode the token to get access to cnf.jkt for DPoP validation
+            DecodedJwt decodedJwt = jwtParser.decode(tokenString, false);
+            dpopValidator.validate(request, decodedJwt, tokenString);
+        }
     }
 }

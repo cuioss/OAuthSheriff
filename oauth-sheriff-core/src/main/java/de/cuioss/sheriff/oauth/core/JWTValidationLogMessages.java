@@ -495,6 +495,55 @@ public final class JWTValidationLogMessages {
                 .identifier(148)
                 .template("Token type '%s' does not match expected type '%s'")
                 .build();
+
+        // DPoP validation issues (RFC 9449)
+        public static final LogRecord DPOP_PROOF_MISSING = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(149)
+                .template("DPoP proof is required but the DPoP HTTP header is missing")
+                .build();
+
+        public static final LogRecord DPOP_PROOF_INVALID = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(150)
+                .template("DPoP proof has invalid format: %s")
+                .build();
+
+        public static final LogRecord DPOP_PROOF_EXPIRED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(151)
+                .template("DPoP proof iat claim is outside acceptable freshness window")
+                .build();
+
+        public static final LogRecord DPOP_THUMBPRINT_MISMATCH = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(152)
+                .template("DPoP proof JWK thumbprint '%s' does not match token cnf.jkt '%s'")
+                .build();
+
+        public static final LogRecord DPOP_REPLAY_DETECTED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(153)
+                .template("DPoP proof replay detected for jti: %s")
+                .build();
+
+        public static final LogRecord DPOP_PROOF_MISSING_CLAIM = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(154)
+                .template("DPoP proof is missing required claim: %s")
+                .build();
+
+        public static final LogRecord DPOP_ATH_MISMATCH = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(155)
+                .template("DPoP proof ath claim does not match access token hash")
+                .build();
+
+        public static final LogRecord DPOP_CNF_MISSING = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(156)
+                .template("DPoP is required but access token does not contain cnf.jkt claim")
+                .build();
     }
 
 }
