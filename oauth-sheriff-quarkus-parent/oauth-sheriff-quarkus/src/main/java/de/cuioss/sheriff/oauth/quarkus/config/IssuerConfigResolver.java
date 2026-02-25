@@ -358,7 +358,7 @@ public class IssuerConfigResolver {
                 Boolean.class
         );
 
-        if (dpopEnabled.isPresent() && dpopEnabled.get()) {
+        if (dpopEnabled.isPresent() && Boolean.TRUE.equals(dpopEnabled.get())) {
             DpopConfig.DpopConfigBuilder dpopBuilder = DpopConfig.builder();
 
             config.getOptionalValue(

@@ -38,6 +38,7 @@ import lombok.Getter;
 import lombok.Singular;
 import org.jspecify.annotations.Nullable;
 
+import java.io.Closeable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,7 +134,7 @@ import java.util.Map;
  * @since 1.0
  */
 @SuppressWarnings({"JavadocLinkAsPlainText", "java:S6539"}) // java:S6539: Intentional facade pattern - high coupling is by design
-public class TokenValidator {
+public class TokenValidator implements Closeable {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenValidator.class);
 
@@ -174,6 +175,13 @@ public class TokenValidator {
      * Handles opaque or lightly validated refresh tokens.
      */
     private final RefreshTokenValidationPipeline refreshTokenPipeline;
+
+    /**
+     * Shared DPoP replay protection instance, or null if no issuer has DPoP enabled.
+     * Stored for lifecycle management ({@link #close()}).
+     */
+    @Nullable
+    private final DpopReplayProtection dpopReplayProtection;
 
 
     /**
@@ -269,13 +277,13 @@ public class TokenValidator {
                 maxNonceCacheSize = Math.max(maxNonceCacheSize, issuerConfig.getDpopConfig().getNonceCacheSize());
             }
         }
-        DpopReplayProtection sharedReplayProtection = maxNonceCacheSize > 0
+        this.dpopReplayProtection = maxNonceCacheSize > 0
                 ? new DpopReplayProtection(maxNonceCacheTtl, maxNonceCacheSize)
                 : null;
         for (IssuerConfig issuerConfig : issuerConfigs) {
             if (issuerConfig.getDpopConfig() != null) {
                 DpopProofValidator dpopValidator = new DpopProofValidator(
-                        issuerConfig, this.securityEventCounter, sharedReplayProtection);
+                        issuerConfig, this.securityEventCounter, this.dpopReplayProtection);
                 dpopValidatorsMap.put(issuerConfig.getIssuerIdentifier(), dpopValidator);
                 LOGGER.debug("Pre-created DpopProofValidator for issuer: %s", issuerConfig.getIssuerIdentifier());
             }
@@ -398,5 +406,16 @@ public class TokenValidator {
         securityEventCounter.increment(SecurityEventCounter.EventType.REFRESH_TOKEN_CREATED);
 
         return refreshToken;
+    }
+
+    /**
+     * Shuts down the DPoP replay protection scheduler if active.
+     * This should be called when the TokenValidator is no longer needed.
+     */
+    @Override
+    public void close() {
+        if (dpopReplayProtection != null) {
+            dpopReplayProtection.close();
+        }
     }
 }

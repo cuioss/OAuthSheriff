@@ -273,6 +273,71 @@ class DpopProofValidatorTest {
     }
 
     @Test
+    void shouldRejectMultipleDpopHeaders() {
+        DecodedJwt accessToken = createAccessTokenJwt("some-thumbprint");
+        AccessTokenRequest request = new AccessTokenRequest("dummy-token",
+                Map.of("dpop", List.of("proof1", "proof2")));
+
+        var ex = assertThrows(TokenValidationException.class,
+                () -> validator.validate(request, accessToken, "dummy-token"));
+        assertEquals(EventType.DPOP_PROOF_INVALID, ex.getEventType());
+        assertTrue(ex.getMessage().contains("Multiple DPoP headers"));
+    }
+
+    @Test
+    void shouldRejectOversizedDpopProof() {
+        DecodedJwt accessToken = createAccessTokenJwt("some-thumbprint");
+        // Create a proof string larger than 8192 bytes
+        String oversizedProof = "a".repeat(8193);
+        AccessTokenRequest request = new AccessTokenRequest("dummy-token",
+                Map.of("dpop", List.of(oversizedProof)));
+
+        var ex = assertThrows(TokenValidationException.class,
+                () -> validator.validate(request, accessToken, "dummy-token"));
+        assertEquals(EventType.DPOP_PROOF_INVALID, ex.getEventType());
+        assertTrue(ex.getMessage().contains("maximum size"));
+    }
+
+    @Test
+    void shouldRejectWhenDpopRequiredWithCnfJktButNoDpopHeader() {
+        IssuerConfig requiredConfig = IssuerConfig.builder()
+                .issuerIdentifier(TEST_ISSUER)
+                .dpopConfig(DpopConfig.builder().required(true).build())
+                .jwksContent(InMemoryKeyMaterialHandler.createDefaultJwks())
+                .build();
+        var requiredValidator = new DpopProofValidator(requiredConfig, securityEventCounter, replayProtection);
+
+        // Required mode, access token has cnf.jkt but no DPoP header
+        DecodedJwt accessToken = createAccessTokenJwt("some-thumbprint");
+        AccessTokenRequest request = new AccessTokenRequest("dummy-token", Map.of());
+
+        var ex = assertThrows(TokenValidationException.class,
+                () -> requiredValidator.validate(request, accessToken, "dummy-token"));
+        assertEquals(EventType.DPOP_PROOF_MISSING, ex.getEventType());
+    }
+
+    @Test
+    void shouldRejectFutureIat() {
+        KeyPair keyPair = generateRsaKeyPair();
+        Map<String, Object> jwkMap = rsaPublicKeyToJwkMap((RSAPublicKey) keyPair.getPublic());
+        String thumbprint = JwkThumbprintUtil.computeThumbprint(jwkMap);
+
+        String rawAccessToken = "some.access.token";
+        DecodedJwt accessToken = createAccessTokenJwt(thumbprint);
+
+        // Build proof with iat 2 minutes in the future (exceeds -60s tolerance)
+        long futureIat = (System.currentTimeMillis() / 1000) + 120;
+        String dpopProof = buildDpopProofWithIat(keyPair, jwkMap, "RS256", rawAccessToken, futureIat);
+
+        AccessTokenRequest request = new AccessTokenRequest(rawAccessToken,
+                Map.of("dpop", List.of(dpopProof)));
+
+        var ex = assertThrows(TokenValidationException.class,
+                () -> validator.validate(request, accessToken, rawAccessToken));
+        assertEquals(EventType.DPOP_PROOF_EXPIRED, ex.getEventType());
+    }
+
+    @Test
     void shouldAcceptCaseInsensitiveTyp() {
         KeyPair keyPair = generateRsaKeyPair();
         Map<String, Object> jwkMap = rsaPublicKeyToJwkMap((RSAPublicKey) keyPair.getPublic());
@@ -310,46 +375,46 @@ class DpopProofValidatorTest {
     }
 
     private String buildDpopProof(KeyPair keyPair, Map<String, Object> jwkMap, String alg, String accessToken) {
-        return buildDpopProofInternal(keyPair, jwkMap, alg, accessToken, "dpop+jwt",
+        return buildDpopProofInternal(keyPair, jwkMap, alg, "dpop+jwt",
                 UUID.randomUUID().toString(), System.currentTimeMillis() / 1000,
                 computeAth(accessToken));
     }
 
     private String buildDpopProofWithCustomTyp(KeyPair keyPair, Map<String, Object> jwkMap, String alg,
             String accessToken, String typ) {
-        return buildDpopProofInternal(keyPair, jwkMap, alg, accessToken, typ,
+        return buildDpopProofInternal(keyPair, jwkMap, alg, typ,
                 UUID.randomUUID().toString(), System.currentTimeMillis() / 1000,
                 computeAth(accessToken));
     }
 
     private String buildDpopProofWithJti(KeyPair keyPair, Map<String, Object> jwkMap, String alg,
             String accessToken, String jti) {
-        return buildDpopProofInternal(keyPair, jwkMap, alg, accessToken, "dpop+jwt",
+        return buildDpopProofInternal(keyPair, jwkMap, alg, "dpop+jwt",
                 jti, System.currentTimeMillis() / 1000, computeAth(accessToken));
     }
 
     private String buildDpopProofWithIat(KeyPair keyPair, Map<String, Object> jwkMap, String alg,
             String accessToken, long iat) {
-        return buildDpopProofInternal(keyPair, jwkMap, alg, accessToken, "dpop+jwt",
+        return buildDpopProofInternal(keyPair, jwkMap, alg, "dpop+jwt",
                 UUID.randomUUID().toString(), iat, computeAth(accessToken));
     }
 
     private String buildDpopProofWithAth(KeyPair keyPair, Map<String, Object> jwkMap, String alg,
             String accessTokenForAth) {
-        return buildDpopProofInternal(keyPair, jwkMap, alg, accessTokenForAth, "dpop+jwt",
+        return buildDpopProofInternal(keyPair, jwkMap, alg, "dpop+jwt",
                 UUID.randomUUID().toString(), System.currentTimeMillis() / 1000,
                 computeAth(accessTokenForAth));
     }
 
     private String buildDpopProofWithMismatchedKey(KeyPair signingKeyPair, Map<String, Object> headerJwkMap,
             String alg, String accessToken) {
-        return buildDpopProofInternal(signingKeyPair, headerJwkMap, alg, accessToken, "dpop+jwt",
+        return buildDpopProofInternal(signingKeyPair, headerJwkMap, alg, "dpop+jwt",
                 UUID.randomUUID().toString(), System.currentTimeMillis() / 1000,
                 computeAth(accessToken));
     }
 
     private String buildDpopProofInternal(KeyPair signingKeyPair, Map<String, Object> headerJwkMap,
-            String alg, String accessToken, String typ,
+            String alg, String typ,
             String jti, long iat, String ath) {
         // Build header JSON
         String jwkJson = mapToJson(headerJwkMap);
