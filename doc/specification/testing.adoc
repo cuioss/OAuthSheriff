@@ -329,7 +329,7 @@ void shouldRejectAccessTokenWithInvalidSignature(String token) {
 
     // Verify that the tampered token is rejected by throwing TokenValidationException
     assertThrows(TokenValidationException.class, () -> {
-        tokenValidator.createAccessToken(tamperedToken);
+        tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken));
     }, "Token with invalid signature should be rejected with TokenValidationException");
 }
 ----
@@ -399,7 +399,7 @@ void shouldRejectAccessTokenWithInvalidSignature(String token) {
 
     // Verify that the tampered token is rejected by throwing TokenValidationException
     TokenValidationException exception = assertThrows(TokenValidationException.class, () -> {
-        tokenValidator.createAccessToken(tamperedToken);
+        tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken));
     }, "Token with invalid signature should be rejected with TokenValidationException");
 
     // Verify that the exception contains the correct event type and category

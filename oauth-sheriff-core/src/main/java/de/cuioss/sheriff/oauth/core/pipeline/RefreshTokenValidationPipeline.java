@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.oauth.core.pipeline;
 
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimValue;
+import de.cuioss.sheriff.oauth.core.domain.context.RefreshTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.RefreshTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.json.MapRepresentation;
@@ -76,12 +77,12 @@ public class RefreshTokenValidationPipeline {
      * claims map is used. Parsing failures are expected and do not cause validation
      * to fail.
      *
-     * @param tokenString the token string to validate (guaranteed non-null, non-blank, within size limits)
+     * @param request the refresh token validation request (token string guaranteed non-null, non-blank, within size limits)
      * @return the validated refresh token content
      */
-   
-    public RefreshTokenContent validate(String tokenString) {
+    public RefreshTokenContent validate(RefreshTokenRequest request) {
         LOGGER.debug("Validating refresh token");
+        String tokenString = request.tokenString();
 
         // TokenStringValidator has already checked: null, blank, size
 

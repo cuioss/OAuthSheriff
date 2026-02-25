@@ -18,6 +18,8 @@ package de.cuioss.sheriff.oauth.core.test;
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
+import de.cuioss.sheriff.oauth.core.domain.context.IdTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.domain.token.IdTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
@@ -66,7 +68,7 @@ class JwtTokenTamperingUtilTest {
     void shouldValidateUntamperedAccessToken() {
 
         String token = TestTokenGenerators.accessTokens().next().getRawToken();
-        AccessTokenContent result = tokenValidator.createAccessToken(token);
+        AccessTokenContent result = tokenValidator.createAccessToken(AccessTokenRequest.of(token));
         assertNotNull(result, "Untampered token should be valid");
     }
 
@@ -75,7 +77,7 @@ class JwtTokenTamperingUtilTest {
     void shouldValidateUntamperedIdToken() {
 
         String token = TestTokenGenerators.idTokens().next().getRawToken();
-        IdTokenContent result = tokenValidator.createIdToken(token);
+        IdTokenContent result = tokenValidator.createIdToken(IdTokenRequest.of(token));
         assertNotNull(result, "Untampered token should be valid");
     }
 
@@ -91,7 +93,7 @@ class JwtTokenTamperingUtilTest {
         assertNotEquals(originalToken, tamperedToken,
                 "Token should be tampered using strategy: " + strategy.getDescription());
         TokenValidationException exception = assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(tamperedToken),
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)),
                 "Tampered token should be rejected. Strategy: " + strategy.getDescription());
 
         // Verify the exception has a valid event type
@@ -111,7 +113,7 @@ class JwtTokenTamperingUtilTest {
         assertNotEquals(originalToken, tamperedToken,
                 "Token should be tampered using strategy: " + strategy.getDescription());
         TokenValidationException exception = assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createIdToken(tamperedToken),
+                () -> tokenValidator.createIdToken(IdTokenRequest.of(tamperedToken)),
                 "Tampered token should be rejected. Strategy: " + strategy.getDescription());
 
         // Verify the exception has a valid event type

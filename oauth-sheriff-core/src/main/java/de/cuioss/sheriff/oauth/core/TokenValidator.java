@@ -16,6 +16,9 @@
 package de.cuioss.sheriff.oauth.core;
 
 import de.cuioss.sheriff.oauth.core.cache.AccessTokenCacheConfig;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
+import de.cuioss.sheriff.oauth.core.domain.context.IdTokenRequest;
+import de.cuioss.sheriff.oauth.core.domain.context.RefreshTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.domain.token.IdTokenContent;
 import de.cuioss.sheriff.oauth.core.domain.token.RefreshTokenContent;
@@ -98,13 +101,13 @@ import java.util.Map;
  *     .build();
  *
  * // Parse an access token
- * Optional&lt;AccessTokenContent&gt; accessToken = tokenValidator.createAccessToken(tokenString);
+ * AccessTokenContent accessToken = tokenValidator.createAccessToken(AccessTokenRequest.of(tokenString));
  *
  * // Parse an ID token
- * Optional&lt;IdTokenContent&gt; idToken = tokenValidator.createIdToken(tokenString);
+ * IdTokenContent idToken = tokenValidator.createIdToken(IdTokenRequest.of(tokenString));
  *
  * // Parse a refresh token
- * Optional&lt;RefreshTokenContent&gt; refreshToken = tokenValidator.createRefreshToken(tokenString);
+ * RefreshTokenContent refreshToken = tokenValidator.createRefreshToken(RefreshTokenRequest.of(tokenString));
  *
  * // Access the security event counter for monitoring
  * SecurityEventCounter securityEventCounter = tokenValidator.getSecurityEventCounter();
@@ -298,24 +301,23 @@ public class TokenValidator {
 
 
     /**
-     * Creates an access token from the given token string.
+     * Creates an access token from the given request.
      *
-     * @param tokenString The token string to parse, must not be null
+     * @param request the access token validation request containing the token string and HTTP headers
      * @return The parsed access token
      * @throws TokenValidationException if the token is invalid
      */
-   
-    public AccessTokenContent createAccessToken(String tokenString) {
+    public AccessTokenContent createAccessToken(AccessTokenRequest request) {
         LOGGER.debug("Creating access token");
 
         // Record complete validation time
         MetricsTicker completeTicker = MetricsTickerFactory.createStartedTicker(MeasurementType.COMPLETE_VALIDATION, performanceMonitor);
         try {
             // Pre-pipeline validation (null, blank, size)
-            tokenStringValidator.validate(tokenString);
+            tokenStringValidator.validate(request.tokenString());
 
             // Delegate to access token pipeline (handles caching, metrics, full validation)
-            AccessTokenContent result = accessTokenPipeline.validate(tokenString);
+            AccessTokenContent result = accessTokenPipeline.validate(request);
 
             LOGGER.debug("Successfully created access token");
             securityEventCounter.increment(SecurityEventCounter.EventType.ACCESS_TOKEN_CREATED);
@@ -327,21 +329,20 @@ public class TokenValidator {
     }
 
     /**
-     * Creates an ID token from the given token string.
+     * Creates an ID token from the given request.
      *
-     * @param tokenString The token string to parse, must not be null
+     * @param request the ID token validation request containing the token string and HTTP headers
      * @return The parsed ID token
      * @throws TokenValidationException if the token is invalid
      */
-   
-    public IdTokenContent createIdToken(String tokenString) {
+    public IdTokenContent createIdToken(IdTokenRequest request) {
         LOGGER.debug("Creating ID token");
 
         // Pre-pipeline validation (null, blank, size)
-        tokenStringValidator.validate(tokenString);
+        tokenStringValidator.validate(request.tokenString());
 
         // Delegate to ID token pipeline (handles full validation, no caching, no metrics)
-        IdTokenContent validatedToken = idTokenPipeline.validate(tokenString);
+        IdTokenContent validatedToken = idTokenPipeline.validate(request);
 
         LOGGER.debug("Successfully created ID-Token");
         securityEventCounter.increment(SecurityEventCounter.EventType.ID_TOKEN_CREATED);
@@ -350,21 +351,20 @@ public class TokenValidator {
     }
 
     /**
-     * Creates a refresh token from the given token string.
+     * Creates a refresh token from the given request.
      *
-     * @param tokenString The token string to parse, must not be null
+     * @param request the refresh token validation request containing the token string and HTTP headers
      * @return The parsed refresh token
      * @throws TokenValidationException if the token is invalid
      */
-   
-    public RefreshTokenContent createRefreshToken(String tokenString) {
+    public RefreshTokenContent createRefreshToken(RefreshTokenRequest request) {
         LOGGER.debug("Creating refresh token");
 
         // Pre-pipeline validation (null, blank, size)
-        tokenStringValidator.validate(tokenString);
+        tokenStringValidator.validate(request.tokenString());
 
         // Delegate to refresh token pipeline (handles minimal validation, no caching, no metrics)
-        RefreshTokenContent refreshToken = refreshTokenPipeline.validate(tokenString);
+        RefreshTokenContent refreshToken = refreshTokenPipeline.validate(request);
 
         LOGGER.debug("Successfully created Refresh-Token");
         securityEventCounter.increment(SecurityEventCounter.EventType.REFRESH_TOKEN_CREATED);

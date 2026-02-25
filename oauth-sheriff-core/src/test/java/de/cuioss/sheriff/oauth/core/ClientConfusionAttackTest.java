@@ -15,6 +15,7 @@
  */
 package de.cuioss.sheriff.oauth.core;
 
+import de.cuioss.sheriff.oauth.core.domain.context.IdTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.IdTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
@@ -52,7 +53,7 @@ class ClientConfusionAttackTest {
         tokenValidator = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build();
 
         // Verify the token is accepted
-        IdTokenContent result = tokenValidator.createIdToken(token);
+        IdTokenContent result = tokenValidator.createIdToken(IdTokenRequest.of(token));
         assertNotNull(result, "Token with valid azp claim should be accepted");
     }
 
@@ -74,7 +75,7 @@ class ClientConfusionAttackTest {
         tokenValidator = TokenValidator.builder().issuerConfig(issuerConfig).build();
 
         // Verify the token is rejected
-        var exception = assertThrows(TokenValidationException.class, () -> tokenValidator.createIdToken(token),
+        var exception = assertThrows(TokenValidationException.class, () -> tokenValidator.createIdToken(IdTokenRequest.of(token)),
                 "Token with invalid azp claim should be rejected");
         assertEquals(SecurityEventCounter.EventType.AZP_MISMATCH, exception.getEventType(),
                 "Exception should have AZP_MISMATCH event type");
@@ -116,7 +117,7 @@ class ClientConfusionAttackTest {
         tokenValidator = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build();
 
         // Verify the token is accepted
-        IdTokenContent result = tokenValidator.createIdToken(token);
+        IdTokenContent result = tokenValidator.createIdToken(IdTokenRequest.of(token));
         assertNotNull(result, "Token with valid audience should be accepted");
     }
 
@@ -131,7 +132,7 @@ class ClientConfusionAttackTest {
         tokenValidator = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build();
 
         // Verify the token is accepted
-        IdTokenContent result = tokenValidator.createIdToken(token);
+        IdTokenContent result = tokenValidator.createIdToken(IdTokenRequest.of(token));
         assertNotNull(result, "Token with valid azp should be accepted");
     }
 
@@ -147,7 +148,7 @@ class ClientConfusionAttackTest {
         tokenValidator = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build();
 
         // Verify the token is rejected
-        var exception = assertThrows(TokenValidationException.class, () -> tokenValidator.createIdToken(token),
+        var exception = assertThrows(TokenValidationException.class, () -> tokenValidator.createIdToken(IdTokenRequest.of(token)),
                 "Token with missing azp claim should be rejected");
         assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType(),
                 "Exception should have MISSING_CLAIM event type");

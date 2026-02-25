@@ -17,6 +17,7 @@ package de.cuioss.sheriff.oauth.core;
 
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimName;
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimValue;
+import de.cuioss.sheriff.oauth.core.domain.context.IdTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.context.ValidationContext;
 import de.cuioss.sheriff.oauth.core.domain.token.IdTokenContent;
 import de.cuioss.sheriff.oauth.core.security.SignatureAlgorithmPreferences;
@@ -84,7 +85,7 @@ class OpenIDConnectComplianceTest {
         void shouldHandleIssuerClaim() {
 
             String token = TestTokenGenerators.idTokens().next().getRawToken();
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(IdTokenRequest.of(token));
             assertEquals(ISSUER, result.getIssuer());
         }
 
@@ -99,7 +100,7 @@ class OpenIDConnectComplianceTest {
             tokenHolder.withClaim(ClaimName.SUBJECT.getName(), ClaimValue.forPlainString(subject));
 
             String token = tokenHolder.getRawToken();
-            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(token);
+            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(IdTokenRequest.of(token));
 
             // Since we explicitly set the subject claim, it should always be present
             // regardless of claimSubOptional configuration
@@ -113,7 +114,7 @@ class OpenIDConnectComplianceTest {
         void shouldHandleAudienceClaim() {
 
             String token = TestTokenGenerators.idTokens().next().getRawToken();
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(IdTokenRequest.of(token));
             assertEquals(List.of(TestTokenHolder.TEST_AUDIENCE), result.getAudience());
         }
 
@@ -122,7 +123,7 @@ class OpenIDConnectComplianceTest {
         void shouldHandleExpirationTimeClaim() {
 
             String token = TestTokenGenerators.idTokens().next().getRawToken();
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(IdTokenRequest.of(token));
             assertNotNull(result.getExpirationTime());
             assertFalse(result.isExpired(validationContext));
         }
@@ -132,7 +133,7 @@ class OpenIDConnectComplianceTest {
         void shouldHandleIssuedAtClaim() {
 
             String token = TestTokenGenerators.idTokens().next().getRawToken();
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(IdTokenRequest.of(token));
             assertNotNull(result.getIssuedAtTime());
         }
 
@@ -147,7 +148,7 @@ class OpenIDConnectComplianceTest {
             tokenHolder.withClaim("auth_time", ClaimValue.forPlainString(String.valueOf(authTime.getEpochSecond())));
 
             String token = tokenHolder.getRawToken();
-            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(token);
+            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(IdTokenRequest.of(token));
             assertTrue(result.getClaims().containsKey("auth_time"));
         }
 
@@ -162,7 +163,7 @@ class OpenIDConnectComplianceTest {
             tokenHolder.withClaim("nonce", ClaimValue.forPlainString(nonce));
 
             String token = tokenHolder.getRawToken();
-            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(token);
+            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(IdTokenRequest.of(token));
             assertTrue(result.getClaims().containsKey("nonce"));
             assertEquals(nonce, result.getClaims().get("nonce").getOriginalString());
         }
@@ -172,7 +173,7 @@ class OpenIDConnectComplianceTest {
         void shouldHandleAuthorizedPartyClaim() {
 
             String token = TestTokenGenerators.idTokens().next().getRawToken();
-            IdTokenContent result = tokenValidator.createIdToken(token);
+            IdTokenContent result = tokenValidator.createIdToken(IdTokenRequest.of(token));
             assertTrue(result.getClaimOption(ClaimName.AUTHORIZED_PARTY).isPresent());
             assertEquals(TestTokenHolder.TEST_CLIENT_ID, result.getClaimOption(ClaimName.AUTHORIZED_PARTY).get().getOriginalString());
         }
@@ -193,7 +194,7 @@ class OpenIDConnectComplianceTest {
             tokenHolder.withClaim(ClaimName.NAME.getName(), ClaimValue.forPlainString(name));
 
             String token = tokenHolder.getRawToken();
-            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(token);
+            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(IdTokenRequest.of(token));
             assertEquals(name, result.getName().orElse(null));
         }
 
@@ -208,7 +209,7 @@ class OpenIDConnectComplianceTest {
             tokenHolder.withClaim(ClaimName.EMAIL.getName(), ClaimValue.forPlainString(email));
 
             String token = tokenHolder.getRawToken();
-            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(token);
+            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(IdTokenRequest.of(token));
             assertEquals(email, result.getEmail().orElse(null));
         }
 
@@ -223,7 +224,7 @@ class OpenIDConnectComplianceTest {
             tokenHolder.withClaim(ClaimName.PREFERRED_USERNAME.getName(), ClaimValue.forPlainString(preferredUsername));
 
             String token = tokenHolder.getRawToken();
-            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(token);
+            IdTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createIdToken(IdTokenRequest.of(token));
             assertTrue(result.getClaimOption(ClaimName.PREFERRED_USERNAME).isPresent());
             assertEquals(preferredUsername, result.getClaimOption(ClaimName.PREFERRED_USERNAME).get().getOriginalString());
         }

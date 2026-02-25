@@ -15,6 +15,7 @@
  */
 package de.cuioss.sheriff.oauth.core;
 
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.test.generator.TestTokenGenerators;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -79,7 +80,7 @@ class TokenValidatorConcurrencyTest {
                     // Perform multiple iterations to increase chance of race condition
                     for (int j = 0; j < ITERATIONS_PER_THREAD; j++) {
                         // This should trigger the resolveIssuerConfig method
-                        tokenValidator.createAccessToken(validJwt);
+                        tokenValidator.createAccessToken(AccessTokenRequest.of(validJwt));
                         successCount.incrementAndGet();
                     }
                 } catch (InterruptedException e) {
@@ -123,7 +124,7 @@ class TokenValidatorConcurrencyTest {
             executor.submit(() -> {
                 try {
                     for (int j = 0; j < 20; j++) {
-                        tokenValidator.createAccessToken(validJwt);
+                        tokenValidator.createAccessToken(AccessTokenRequest.of(validJwt));
                     }
                 } finally {
                     latch.countDown();

@@ -22,9 +22,9 @@ public class TokenValidator {
 
     // Token creation methods (performs validation and returns validated token)
     // These methods throw TokenValidationException if validation fails
-    public AccessTokenContent createAccessToken(String token);
-    public IdTokenContent createIdToken(String token);
-    public RefreshTokenContent createRefreshToken(String token);
+    public AccessTokenContent createAccessToken(AccessTokenRequest request);
+    public IdTokenContent createIdToken(IdTokenRequest request);
+    public RefreshTokenContent createRefreshToken(RefreshTokenRequest request);
 ----
 
 === AccessTokenContent

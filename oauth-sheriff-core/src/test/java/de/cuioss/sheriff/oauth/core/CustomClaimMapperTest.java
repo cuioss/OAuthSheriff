@@ -20,6 +20,7 @@ import de.cuioss.sheriff.oauth.core.domain.claim.ClaimValue;
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimValueType;
 import de.cuioss.sheriff.oauth.core.domain.claim.mapper.ClaimMapper;
 import de.cuioss.sheriff.oauth.core.domain.claim.mapper.JsonCollectionMapper;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.test.InMemoryJWKSFactory;
 import de.cuioss.sheriff.oauth.core.test.TestTokenHolder;
@@ -78,7 +79,7 @@ class CustomClaimMapperTest {
     @Test
     @DisplayName("Use custom claim mapper for role claim")
     void shouldUseCustomClaimMapperForRoleClaim() {
-        AccessTokenContent tokenContent = tokenValidator.createAccessToken(tokenWithRoles);
+        AccessTokenContent tokenContent = tokenValidator.createAccessToken(AccessTokenRequest.of(tokenWithRoles));
         ClaimValue roleClaim = tokenContent.getClaims().get(ROLE_CLAIM);
 
         assertNotNull(roleClaim, "Role claim should not be null");
@@ -101,7 +102,7 @@ class CustomClaimMapperTest {
                 .issuerConfig(issuerConfigWithoutCustomMapper)
                 .build();
 
-        AccessTokenContent tokenContent = factoryWithoutCustomMapper.createAccessToken(tokenWithRoles);
+        AccessTokenContent tokenContent = factoryWithoutCustomMapper.createAccessToken(AccessTokenRequest.of(tokenWithRoles));
         ClaimValue roleClaim = tokenContent.getClaims().get(ROLE_CLAIM);
 
         assertNotNull(roleClaim, "Role claim should not be null");

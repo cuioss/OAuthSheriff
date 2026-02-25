@@ -16,6 +16,9 @@
 package de.cuioss.sheriff.oauth.integration.endpoint;
 
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
+import de.cuioss.sheriff.oauth.core.domain.context.IdTokenRequest;
+import de.cuioss.sheriff.oauth.core.domain.context.RefreshTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.quarkus.annotation.BearerAuth;
@@ -120,7 +123,7 @@ public class JwtValidationEndpoint {
         }
 
         try {
-            AccessTokenContent token = tokenValidator.createAccessToken(tokenRequest.token().trim());
+            AccessTokenContent token = tokenValidator.createAccessToken(AccessTokenRequest.of(tokenRequest.token().trim()));
             LOGGER.debug("Explicit token validated successfully - Subject: %s, Roles: %s, Groups: %s, Scopes: %s",
                     token.getSubject().orElse("none"), token.getRoles(), token.getGroups(), token.getScopes());
             return Response.ok(createTokenResponse(token, "Access token is valid")).build();
@@ -146,7 +149,7 @@ public class JwtValidationEndpoint {
         }
 
         try {
-            tokenValidator.createIdToken(tokenRequest.token().trim());
+            tokenValidator.createIdToken(IdTokenRequest.of(tokenRequest.token().trim()));
             return Response.ok(new ValidationResponse(true, "ID token is valid")).build();
         } catch (TokenValidationException e) {
             LOGGER.debug("ID token validation failed: %s", e.getMessage());
@@ -170,7 +173,7 @@ public class JwtValidationEndpoint {
         }
 
         try {
-            tokenValidator.createRefreshToken(tokenRequest.token().trim());
+            tokenValidator.createRefreshToken(RefreshTokenRequest.of(tokenRequest.token().trim()));
             return Response.ok(new ValidationResponse(true, "Refresh token is valid")).build();
         } catch (TokenValidationException e) {
             LOGGER.debug("Refresh token validation failed: %s", e.getMessage());

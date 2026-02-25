@@ -15,6 +15,7 @@
  */
 package de.cuioss.sheriff.oauth.core.pipeline;
 
+import de.cuioss.sheriff.oauth.core.domain.context.RefreshTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.RefreshTokenContent;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.sheriff.oauth.core.test.TestTokenHolder;
@@ -53,7 +54,7 @@ class RefreshTokenValidationPipelineTest {
         TestTokenHolder tokenHolder = TestTokenGenerators.refreshTokens().next();
         String tokenString = tokenHolder.getRawToken();
 
-        RefreshTokenContent result = pipeline.validate(tokenString);
+        RefreshTokenContent result = pipeline.validate(RefreshTokenRequest.of(tokenString));
 
         assertNotNull(result);
         assertEquals(tokenString, result.getRawToken());
@@ -66,7 +67,7 @@ class RefreshTokenValidationPipelineTest {
         // Opaque refresh tokens are not JWTs
         String opaqueToken = "opaque_refresh_token_12345";
 
-        RefreshTokenContent result = pipeline.validate(opaqueToken);
+        RefreshTokenContent result = pipeline.validate(RefreshTokenRequest.of(opaqueToken));
 
         assertNotNull(result);
         assertEquals(opaqueToken, result.getRawToken());
@@ -79,7 +80,7 @@ class RefreshTokenValidationPipelineTest {
         // Invalid JWT format should not throw exception for refresh tokens
         String invalidJwt = "not.a.valid.jwt.token";
 
-        RefreshTokenContent result = pipeline.validate(invalidJwt);
+        RefreshTokenContent result = pipeline.validate(RefreshTokenRequest.of(invalidJwt));
 
         assertNotNull(result);
         assertEquals(invalidJwt, result.getRawToken());
@@ -94,7 +95,7 @@ class RefreshTokenValidationPipelineTest {
         String tokenString = tokenHolder.getRawToken();
 
         assertDoesNotThrow(() -> {
-            RefreshTokenContent result = pipeline.validate(tokenString);
+            RefreshTokenContent result = pipeline.validate(RefreshTokenRequest.of(tokenString));
             assertNotNull(result);
         });
     }

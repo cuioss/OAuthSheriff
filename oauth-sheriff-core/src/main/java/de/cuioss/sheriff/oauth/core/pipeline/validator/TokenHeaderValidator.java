@@ -17,6 +17,7 @@ package de.cuioss.sheriff.oauth.core.pipeline.validator;
 
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.JWTValidationLogMessages;
+import de.cuioss.sheriff.oauth.core.domain.context.TokenValidationRequest;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.json.JwtHeader;
 import de.cuioss.sheriff.oauth.core.pipeline.DecodedJwt;
@@ -67,7 +68,7 @@ public class TokenHeaderValidator {
 
 
     /**
-     * Validates a decoded JWT Token's header.
+     * Validates a decoded JWT Token's header with access to the full validation request context.
      * <p>
      * This validator checks:
      * <ul>
@@ -76,14 +77,18 @@ public class TokenHeaderValidator {
      *   <li>Absence of embedded JWK to prevent CVE-2018-0114 attacks</li>
      * </ul>
      * <p>
+     * The request parameter provides access to HTTP headers, enabling future features such as
+     * RFC 9068 {@code typ} header validation and RFC 9449 DPoP support.
+     * <p>
      * Note: Issuer validation is now performed at the TokenValidator level during
      * issuer configuration resolution, not here.
      * </p>
      *
      * @param decodedJwt the decoded JWT Token to validate
+     * @param request the token validation request providing HTTP context
      * @throws TokenValidationException if the token header is invalid
      */
-    public void validate(DecodedJwt decodedJwt) {
+    public void validate(DecodedJwt decodedJwt, TokenValidationRequest request) {
         LOGGER.trace("Validating token header");
 
         validateAlgorithm(decodedJwt);

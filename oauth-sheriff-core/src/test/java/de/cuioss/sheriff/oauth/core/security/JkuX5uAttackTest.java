@@ -19,6 +19,7 @@ import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.TokenType;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.test.InMemoryJWKSFactory;
 import de.cuioss.sheriff.oauth.core.test.TestTokenHolder;
@@ -82,7 +83,7 @@ class JkuX5uAttackTest {
         String tamperedToken = tamperedHeader + "." + parts[1] + "." + parts[2];
 
         assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(tamperedToken),
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)),
                 "Should reject token with malicious JKU header");
         assertTrue(tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED) >= 0,
                 "Security event counter should track JKU header attack attempts");
@@ -105,7 +106,7 @@ class JkuX5uAttackTest {
         String tamperedToken = tamperedHeader + "." + parts[1] + "." + parts[2];
 
         assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(tamperedToken),
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)),
                 "Should reject token with malicious X5U header");
         assertTrue(tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED) >= 0,
                 "Security event counter should track X5U header attack attempts");

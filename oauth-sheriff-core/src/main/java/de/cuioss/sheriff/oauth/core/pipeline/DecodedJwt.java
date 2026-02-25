@@ -215,6 +215,9 @@ String rawToken
     /**
      * Overrides toString to properly handle array representation for the parts field.
      * Uses Arrays.toString() for proper array content representation.
+     * <p>
+     * <strong>Security:</strong> The rawToken is redacted to prevent accidental token
+     * leakage in log output. Only the first 10 characters are shown.
      *
      * @return a string representation of this object
      */
@@ -225,8 +228,25 @@ String rawToken
                 ", body=" + body +
                 ", signature=" + signature +
                 ", parts=" + Arrays.toString(parts) +
-                ", rawToken=" + rawToken +
+                ", rawToken=" + redactToken(rawToken) +
                 ']';
+    }
+
+    /**
+     * Redacts a token string to prevent leakage in logs.
+     * Shows only the first 10 characters followed by "...".
+     *
+     * @param token the token to redact
+     * @return the redacted token string
+     */
+    private static String redactToken(String token) {
+        if (token == null) {
+            return "null";
+        }
+        if (token.length() <= 10) {
+            return token;
+        }
+        return token.substring(0, 10) + "...";
     }
 
     /**

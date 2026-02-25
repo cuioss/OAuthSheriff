@@ -18,6 +18,7 @@ package de.cuioss.sheriff.oauth.core.pipeline;
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.IssuerConfigResolver;
 import de.cuioss.sheriff.oauth.core.JWTValidationLogMessages;
+import de.cuioss.sheriff.oauth.core.domain.context.IdTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.context.ValidationContext;
 import de.cuioss.sheriff.oauth.core.domain.token.IdTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
@@ -107,13 +108,13 @@ public class IdTokenValidationPipeline {
      * and claims validation. All validation steps must succeed for the token
      * to be considered valid.
      *
-     * @param tokenString the token string to validate (guaranteed non-null, non-blank, within size limits)
+     * @param request the ID token validation request (token string guaranteed non-null, non-blank, within size limits)
      * @return the validated ID token content
      * @throws TokenValidationException if any validation step fails
      */
-   
-    public IdTokenContent validate(String tokenString) {
+    public IdTokenContent validate(IdTokenRequest request) {
         LOGGER.debug("Validating ID token");
+        String tokenString = request.tokenString();
 
         // TokenStringValidator has already checked: null, blank, size
 
@@ -135,7 +136,7 @@ public class IdTokenValidationPipeline {
 
         // 4. Validate header
         TokenHeaderValidator headerValidator = headerValidators.get(issuerConfig.getIssuerIdentifier());
-        headerValidator.validate(decodedJwt);
+        headerValidator.validate(decodedJwt, request);
 
         // 5. Validate signature
         // Note: signatureValidator is guaranteed to exist because TokenValidator

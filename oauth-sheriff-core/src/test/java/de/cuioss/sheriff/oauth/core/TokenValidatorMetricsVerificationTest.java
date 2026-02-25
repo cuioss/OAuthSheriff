@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.oauth.core;
 
 import de.cuioss.sheriff.oauth.core.cache.AccessTokenCacheConfig;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.metrics.MeasurementType;
 import de.cuioss.sheriff.oauth.core.metrics.TokenValidatorMonitor;
 import de.cuioss.sheriff.oauth.core.metrics.TokenValidatorMonitorConfig;
@@ -56,7 +57,7 @@ class TokenValidatorMetricsVerificationTest {
         // When - validate multiple times to get meaningful averages
         int iterations = 100;
         for (int i = 0; i < iterations; i++) {
-            tokenValidator.createAccessToken(tokenString);
+            tokenValidator.createAccessToken(AccessTokenRequest.of(tokenString));
         }
 
         // Then - analyze metrics

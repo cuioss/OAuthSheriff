@@ -183,7 +183,7 @@ TokenValidator validator = TokenValidator.builder()
     .build();
 
 // Validate token
-AccessTokenContent accessToken = validator.createAccessToken(tokenString);
+AccessTokenContent accessToken = validator.createAccessToken(AccessTokenRequest.of(tokenString));
 ----
 
 == Core Features

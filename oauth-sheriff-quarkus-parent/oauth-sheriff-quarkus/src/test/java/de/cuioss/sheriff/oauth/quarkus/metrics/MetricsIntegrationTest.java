@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.oauth.quarkus.metrics;
 
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.sheriff.oauth.quarkus.config.JwtPropertyKeys;
@@ -62,7 +63,7 @@ class MetricsIntegrationTest {
 
         String invalidToken = "invalid.jwt.token";
 
-        assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken(invalidToken),
+        assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken(AccessTokenRequest.of(invalidToken)),
                 "Should have thrown TokenValidationException for invalid token");
 
         assertNotNull(meterRegistry.find(JwtPropertyKeys.METRICS.VALIDATION_ERRORS).counters(),
@@ -135,7 +136,7 @@ class MetricsIntegrationTest {
         // Force initialization of metrics collector
         metricsCollector.updateCounters();
 
-        Exception thrownException = assertThrows(expectedException, () -> tokenValidator.createAccessToken(invalidToken), "Should throw an exception for invalid token: " + description);
+        Exception thrownException = assertThrows(expectedException, () -> tokenValidator.createAccessToken(AccessTokenRequest.of(invalidToken)), "Should throw an exception for invalid token: " + description);
 
         assertTrue(expectedException.isAssignableFrom(thrownException.getClass()),
                 "Expected exception of type " + expectedException.getSimpleName() +

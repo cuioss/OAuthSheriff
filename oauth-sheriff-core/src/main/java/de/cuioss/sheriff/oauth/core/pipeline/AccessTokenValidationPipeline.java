@@ -20,6 +20,7 @@ import de.cuioss.sheriff.oauth.core.IssuerConfigResolver;
 import de.cuioss.sheriff.oauth.core.JWTValidationLogMessages;
 import de.cuioss.sheriff.oauth.core.cache.AccessTokenCache;
 import de.cuioss.sheriff.oauth.core.cache.AccessTokenCacheConfig;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.context.ValidationContext;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
@@ -132,13 +133,13 @@ public class AccessTokenValidationPipeline {
      * If the token is found in cache and is still valid, it is returned immediately
      * without performing expensive cryptographic operations.
      *
-     * @param tokenString the token string to validate (guaranteed non-null, non-blank, within size limits)
+     * @param request the access token validation request (token string guaranteed non-null, non-blank, within size limits)
      * @return the validated access token content
      * @throws TokenValidationException if any validation step fails
      */
-   
-    public AccessTokenContent validate(String tokenString) {
+    public AccessTokenContent validate(AccessTokenRequest request) {
         LOGGER.debug("Validating access token");
+        String tokenString = request.tokenString();
 
         // TokenStringValidator has already checked: null, blank, size
 
@@ -187,7 +188,7 @@ public class AccessTokenValidationPipeline {
         MetricsTicker headerTicker = MetricsTickerFactory.createStartedTicker(MeasurementType.HEADER_VALIDATION, performanceMonitor);
         try {
             TokenHeaderValidator headerValidator = headerValidators.get(issuerConfig.getIssuerIdentifier());
-            headerValidator.validate(decodedJwt);
+            headerValidator.validate(decodedJwt, request);
         } finally {
             headerTicker.stopAndRecord();
         }
