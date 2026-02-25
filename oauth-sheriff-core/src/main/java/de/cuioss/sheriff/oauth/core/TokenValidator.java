@@ -259,16 +259,21 @@ public class TokenValidator {
 
         // Initialize DPoP validators for issuers that have DPoP configured
         // Shared replay protection across all issuers (jti must be globally unique per RFC 9449)
+        // Use max TTL and max cache size across all DPoP-enabled issuers for consistent behavior
         Map<String, DpopProofValidator> dpopValidatorsMap = new HashMap<>();
-        DpopReplayProtection sharedReplayProtection = null;
+        long maxNonceCacheTtl = 0;
+        int maxNonceCacheSize = 0;
         for (IssuerConfig issuerConfig : issuerConfigs) {
             if (issuerConfig.getDpopConfig() != null) {
-                if (sharedReplayProtection == null) {
-                    // Lazy-create shared replay protection on first DPoP-enabled issuer
-                    sharedReplayProtection = new DpopReplayProtection(
-                            issuerConfig.getDpopConfig().getNonceCacheTtlSeconds(),
-                            issuerConfig.getDpopConfig().getNonceCacheSize());
-                }
+                maxNonceCacheTtl = Math.max(maxNonceCacheTtl, issuerConfig.getDpopConfig().getNonceCacheTtlSeconds());
+                maxNonceCacheSize = Math.max(maxNonceCacheSize, issuerConfig.getDpopConfig().getNonceCacheSize());
+            }
+        }
+        DpopReplayProtection sharedReplayProtection = maxNonceCacheSize > 0
+                ? new DpopReplayProtection(maxNonceCacheTtl, maxNonceCacheSize)
+                : null;
+        for (IssuerConfig issuerConfig : issuerConfigs) {
+            if (issuerConfig.getDpopConfig() != null) {
                 DpopProofValidator dpopValidator = new DpopProofValidator(
                         issuerConfig, this.securityEventCounter, sharedReplayProtection);
                 dpopValidatorsMap.put(issuerConfig.getIssuerIdentifier(), dpopValidator);

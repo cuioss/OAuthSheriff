@@ -69,6 +69,8 @@ public class DpopProofValidator {
     private static final CuiLogger LOGGER = new CuiLogger(DpopProofValidator.class);
     private static final String DPOP_HEADER_NAME = "dpop";
     private static final String DPOP_TYP = "dpop+jwt";
+    /** Maximum DPoP proof size (8KB matches the token size limit from ParserConfig). */
+    private static final int MAX_DPOP_PROOF_SIZE = 8192;
 
     private final DpopConfig config;
     private final SecurityEventCounter securityEventCounter;
@@ -102,9 +104,20 @@ public class DpopProofValidator {
      */
     @SuppressWarnings({"java:S3776", "java:S1871"}) // Complexity justified for complete DPoP validation flow
     public void validate(AccessTokenRequest request, DecodedJwt accessTokenJwt, String rawAccessToken) {
-        // 1. Extract DPoP header
+        // 1. Extract DPoP header (RFC 9449 Section 7: must be single-valued)
         List<String> dpopHeaders = request.httpHeaders().get(DPOP_HEADER_NAME);
-        String dpopProofString = dpopHeaders != null && !dpopHeaders.isEmpty() ? dpopHeaders.getFirst() : null;
+        String dpopProofString = null;
+        if (dpopHeaders != null && !dpopHeaders.isEmpty()) {
+            if (dpopHeaders.size() > 1) {
+                rejectWith(EventType.DPOP_PROOF_INVALID, JWTValidationLogMessages.WARN.DPOP_PROOF_INVALID,
+                        "Multiple DPoP headers found; RFC 9449 requires exactly one");
+            }
+            dpopProofString = dpopHeaders.getFirst();
+            if (dpopProofString != null && dpopProofString.length() > MAX_DPOP_PROOF_SIZE) {
+                rejectWith(EventType.DPOP_PROOF_INVALID, JWTValidationLogMessages.WARN.DPOP_PROOF_INVALID,
+                        "DPoP proof exceeds maximum size of %s bytes".formatted(MAX_DPOP_PROOF_SIZE));
+            }
+        }
 
         // Extract cnf.jkt from access token
         Optional<String> cnfJkt = extractCnfJkt(accessTokenJwt);
