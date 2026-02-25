@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.oauth.core;
 
 import de.cuioss.sheriff.oauth.core.cache.AccessTokenCacheConfig;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.metrics.MeasurementType;
 import de.cuioss.sheriff.oauth.core.metrics.TokenValidatorMonitor;
@@ -74,7 +75,7 @@ class TokenValidatorMetricsTest {
         TokenValidatorMonitor monitor = tokenValidator.getPerformanceMonitor();
 
         // When
-        AccessTokenContent accessToken = tokenValidator.createAccessToken(tokenString);
+        AccessTokenContent accessToken = tokenValidator.createAccessToken(AccessTokenRequest.of(tokenString));
 
         // Then
         assertNotNull(accessToken);
@@ -122,7 +123,7 @@ class TokenValidatorMetricsTest {
 
         // When - validate multiple times to get stable averages
         for (int i = 0; i < 10; i++) {
-            tokenValidator.createAccessToken(tokenString);
+            tokenValidator.createAccessToken(AccessTokenRequest.of(tokenString));
         }
 
         // Then - calculate sum of individual steps
@@ -169,7 +170,7 @@ class TokenValidatorMetricsTest {
         TokenValidatorMonitor monitor = tokenValidator.getPerformanceMonitor();
 
         // When - validate once
-        tokenValidator.createAccessToken(tokenString);
+        tokenValidator.createAccessToken(AccessTokenRequest.of(tokenString));
 
         // Then - check for very fast operations
         Duration tokenFormatCheck = monitor.getValidationMetrics(MeasurementType.TOKEN_FORMAT_CHECK)
@@ -206,7 +207,7 @@ class TokenValidatorMetricsTest {
         TokenValidatorMonitor monitor = tokenValidator.getPerformanceMonitor();
 
         // When
-        tokenValidator.createAccessToken(tokenString);
+        tokenValidator.createAccessToken(AccessTokenRequest.of(tokenString));
 
         // Then
         Duration jwksOperations = monitor.getValidationMetrics(MeasurementType.JWKS_OPERATIONS)

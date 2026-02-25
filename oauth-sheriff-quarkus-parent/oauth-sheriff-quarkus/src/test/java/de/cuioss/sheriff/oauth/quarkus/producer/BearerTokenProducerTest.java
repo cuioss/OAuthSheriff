@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.oauth.quarkus.producer;
 
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
@@ -89,7 +90,7 @@ class BearerTokenProducerTest {
         servletResolverMock.setBearerToken(token);
 
         AccessTokenContent mockContent = createMock(AccessTokenContent.class);
-        expect(tokenValidator.createAccessToken(token)).andReturn(mockContent);
+        expect(tokenValidator.createAccessToken(anyObject(AccessTokenRequest.class))).andReturn(mockContent);
         expect(mockContent.determineMissingScopes(anyObject())).andReturn(Set.of());
         expect(mockContent.determineMissingRoles(anyObject())).andReturn(Set.of());
         expect(mockContent.determineMissingGroups(anyObject())).andReturn(Set.of());
@@ -115,7 +116,7 @@ class BearerTokenProducerTest {
         Set<String> requiredScopes = Set.of("admin", "write");
         Set<String> missingScopes = Set.of("admin");
 
-        expect(tokenValidator.createAccessToken(token)).andReturn(mockContent);
+        expect(tokenValidator.createAccessToken(anyObject(AccessTokenRequest.class))).andReturn(mockContent);
         expect(mockContent.determineMissingScopes(requiredScopes)).andReturn(missingScopes);
         expect(mockContent.determineMissingRoles(anyObject())).andReturn(Set.of());
         expect(mockContent.determineMissingGroups(anyObject())).andReturn(Set.of());
@@ -142,7 +143,7 @@ class BearerTokenProducerTest {
         Set<String> requiredRoles = Set.of("user", "admin");
         Set<String> missingRoles = Set.of("admin");
 
-        expect(tokenValidator.createAccessToken(token)).andReturn(mockContent);
+        expect(tokenValidator.createAccessToken(anyObject(AccessTokenRequest.class))).andReturn(mockContent);
         expect(mockContent.determineMissingScopes(anyObject())).andReturn(Set.of());
         expect(mockContent.determineMissingRoles(requiredRoles)).andReturn(missingRoles);
         expect(mockContent.determineMissingGroups(anyObject())).andReturn(Set.of());
@@ -169,7 +170,7 @@ class BearerTokenProducerTest {
         Set<String> requiredGroups = Set.of("developers", "managers");
         Set<String> missingGroups = Set.of("managers");
 
-        expect(tokenValidator.createAccessToken(token)).andReturn(mockContent);
+        expect(tokenValidator.createAccessToken(anyObject(AccessTokenRequest.class))).andReturn(mockContent);
         expect(mockContent.determineMissingScopes(anyObject())).andReturn(Set.of());
         expect(mockContent.determineMissingRoles(anyObject())).andReturn(Set.of());
         expect(mockContent.determineMissingGroups(requiredGroups)).andReturn(missingGroups);
@@ -194,7 +195,7 @@ class BearerTokenProducerTest {
 
         TokenValidationException exception = new TokenValidationException(
                 SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED, "Invalid signature");
-        expect(tokenValidator.createAccessToken(token)).andThrow(exception);
+        expect(tokenValidator.createAccessToken(anyObject(AccessTokenRequest.class))).andThrow(exception);
         replay(tokenValidator);
 
         BearerTokenResult result = producer.getBearerTokenResult(Set.of(), Set.of(), Set.of());
@@ -214,7 +215,7 @@ class BearerTokenProducerTest {
         servletResolverMock.setBearerToken(token);
 
         AccessTokenContent mockContent = createMock(AccessTokenContent.class);
-        expect(tokenValidator.createAccessToken(token)).andReturn(mockContent);
+        expect(tokenValidator.createAccessToken(anyObject(AccessTokenRequest.class))).andReturn(mockContent);
         expect(mockContent.determineMissingScopes(anyObject())).andReturn(Set.of());
         expect(mockContent.determineMissingRoles(anyObject())).andReturn(Set.of());
         expect(mockContent.determineMissingGroups(anyObject())).andReturn(Set.of());

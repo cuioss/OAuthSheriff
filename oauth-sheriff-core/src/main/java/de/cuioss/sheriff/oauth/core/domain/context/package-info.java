@@ -22,8 +22,16 @@
  * <p>
  * Key classes:
  * <ul>
- *   <li>{@link de.cuioss.sheriff.oauth.core.domain.context.ValidationContext} - 
+ *   <li>{@link de.cuioss.sheriff.oauth.core.domain.context.ValidationContext} -
  *       Carries cached current time and configuration through the validation pipeline</li>
+ *   <li>{@link de.cuioss.sheriff.oauth.core.domain.context.TokenValidationRequest} -
+ *       Sealed interface for token validation requests carrying token string and HTTP headers</li>
+ *   <li>{@link de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest} -
+ *       Request object for access token validation</li>
+ *   <li>{@link de.cuioss.sheriff.oauth.core.domain.context.IdTokenRequest} -
+ *       Request object for ID token validation</li>
+ *   <li>{@link de.cuioss.sheriff.oauth.core.domain.context.RefreshTokenRequest} -
+ *       Request object for refresh token validation</li>
  * </ul>
  *
  * @since 1.0

@@ -17,6 +17,7 @@ package de.cuioss.sheriff.oauth.quarkus.producer;
 
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.sheriff.oauth.quarkus.config.JwtTestProfile;
@@ -77,7 +78,7 @@ class QuarkusTokenValidatorProducerTest {
     void shouldRejectInvalidTokensInIntegratedEnvironment() {
         String invalidToken = "invalid.token.format";
 
-        assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken(invalidToken),
+        assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken(AccessTokenRequest.of(invalidToken)),
                 "Integrated TokenValidator should reject invalid tokens");
     }
 

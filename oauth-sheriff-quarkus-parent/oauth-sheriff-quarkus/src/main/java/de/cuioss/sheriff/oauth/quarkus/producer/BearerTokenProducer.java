@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.oauth.quarkus.producer;
 
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.quarkus.annotation.BearerToken;
@@ -142,7 +143,10 @@ public class BearerTokenProducer {
         LOGGER.debug("Validating bearer token with required scopes: %s, roles: %s, groups: %s",
                 requiredScopes, requiredRoles, requiredGroups);
 
-        Optional<String> tokenResult = extractBearerTokenFromHeaderMap();
+        // Resolve headers once and reuse for both extraction and validation request
+        Map<String, List<String>> headerMap = servletObjectsResolver.resolveHeaderMap();
+
+        Optional<String> tokenResult = extractBearerTokenFromHeaderMap(headerMap);
         if (tokenResult.isEmpty()) {
             LOGGER.debug("Bearer token missing or invalid in Authorization header");
             return BearerTokenResult.noTokenGiven(requiredScopes, requiredRoles, requiredGroups);
@@ -158,7 +162,9 @@ public class BearerTokenProducer {
         }
 
         try {
-            AccessTokenContent tokenContent = tokenValidator.createAccessToken(bearerToken);
+            // Pass HTTP headers through to the validation pipeline for DPoP and typ support
+            AccessTokenContent tokenContent = tokenValidator.createAccessToken(
+                    new AccessTokenRequest(bearerToken, headerMap));
 
             // Determine missing scopes, roles, and groups
             Set<String> missingScopes = tokenContent.determineMissingScopes(requiredScopes);
@@ -189,7 +195,7 @@ public class BearerTokenProducer {
 
 
     /**
-     * Extracts the bearer token from the HTTP Authorization header using header map resolution.
+     * Extracts the bearer token from the provided HTTP header map.
      * <p>
      * Two-state return model:
      * <ul>
@@ -197,12 +203,10 @@ public class BearerTokenProducer {
      *   <li>Optional.of(token) - Token found (may be empty string for "Bearer ")</li>
      * </ul>
      *
+     * @param headerMap the resolved HTTP header map
      * @return Optional containing the bearer token, or empty Optional if no token found
-     * @throws IllegalStateException if header map cannot be accessed due to infrastructure issues
      */
-    private Optional<String> extractBearerTokenFromHeaderMap() {
-        Map<String, List<String>> headerMap = servletObjectsResolver.resolveHeaderMap();
-
+    private Optional<String> extractBearerTokenFromHeaderMap(Map<String, List<String>> headerMap) {
         // Header names are normalized to lowercase by HttpServletRequestResolver per RFC 9113 (HTTP/2)
         // and RFC 7230 (HTTP/1.1). Direct lookup with lowercase key is sufficient.
         List<String> authHeaders = headerMap.get("authorization");

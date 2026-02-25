@@ -24,7 +24,7 @@ TokenValidator tokenValidator = TokenValidator.builder()
 
 // Validate and create token (throws TokenValidationException if invalid)
 try {
-    AccessTokenContent token = tokenValidator.createAccessToken(jwtString);
+    AccessTokenContent token = tokenValidator.createAccessToken(AccessTokenRequest.of(jwtString));
     String subject = token.getSubject();
     List<String> roles = token.getRoles();
 } catch (TokenValidationException e) {
@@ -51,8 +51,8 @@ TokenValidator tokenValidator = TokenValidator.builder()
     .build();
 
 // Subsequent validations of the same token are cached
-AccessTokenContent token1 = tokenValidator.createAccessToken(jwtString);
-AccessTokenContent token2 = tokenValidator.createAccessToken(jwtString); // From cache
+AccessTokenContent token1 = tokenValidator.createAccessToken(AccessTokenRequest.of(jwtString));
+AccessTokenContent token2 = tokenValidator.createAccessToken(AccessTokenRequest.of(jwtString)); // From cache
 ----
 
 == Multi-Issuer Configuration
@@ -73,7 +73,7 @@ TokenValidator tokenValidator = TokenValidator.builder()
     .build();
 
 // Validator automatically selects correct issuer based on token
-AccessTokenContent token = tokenValidator.createAccessToken(jwtString);
+AccessTokenContent token = tokenValidator.createAccessToken(AccessTokenRequest.of(jwtString));
 ----
 
 == OpenID Connect Discovery
@@ -163,7 +163,7 @@ TokenValidator validator = TokenValidator.builder()
     .build();
 
 // Token claims are automatically mapped
-AccessTokenContent token = validator.createAccessToken(jwtString);
+AccessTokenContent token = validator.createAccessToken(AccessTokenRequest.of(jwtString));
 Set<String> roles = token.getRoles(); // From realm_access/roles
 Set<String> groups = token.getGroups(); // From groups claim
 ----

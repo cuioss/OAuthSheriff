@@ -19,6 +19,7 @@ import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.TokenType;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.test.TestTokenHolder;
 import de.cuioss.sheriff.oauth.core.test.generator.TestTokenGenerators;
@@ -184,7 +185,7 @@ class KeyInjectionAttackTest {
 
         // Verify that the token is rejected
         var exception = assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(token));
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of(token)));
 
         // Verify the error message if needed
         LOGGER.debug("Exception message: %s", exception.getMessage());
@@ -206,7 +207,7 @@ class KeyInjectionAttackTest {
 
         LOGGER.debug("Using valid token: %s", token);
 
-        var accessToken = tokenValidator.createAccessToken(token);
+        var accessToken = tokenValidator.createAccessToken(AccessTokenRequest.of(token));
         assertNotNull(accessToken, "Token with valid KID should be accepted");
         assertEquals(0, tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.KEY_NOT_FOUND),
                 "No KEY_NOT_FOUND security events should be recorded for valid token");

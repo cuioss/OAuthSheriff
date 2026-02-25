@@ -171,7 +171,7 @@ void shouldTestWithAccessToken(TestTokenHolder tokenHolder) {
     AccessTokenContent result = TokenValidator.builder()
             .issuerConfig(tokenHolder.getIssuerConfig())
             .build()
-            .createAccessToken(token);
+            .createAccessToken(AccessTokenRequest.of(token));
 
     // Then
     assertNotNull(result, "Token should be parsed successfully");
@@ -204,7 +204,7 @@ void shouldTestWithMultipleAccessTokens(TestTokenHolder tokenHolder) {
     AccessTokenContent result = TokenValidator.builder()
             .issuerConfig(tokenHolder.getIssuerConfig())
             .build()
-            .createAccessToken(token);
+            .createAccessToken(AccessTokenRequest.of(token));
 
     // Then
     assertNotNull(result, "Token should be parsed successfully");
@@ -227,7 +227,7 @@ void shouldValidateToken() {
     AccessTokenContent result = TokenValidator.builder()
             .issuerConfig(tokenHolder.getIssuerConfig())
             .build()
-            .createAccessToken(token);
+            .createAccessToken(AccessTokenRequest.of(token));
 
     // Assert
     assertNotNull(result);
@@ -263,7 +263,7 @@ void shouldRejectTokenWithMissingClaims() {
 
     // Act/Assert
     TokenValidationException exception = assertThrows(TokenValidationException.class,
-        () -> validator.createAccessToken(token));
+        () -> validator.createAccessToken(AccessTokenRequest.of(token)));
 
     assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType());
 }

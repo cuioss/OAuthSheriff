@@ -18,6 +18,7 @@ package de.cuioss.sheriff.oauth.core.pipeline.validator;
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.JWTValidationLogMessages;
 import de.cuioss.sheriff.oauth.core.TokenType;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.json.JwtHeader;
 import de.cuioss.sheriff.oauth.core.json.MapRepresentation;
@@ -121,7 +122,7 @@ class TokenHeaderValidatorTest {
             DecodedJwt decodedJwt = JWT_PARSER.decode(token);
 
             // When validating the validation, it should not throw an exception
-            assertDoesNotThrow(() -> validator.validate(decodedJwt));
+            assertDoesNotThrow(() -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
         }
 
         @Test
@@ -146,7 +147,7 @@ class TokenHeaderValidatorTest {
 
             // When validating the validation, it should throw an exception
             var exception = assertThrows(TokenValidationException.class,
-                    () -> validator.validate(decodedJwt));
+                    () -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
 
             // Verify the exception has the correct event type
             assertEquals(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM, exception.getEventType());
@@ -177,7 +178,7 @@ class TokenHeaderValidatorTest {
 
             // When validating the validation, it should throw an exception
             var exception = assertThrows(TokenValidationException.class,
-                    () -> validator.validate(decodedJwt));
+                    () -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
 
             // Verify the exception has the correct event type
             assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType());
@@ -233,7 +234,7 @@ class TokenHeaderValidatorTest {
 
             // When validating the token, it should throw an exception
             var exception = assertThrows(TokenValidationException.class,
-                    () -> validator.validate(decodedJwt));
+                    () -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
 
             // Verify the exception has the correct event type
             assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType());
@@ -284,7 +285,7 @@ class TokenHeaderValidatorTest {
 
             // When validating the token, it should throw an exception
             var exception = assertThrows(TokenValidationException.class,
-                    () -> validator.validate(decodedJwt));
+                    () -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
 
             // Verify the exception message includes available header info (only alg)
             assertTrue(exception.getMessage().contains("alg=RS256"));
@@ -327,7 +328,7 @@ class TokenHeaderValidatorTest {
             // When validating the token, it should throw an exception for missing alg first
             // (alg validation comes before kid validation)
             var exception = assertThrows(TokenValidationException.class,
-                    () -> validator.validate(decodedJwt));
+                    () -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
 
             // Verify the exception is for missing alg (not kid, since alg is checked first)
             assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType());
@@ -389,7 +390,7 @@ class TokenHeaderValidatorTest {
 
             // When validating the token, it should throw an exception
             var exception = assertThrows(TokenValidationException.class,
-                    () -> validator.validate(decodedJwt));
+                    () -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
 
             // Verify the exception has the correct event type
             assertEquals(SecurityEventCounter.EventType.UNSUPPORTED_ALGORITHM, exception.getEventType());
@@ -440,7 +441,7 @@ class TokenHeaderValidatorTest {
             );
 
             // When validating the token, it should not throw an exception for embedded JWK
-            assertDoesNotThrow(() -> validator.validate(decodedJwt));
+            assertDoesNotThrow(() -> validator.validate(decodedJwt, AccessTokenRequest.of("test")));
         }
     }
 

@@ -17,6 +17,7 @@ package de.cuioss.sheriff.oauth.core.benchmark.delegates;
 
 import de.cuioss.sheriff.oauth.core.TokenValidator;
 import de.cuioss.sheriff.oauth.core.benchmark.MockTokenRepository;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 
@@ -45,7 +46,7 @@ public abstract class BenchmarkDelegate {
      * @throws TokenValidationException if validation fails
      */
     protected AccessTokenContent validateToken(String token) throws TokenValidationException {
-        return tokenValidator.createAccessToken(token);
+        return tokenValidator.createAccessToken(AccessTokenRequest.of(token));
     }
 
 }

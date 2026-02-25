@@ -19,6 +19,7 @@ import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.TokenType;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.test.InMemoryJWKSFactory;
@@ -90,7 +91,7 @@ class TokenValidationSecurityTest {
         String tamperedToken = parts[0] + "." + tamperedPayload + ".";
 
         assertThrows(TokenValidationException.class, () ->
-                        tokenValidator.createAccessToken(tamperedToken),
+                        tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)),
                 "Should reject token with tampered payload");
     }
 
@@ -105,7 +106,7 @@ class TokenValidationSecurityTest {
         assertNotEquals(validToken, tamperedToken, "Tampered token should be different from valid token");
 
         assertThrows(TokenValidationException.class, () ->
-                        tokenValidator.createAccessToken(tamperedToken),
+                        tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)),
                 "Should reject token with tampered signature: " + tamperedToken);
     }
 
@@ -117,7 +118,7 @@ class TokenValidationSecurityTest {
         String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(validToken, TamperingStrategy.ALGORITHM_NONE);
 
         assertThrows(TokenValidationException.class, () ->
-                        tokenValidator.createAccessToken(tamperedToken),
+                        tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)),
                 "Should reject token with 'none' algorithm");
     }
 
@@ -146,7 +147,7 @@ class TokenValidationSecurityTest {
 
         // Verify that the tampered token is rejected
         assertThrows(TokenValidationException.class, () ->
-                tokenValidator.createAccessToken(tamperedToken));
+                tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)));
     }
 
     @ParameterizedTest
@@ -154,7 +155,7 @@ class TokenValidationSecurityTest {
     @DisplayName("Should accept valid tokens")
     void shouldAcceptValidTokens(TestTokenHolder tokenHolder) {
         String validToken = tokenHolder.getRawToken();
-        AccessTokenContent tokenContent = tokenValidator.createAccessToken(validToken);
+        AccessTokenContent tokenContent = tokenValidator.createAccessToken(AccessTokenRequest.of(validToken));
 
         assertNotNull(tokenContent, "Token content should not be null");
         assertEquals("Token-Test-testIssuer", tokenContent.getIssuer(), "Issuer should match expected");
@@ -168,7 +169,7 @@ class TokenValidationSecurityTest {
         String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(validToken, TamperingStrategy.ALGORITHM_DOWNGRADE);
 
         assertThrows(TokenValidationException.class, () ->
-                        tokenValidator.createAccessToken(tamperedToken),
+                        tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)),
                 "Should reject token with downgraded algorithm");
     }
 
@@ -180,7 +181,7 @@ class TokenValidationSecurityTest {
         String tamperedToken = JwtTokenTamperingUtil.applyTamperingStrategy(validToken, TamperingStrategy.INVALID_KID);
 
         assertThrows(TokenValidationException.class, () ->
-                        tokenValidator.createAccessToken(tamperedToken),
+                        tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)),
                 "Should reject token with invalid key ID");
     }
 }

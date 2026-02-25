@@ -20,6 +20,7 @@ import de.cuioss.sheriff.oauth.core.TokenType;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
 import de.cuioss.sheriff.oauth.core.cache.AccessTokenCacheConfig;
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimValue;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.jwks.key.KeyInfo;
@@ -491,7 +492,7 @@ class HttpJwksLoaderGracePeriodTest {
             String tokenSignedWithOriginalKey = tokenHolderOriginalKey.getRawToken();
 
             // Validate token with original key - should succeed
-            AccessTokenContent validationResult1 = validator.createAccessToken(tokenSignedWithOriginalKey);
+            AccessTokenContent validationResult1 = validator.createAccessToken(AccessTokenRequest.of(tokenSignedWithOriginalKey));
             assertNotNull(validationResult1, "Token signed with original key should validate");
             assertEquals("test-subject", validationResult1.getSubject().orElse(null),
                     "Subject claim should match");
@@ -520,14 +521,14 @@ class HttpJwksLoaderGracePeriodTest {
             String tokenSignedWithRotatedKey = tokenHolderRotatedKey.getRawToken();
 
             // Validate new token with rotated key - should succeed
-            AccessTokenContent validationResult2 = validator.createAccessToken(tokenSignedWithRotatedKey);
+            AccessTokenContent validationResult2 = validator.createAccessToken(AccessTokenRequest.of(tokenSignedWithRotatedKey));
             assertNotNull(validationResult2, "Token signed with rotated key should validate");
             assertEquals("test-subject-rotated", validationResult2.getSubject().orElse(null),
                     "Subject claim should match for rotated key token");
 
             // CRITICAL: Validate the original token AFTER key rotation
             // This should STILL WORK due to the 5-minute grace period
-            AccessTokenContent validationResult3 = validator.createAccessToken(tokenSignedWithOriginalKey);
+            AccessTokenContent validationResult3 = validator.createAccessToken(AccessTokenRequest.of(tokenSignedWithOriginalKey));
             assertNotNull(validationResult3,
                     """
                             Token signed with ORIGINAL key should STILL validate within grace period. \
@@ -536,9 +537,9 @@ class HttpJwksLoaderGracePeriodTest {
                     "Original token subject should still be accessible");
 
             // Both tokens should be valid simultaneously during grace period
-            assertNotNull(validator.createAccessToken(tokenSignedWithOriginalKey),
+            assertNotNull(validator.createAccessToken(AccessTokenRequest.of(tokenSignedWithOriginalKey)),
                     "Original key token should remain valid");
-            assertNotNull(validator.createAccessToken(tokenSignedWithRotatedKey),
+            assertNotNull(validator.createAccessToken(AccessTokenRequest.of(tokenSignedWithRotatedKey)),
                     "Rotated key token should be valid");
 
             loader.close();
@@ -602,7 +603,7 @@ class HttpJwksLoaderGracePeriodTest {
             String tokenSignedWithOriginalKey = tokenHolderOriginalKey.getRawToken();
 
             // Validate token with original key - should succeed initially
-            AccessTokenContent validationResult1 = validator.createAccessToken(tokenSignedWithOriginalKey);
+            AccessTokenContent validationResult1 = validator.createAccessToken(AccessTokenRequest.of(tokenSignedWithOriginalKey));
             assertNotNull(validationResult1, "Token signed with original key should validate initially");
 
             // Rotate keys
@@ -620,7 +621,7 @@ class HttpJwksLoaderGracePeriodTest {
 
             // CRITICAL: With zero grace period, the original token should immediately fail validation
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> validator.createAccessToken(tokenSignedWithOriginalKey),
+                    () -> validator.createAccessToken(AccessTokenRequest.of(tokenSignedWithOriginalKey)),
                     """
                             Token signed with original key should IMMEDIATELY FAIL with zero grace period. \
                             This verifies that zero grace period immediately invalidates old tokens!""");
@@ -641,7 +642,7 @@ class HttpJwksLoaderGracePeriodTest {
                     .withAudience(List.of("test-audience"));
 
             String tokenSignedWithRotatedKey = tokenHolderRotatedKey.getRawToken();
-            AccessTokenContent validationResult3 = validator.createAccessToken(tokenSignedWithRotatedKey);
+            AccessTokenContent validationResult3 = validator.createAccessToken(AccessTokenRequest.of(tokenSignedWithRotatedKey));
             assertNotNull(validationResult3, "Token signed with rotated key should validate");
 
             loader.close();

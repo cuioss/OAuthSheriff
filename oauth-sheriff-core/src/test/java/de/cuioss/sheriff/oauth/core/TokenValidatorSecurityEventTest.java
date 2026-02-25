@@ -17,6 +17,8 @@ package de.cuioss.sheriff.oauth.core;
 
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimName;
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimValue;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
+import de.cuioss.sheriff.oauth.core.domain.context.RefreshTokenRequest;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.sheriff.oauth.core.security.SignatureAlgorithmPreferences;
@@ -74,7 +76,7 @@ class TokenValidatorSecurityEventTest {
 
         // Process empty validation - expect exception
         TokenValidationException exception = assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(""),
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of("")),
                 "Empty token should throw TokenValidationException");
 
         // Verify exception has the correct event type
@@ -86,7 +88,7 @@ class TokenValidatorSecurityEventTest {
 
         // Process another empty validation - expect exception
         exception = assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createRefreshToken("   "),
+                () -> tokenValidator.createRefreshToken(RefreshTokenRequest.of("   ")),
                 "Empty token should throw TokenValidationException");
 
         // Verify exception has the correct event type
@@ -105,7 +107,7 @@ class TokenValidatorSecurityEventTest {
 
         // Process invalid validation - expect exception
         TokenValidationException exception = assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken("invalid-validation"),
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of("invalid-validation")),
                 "Invalid token should throw TokenValidationException");
 
         // Verify exception has the correct event type
@@ -129,7 +131,7 @@ class TokenValidatorSecurityEventTest {
 
         // Process token without issuer - expect exception
         TokenValidationException exception = assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(token),
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of(token)),
                 "Token without issuer should throw TokenValidationException");
 
         // Verify exception has the correct event type
@@ -154,7 +156,7 @@ class TokenValidatorSecurityEventTest {
 
         // Process token with unknown issuer - expect exception
         TokenValidationException exception = assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(token),
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of(token)),
                 "Token with unknown issuer should throw TokenValidationException");
 
         // Verify exception has the correct event type
@@ -181,7 +183,7 @@ class TokenValidatorSecurityEventTest {
 
         // Process token with invalid signature - expect exception
         TokenValidationException exception = assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(invalidToken),
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of(invalidToken)),
                 "Token with invalid signature should throw TokenValidationException");
 
         // Verify exception has the correct event type
@@ -197,8 +199,8 @@ class TokenValidatorSecurityEventTest {
     @DisplayName("Should reset security event counters")
     void shouldResetSecurityEventCounters() {
         // Generate some events - expect exceptions but we don't need to check them here
-        assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken(""));
-        assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken("invalid-validation"));
+        assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken(AccessTokenRequest.of("")));
+        assertThrows(TokenValidationException.class, () -> tokenValidator.createAccessToken(AccessTokenRequest.of("invalid-validation")));
 
         // Verify counts are non-zero
         assertTrue(tokenValidator.getSecurityEventCounter().getCount(SecurityEventCounter.EventType.TOKEN_EMPTY) > 0);

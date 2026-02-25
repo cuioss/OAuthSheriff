@@ -18,6 +18,7 @@ package de.cuioss.sheriff.oauth.quarkus.runtime;
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.TokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -209,7 +210,7 @@ public class OAuthSheriffDevUIRuntimeService {
 
         try {
             // Only validate as access token
-            TokenContent tokenContent = tokenValidator.createAccessToken(token.trim());
+            TokenContent tokenContent = tokenValidator.createAccessToken(AccessTokenRequest.of(token.trim()));
 
             result.put(VALID, true);
             result.put(TOKEN_TYPE, "ACCESS_TOKEN");

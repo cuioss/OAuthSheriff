@@ -149,7 +149,7 @@ TokenValidator tokenValidator;
 
 public void processRequest(String jwtString) {
     try {
-        AccessTokenContent token = tokenValidator.createAccessToken(jwtString);
+        AccessTokenContent token = tokenValidator.createAccessToken(AccessTokenRequest.of(jwtString));
         String subject = token.getSubject();
         List<String> roles = token.getRoles();
         // Process valid token

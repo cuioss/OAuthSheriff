@@ -17,6 +17,8 @@ package de.cuioss.sheriff.oauth.core;
 
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimName;
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimValue;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
+import de.cuioss.sheriff.oauth.core.domain.context.IdTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.context.ValidationContext;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
@@ -93,7 +95,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         void shouldValidateAudienceClaim() {
 
             String token = TestTokenGenerators.accessTokens().next().getRawToken();
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
             assertTrue(result.getAudience().isPresent(), "Audience claim should be present");
             assertTrue(result.getAudience().get().contains(TestTokenHolder.TEST_AUDIENCE),
@@ -109,7 +111,7 @@ class OAuth2JWTBestPracticesComplianceTest {
             tokenHolder.withAudience(List.of("wrong-audience"));
             String token = tokenHolder.getRawToken();
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> tokenValidator.createAccessToken(token),
+                    () -> tokenValidator.createAccessToken(AccessTokenRequest.of(token)),
                     "Token with incorrect audience should be rejected");
 
             // Verify the exception has the correct event type
@@ -127,7 +129,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         void shouldValidateIssuerClaim() {
 
             String token = TestTokenGenerators.accessTokens().next().getRawToken();
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
             assertEquals(TestTokenHolder.TEST_ISSUER, result.getIssuer(),
                     "Issuer claim should match the expected value");
@@ -145,7 +147,7 @@ class OAuth2JWTBestPracticesComplianceTest {
 
             String token = tokenHolder.getRawToken();
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> tokenValidator.createAccessToken(token),
+                    () -> tokenValidator.createAccessToken(AccessTokenRequest.of(token)),
                     "Token with incorrect issuer should be rejected");
 
             // Verify the exception has the correct event type
@@ -164,7 +166,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         void shouldValidateTokenSignature() {
 
             String token = TestTokenGenerators.accessTokens().next().getRawToken();
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token with valid signature should be parsed successfully");
         }
 
@@ -184,7 +186,7 @@ class OAuth2JWTBestPracticesComplianceTest {
             TokenValidator validator = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build();
 
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> validator.createAccessToken(tamperedToken),
+                    () -> validator.createAccessToken(AccessTokenRequest.of(tamperedToken)),
                     "Token with invalid signature should be rejected, offending validation: " + tamperedToken);
 
             // Verify the exception has the correct event type
@@ -207,7 +209,7 @@ class OAuth2JWTBestPracticesComplianceTest {
             assertNotEquals(tamperedToken, token, "Token should be tampered");
             TokenValidator validator = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build();
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> validator.createIdToken(tamperedToken),
+                    () -> validator.createIdToken(IdTokenRequest.of(tamperedToken)),
                     "Token with invalid signature should be rejected, offending validation: " + tamperedToken);
 
             // Verify the exception has the correct event type
@@ -225,7 +227,7 @@ class OAuth2JWTBestPracticesComplianceTest {
         void shouldValidateTokenExpiration() {
 
             String token = TestTokenGenerators.accessTokens().next().getRawToken();
-            AccessTokenContent result = tokenValidator.createAccessToken(token);
+            AccessTokenContent result = tokenValidator.createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
             assertNotNull(result.getExpirationTime(),
                     "Expiration time claim should be present");
@@ -249,7 +251,7 @@ class OAuth2JWTBestPracticesComplianceTest {
 
             String token = tokenHolder.getRawToken();
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> tokenValidator.createAccessToken(token),
+                    () -> tokenValidator.createAccessToken(AccessTokenRequest.of(token)),
                     "Expired token should be rejected");
 
             // Verify the exception has the correct event type
@@ -284,7 +286,7 @@ class OAuth2JWTBestPracticesComplianceTest {
                             .build())
                     .build();
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> factory.createAccessToken(largeToken),
+                    () -> factory.createAccessToken(AccessTokenRequest.of(largeToken)),
                     "Token exceeding max size should be rejected");
 
             // Verify the exception has the correct event type

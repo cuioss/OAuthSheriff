@@ -60,6 +60,7 @@ public abstract class BaseTokenContent implements TokenContent {
     private final Map<String, ClaimValue> claims;
 
     @Getter
+    @ToString.Exclude
     private final String rawToken;
 
     @Getter

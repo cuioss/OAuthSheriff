@@ -15,6 +15,7 @@
  */
 package de.cuioss.sheriff.oauth.core;
 
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.metrics.MeasurementType;
 import de.cuioss.sheriff.oauth.core.metrics.TokenValidatorMonitor;
@@ -66,7 +67,7 @@ class TokenValidatorPerformanceIntegrationTest {
 
         // Try to validate an invalid token (empty string) - this should record metrics even for failures
         try {
-            tokenValidator.createAccessToken("");
+            tokenValidator.createAccessToken(AccessTokenRequest.of(""));
             fail("Should have thrown TokenValidationException for empty token");
         } catch (IllegalArgumentException | IllegalStateException | TokenValidationException e) {
             // Expected - token validation should fail for empty string
@@ -81,7 +82,7 @@ class TokenValidatorPerformanceIntegrationTest {
 
         // Try with a malformed token - this should get further in the pipeline
         try {
-            tokenValidator.createAccessToken("not.a.valid.jwt.token");
+            tokenValidator.createAccessToken(AccessTokenRequest.of("not.a.valid.jwt.token"));
             fail("Should have thrown TokenValidationException for malformed token");
         } catch (IllegalArgumentException | IllegalStateException | TokenValidationException e) {
             // Expected - token validation should fail for malformed token

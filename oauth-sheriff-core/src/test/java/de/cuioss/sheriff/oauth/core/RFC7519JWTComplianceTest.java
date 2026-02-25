@@ -17,6 +17,7 @@ package de.cuioss.sheriff.oauth.core;
 
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimName;
 import de.cuioss.sheriff.oauth.core.domain.claim.ClaimValue;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.context.ValidationContext;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
@@ -69,7 +70,7 @@ class RFC7519JWTComplianceTest {
         void shouldHandleIssuerClaim(TestTokenHolder tokenHolder) {
 
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
             assertEquals(TestTokenHolder.TEST_ISSUER, result.getIssuer());
         }
@@ -80,7 +81,7 @@ class RFC7519JWTComplianceTest {
         void shouldHandleSubjectClaim(TestTokenHolder tokenHolder) {
 
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
 
             assertNotNull(result, "Token should be parsed successfully");
 
@@ -95,7 +96,7 @@ class RFC7519JWTComplianceTest {
         void shouldHandleAudienceClaim(TestTokenHolder tokenHolder) {
 
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
             assertTrue(result.getAudience().isPresent());
             assertEquals(List.of(TestTokenHolder.TEST_AUDIENCE), result.getAudience().get());
@@ -107,7 +108,7 @@ class RFC7519JWTComplianceTest {
         void shouldHandleExpirationTimeClaim(TestTokenHolder tokenHolder) {
 
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
             assertNotNull(result.getExpirationTime());
             assertFalse(result.isExpired(validationContext));
@@ -128,7 +129,7 @@ class RFC7519JWTComplianceTest {
                     ClaimValue.forDateTime(String.valueOf(notBeforeDateTime.toEpochSecond()), notBeforeDateTime));
 
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
             assertTrue(result.getNotBefore().isPresent());
         }
@@ -139,7 +140,7 @@ class RFC7519JWTComplianceTest {
 
             TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
             assertNotNull(result.getIssuedAtTime());
         }
@@ -157,7 +158,7 @@ class RFC7519JWTComplianceTest {
             tokenHolder.withClaim(ClaimName.TOKEN_ID.getName(), ClaimValue.forPlainString(jwtId));
 
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
             assertTrue(result.getClaimOption(ClaimName.TOKEN_ID).isPresent());
             assertEquals(jwtId, result.getClaimOption(ClaimName.TOKEN_ID).get().getOriginalString());
@@ -197,7 +198,7 @@ class RFC7519JWTComplianceTest {
 
             TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
             // Note: The TokenContent interface doesn't provide direct access to header claims
             // This is tested indirectly by the fact that the token is successfully validated
@@ -214,7 +215,7 @@ class RFC7519JWTComplianceTest {
 
             TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result);
         }
 
@@ -232,7 +233,7 @@ class RFC7519JWTComplianceTest {
             );
             TokenValidator validator = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build();
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> validator.createAccessToken(invalidToken));
+                    () -> validator.createAccessToken(AccessTokenRequest.of(invalidToken)));
 
             assertEquals(SecurityEventCounter.EventType.SIGNATURE_VALIDATION_FAILED, exception.getEventType());
         }
@@ -254,7 +255,7 @@ class RFC7519JWTComplianceTest {
             String token = tokenHolder.getRawToken();
             TokenValidator validator = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build();
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> validator.createAccessToken(token));
+                    () -> validator.createAccessToken(AccessTokenRequest.of(token)));
 
             assertEquals(SecurityEventCounter.EventType.TOKEN_EXPIRED, exception.getEventType());
         }
@@ -276,7 +277,7 @@ class RFC7519JWTComplianceTest {
             String token = tokenHolder.getRawToken();
             TokenValidator validator = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build();
             TokenValidationException exception = assertThrows(TokenValidationException.class,
-                    () -> validator.createAccessToken(token));
+                    () -> validator.createAccessToken(AccessTokenRequest.of(token)));
 
             assertEquals(SecurityEventCounter.EventType.TOKEN_NBF_FUTURE, exception.getEventType());
         }
@@ -292,7 +293,7 @@ class RFC7519JWTComplianceTest {
 
             TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
 
             // Verify that standard claims are accessible
@@ -320,7 +321,7 @@ class RFC7519JWTComplianceTest {
             tokenHolder.withClaim(customClaimName, ClaimValue.forPlainString(customClaimValue));
 
             String token = tokenHolder.getRawToken();
-            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(token);
+            AccessTokenContent result = TokenValidator.builder().issuerConfig(tokenHolder.getIssuerConfig()).build().createAccessToken(AccessTokenRequest.of(token));
             assertNotNull(result, "Token should be parsed successfully");
 
             // Verify that custom claim is accessible

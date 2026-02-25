@@ -18,6 +18,7 @@ package de.cuioss.sheriff.oauth.core.security;
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.test.InMemoryJWKSFactory;
 import de.cuioss.sheriff.oauth.core.test.InMemoryKeyMaterialHandler;
@@ -81,7 +82,7 @@ class PsychicSignatureAttackTest {
 
         // Verify that the token is rejected
         assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(tamperedToken));
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)));
 
         // Verify that the security event counter was incremented
         // The logs show that ES256 is an unsupported algorithm, so we should check for that event
@@ -111,7 +112,7 @@ class PsychicSignatureAttackTest {
 
         // Verify that the token is rejected
         assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(tamperedToken));
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)));
 
         // Verify that the security event counter was incremented
         // The logs show that ES384 is an unsupported algorithm, so we should check for that event
@@ -141,7 +142,7 @@ class PsychicSignatureAttackTest {
 
         // Verify that the token is rejected
         assertThrows(TokenValidationException.class,
-                () -> tokenValidator.createAccessToken(tamperedToken));
+                () -> tokenValidator.createAccessToken(AccessTokenRequest.of(tamperedToken)));
 
         // Verify that the security event counter was incremented
         // The logs show that ES512 is an unsupported algorithm, so we should check for that event

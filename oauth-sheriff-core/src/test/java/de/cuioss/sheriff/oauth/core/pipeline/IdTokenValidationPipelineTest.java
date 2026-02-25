@@ -18,6 +18,7 @@ package de.cuioss.sheriff.oauth.core.pipeline;
 import de.cuioss.sheriff.oauth.core.JWTValidationLogMessages;
 import de.cuioss.sheriff.oauth.core.TokenType;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.IdTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.IdTokenContent;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
@@ -62,7 +63,7 @@ class IdTokenValidationPipelineTest {
         String tokenString = tokenHolder.getRawToken();
 
         // When
-        IdTokenContent result = tokenValidator.createIdToken(tokenString);
+        IdTokenContent result = tokenValidator.createIdToken(IdTokenRequest.of(tokenString));
 
         // Then
         assertNotNull(result);
@@ -82,7 +83,7 @@ class IdTokenValidationPipelineTest {
         // When/Then
         TokenValidationException exception = assertThrows(
                 TokenValidationException.class,
-                () -> tokenValidator.createIdToken(tokenString),
+                () -> tokenValidator.createIdToken(IdTokenRequest.of(tokenString)),
                 "Should throw TokenValidationException for missing issuer"
         );
 
@@ -108,7 +109,7 @@ class IdTokenValidationPipelineTest {
         // When/Then
         assertThrows(
                 TokenValidationException.class,
-                () -> tokenValidator.createIdToken(tokenString),
+                () -> tokenValidator.createIdToken(IdTokenRequest.of(tokenString)),
                 "Should consistently throw TokenValidationException for missing issuer"
         );
     }
