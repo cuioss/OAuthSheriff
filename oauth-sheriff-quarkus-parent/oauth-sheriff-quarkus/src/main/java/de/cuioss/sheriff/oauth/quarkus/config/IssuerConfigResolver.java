@@ -230,6 +230,7 @@ public class IssuerConfigResolver {
         configureClientId(builder, issuerName);
         configureAlgorithmPreferences(builder, issuerName);
         configureClaimSubOptional(builder, issuerName);
+        configureExpectedTokenType(builder, issuerName);
 
         // Configure JWKS source (mutually exclusive)
         configureJwksSource(builder, issuerName);
@@ -328,6 +329,21 @@ public class IssuerConfigResolver {
         if (claimSubOptional.isPresent()) {
             builder.claimSubOptional(claimSubOptional.get());
             LOGGER.debug("Set claim subject optional for %s: %s", issuerName, claimSubOptional.get());
+        }
+    }
+
+    /**
+     * Configures the expected token type from properties.
+     */
+    private void configureExpectedTokenType(IssuerConfig.IssuerConfigBuilder builder, String issuerName) {
+        Optional<String> expectedTokenType = config.getOptionalValue(
+                JwtPropertyKeys.ISSUERS.EXPECTED_TOKEN_TYPE.formatted(issuerName),
+                String.class
+        );
+
+        if (expectedTokenType.isPresent()) {
+            builder.expectedTokenType(expectedTokenType.get());
+            LOGGER.debug("Set expected token type for %s: %s", issuerName, expectedTokenType.get());
         }
     }
 

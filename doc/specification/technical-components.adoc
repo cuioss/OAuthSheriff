@@ -41,7 +41,7 @@ The `TokenValidator` is the primary entry point for applications using the libra
 
 The `TokenValidator` uses a pipeline of validators and builders to process tokens:
 
-1. `TokenHeaderValidator` - Validates token headers (algorithm, issuer)
+1. `TokenHeaderValidator` - Validates token headers (algorithm, key ID, embedded JWK protection, optional token type per RFC 9068)
 2. `TokenSignatureValidator` - Validates token signatures using JWKS
 3. `TokenBuilder` - Creates token content objects
 4. `TokenClaimValidator` - Validates token claims (expiration, audience, etc.)
@@ -67,7 +67,7 @@ This specification has been implemented in the following classes:
 
 Each component in the pipeline has a specific responsibility:
 
-* `TokenHeaderValidator` - Validates token headers (algorithm, issuer)
+* `TokenHeaderValidator` - Validates token headers (algorithm, key ID, embedded JWK protection, optional token type per RFC 9068)
 * `TokenSignatureValidator` - Validates token signatures using JWKS
 * `TokenBuilder` - Creates token content objects
 * `TokenClaimValidator` - Validates token claims (expiration, audience, etc.)
