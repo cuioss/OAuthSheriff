@@ -115,6 +115,5 @@
  * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification - JwksLoader</a>
  * 
  * @author Oliver Wolff
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.core.jwks.http;

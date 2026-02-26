@@ -39,7 +39,6 @@ import java.util.Optional;
  * maintaining extensibility for additional OpenID Connect discovery fields.
  *
  * @author Oliver Wolff
- * @since 1.0
  * @see <a href="https://openid.net/specs/openid-connect-discovery-1_0.html">OpenID Connect Discovery</a>
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8414">RFC 8414 - OAuth 2.0 Authorization Server Metadata</a>
  */

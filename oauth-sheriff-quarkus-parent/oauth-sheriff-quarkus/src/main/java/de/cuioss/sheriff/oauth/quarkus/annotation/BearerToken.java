@@ -100,7 +100,6 @@ import java.lang.annotation.Target;
  *
  * @author Oliver Wolff
  * @see BearerAuth
- * @since 1.0
  */
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)

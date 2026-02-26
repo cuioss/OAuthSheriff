@@ -40,7 +40,6 @@ import java.time.Duration;
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public abstract class AbstractBenchmarkBase {
 

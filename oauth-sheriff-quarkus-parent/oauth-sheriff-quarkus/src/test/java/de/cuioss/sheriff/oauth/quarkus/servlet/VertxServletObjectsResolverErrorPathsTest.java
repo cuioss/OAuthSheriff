@@ -36,7 +36,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * These scenarios should not occur in properly configured applications but are tested for completeness.</p>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @EnableTestLogger
 @DisplayName("VertxServletObjectsResolver Error Path Tests")

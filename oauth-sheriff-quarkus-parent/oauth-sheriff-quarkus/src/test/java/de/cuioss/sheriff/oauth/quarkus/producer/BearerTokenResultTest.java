@@ -35,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests all methods, builders, static factory methods, and edge cases.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @DisplayName("BearerTokenResult Unit Tests")
 class BearerTokenResultTest {

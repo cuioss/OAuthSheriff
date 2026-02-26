@@ -48,7 +48,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @QuarkusTest
 @TestProfile(JwtTestProfile.class)

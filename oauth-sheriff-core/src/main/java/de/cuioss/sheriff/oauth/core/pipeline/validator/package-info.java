@@ -36,6 +36,5 @@
  * to perform comprehensive token validation.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.core.pipeline.validator;

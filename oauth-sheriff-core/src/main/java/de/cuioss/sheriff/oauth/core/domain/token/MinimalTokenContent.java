@@ -37,7 +37,6 @@ import java.io.Serializable;
  * a common base for token handling regardless of the specific token format.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public interface MinimalTokenContent extends Serializable {
 

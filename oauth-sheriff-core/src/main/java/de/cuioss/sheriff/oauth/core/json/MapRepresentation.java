@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public record MapRepresentation(Map<String, Object> data) implements Serializable {
 

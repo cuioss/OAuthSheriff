@@ -48,7 +48,6 @@ import static de.cuioss.sheriff.oauth.quarkus.OAuthSheriffQuarkusLogMessages.ERR
  * and provides access to HTTP request data through the native Vertx APIs.</p>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @ApplicationScoped
 @ServletObjectsResolver(ServletObjectsResolver.Variant.VERTX)

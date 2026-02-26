@@ -47,7 +47,6 @@ import java.util.Map;
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public final class SignatureTemplateManager {
 

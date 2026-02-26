@@ -68,7 +68,6 @@ import java.util.concurrent.TimeUnit;
  * metrics systems but does not create any dependency on external monitoring frameworks.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class TokenValidatorMonitor {
 
@@ -154,7 +153,6 @@ public class TokenValidatorMonitor {
      *
      * @param measurementType the type of measurement to analyze
      * @return optional containing striped ring buffer statistics, empty if measurement type is not enabled
-     * @since 1.0
      */
     public Optional<StripedRingBufferStatistics> getValidationMetrics(MeasurementType measurementType) {
         StripedRingBuffer buffer = measurementBuffers[measurementType.ordinal()];

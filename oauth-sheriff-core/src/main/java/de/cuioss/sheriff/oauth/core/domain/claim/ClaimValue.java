@@ -52,7 +52,6 @@ import java.util.SortedSet;
  * specification.
  *
  * @author Oliver Wolff
- * @since 1.0
  * @see ClaimName
  * @see ClaimValueType
  */

@@ -40,7 +40,6 @@ import java.util.Optional;
  * Path: HttpResponse.BodyHandler → DSL-JSON → WellKnownResult
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class WellKnownConfigurationConverter implements HttpResponseConverter<WellKnownResult> {
 

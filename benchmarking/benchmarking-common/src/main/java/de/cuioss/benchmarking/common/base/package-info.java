@@ -21,6 +21,5 @@
  * ensuring consistent behavior.</p>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 package de.cuioss.benchmarking.common.base;

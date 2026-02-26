@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Delegate for core validation benchmarks including average time and throughput.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class CoreValidationDelegate extends BenchmarkDelegate {
 

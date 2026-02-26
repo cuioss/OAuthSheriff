@@ -29,6 +29,5 @@
  *       Maps Keycloak's {@code groups} claim</li>
  * </ul>
  *
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.quarkus.mapper.keycloak;

@@ -50,7 +50,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class JwkKeyHandler {
@@ -127,7 +126,6 @@ public final class JwkKeyHandler {
      * @param jwk the JwkKey record containing OKP parameters (crv, x)
      * @return the parsed EdDSA public key
      * @throws InvalidKeySpecException if the key specification is invalid or the curve is unsupported
-     * @since 1.0
      */
     public static PublicKey parseOkpKey(JwkKey jwk) throws InvalidKeySpecException {
         // Validate curve
@@ -170,7 +168,6 @@ public final class JwkKeyHandler {
      *
      * @param curve the OKP curve name (Ed25519 or Ed448)
      * @return always "EdDSA" for supported OKP curves
-     * @since 1.0
      */
     public static String determineOkpAlgorithm(String curve) {
         return EDDSA_ALGORITHM;

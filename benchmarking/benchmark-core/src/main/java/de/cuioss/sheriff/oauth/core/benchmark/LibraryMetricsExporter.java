@@ -37,7 +37,6 @@ import static de.cuioss.benchmarking.common.util.BenchmarkingLogMessages.WARN;
  * Metrics exporter for library benchmarks that exports StripedRingBufferStatistics
  * from TokenValidatorMonitor. This handles JVM-level performance metrics.
  *
- * @since 1.0
  */
 public class LibraryMetricsExporter {
 

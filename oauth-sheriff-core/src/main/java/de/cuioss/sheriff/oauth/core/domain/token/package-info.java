@@ -48,7 +48,6 @@
  * specification.
  *
  * @author Oliver Wolff
- * @since 1.0
  * @see de.cuioss.sheriff.oauth.core.domain.claim.ClaimName
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc6749">RFC 6749 - OAuth 2.0</a>
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html">OpenID Connect Core 1.0</a>

@@ -43,7 +43,6 @@ import static de.cuioss.benchmarking.common.util.BenchmarkingLogMessages.WARN.UN
  * Options jmhOptions = config.toJmhOptions();
  * }</pre>
  * 
- * @since 1.0
  */
 public record BenchmarkConfiguration(
 ReportConfiguration reportConfig,

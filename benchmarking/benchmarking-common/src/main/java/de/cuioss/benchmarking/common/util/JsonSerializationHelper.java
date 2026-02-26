@@ -32,7 +32,6 @@ import java.util.Map;
  * Common JSON serialization utilities for benchmark results.
  * Provides consistent formatting and serialization across all benchmark modules.
  *
- * @since 1.0
  */
 public final class JsonSerializationHelper {
 

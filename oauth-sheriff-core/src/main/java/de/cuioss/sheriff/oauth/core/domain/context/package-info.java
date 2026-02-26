@@ -34,6 +34,5 @@
  *       Request object for refresh token validation</li>
  * </ul>
  *
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.core.domain.context;

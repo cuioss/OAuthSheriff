@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
  * Contains only mixed token validation benchmarks (2 methods maximum).
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @State(Scope.Thread)
 @SuppressWarnings("java:S112")

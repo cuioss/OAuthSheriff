@@ -35,7 +35,6 @@
  * runtime and deployment modules.
  * </p>
  * 
- * @since 1.0
  */
 @NullMarked
 package de.cuioss.sheriff.oauth.quarkus;

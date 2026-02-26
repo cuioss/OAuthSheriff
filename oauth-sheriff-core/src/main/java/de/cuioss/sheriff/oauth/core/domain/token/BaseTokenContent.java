@@ -46,7 +46,6 @@ import java.util.Map;
  * specification.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @ToString
 @EqualsAndHashCode

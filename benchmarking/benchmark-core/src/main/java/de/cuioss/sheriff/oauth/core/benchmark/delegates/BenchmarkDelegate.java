@@ -26,7 +26,6 @@ import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
  * This allows the same logic to be used by both regular and JFR-instrumented benchmarks.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public abstract class BenchmarkDelegate {
 

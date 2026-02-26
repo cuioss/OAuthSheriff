@@ -38,7 +38,6 @@ import static de.cuioss.sheriff.oauth.core.JWTValidationLogMessages.WARN;
  * validation should happen later in the validation chain.
  * 
  * @author Generated
- * @since 1.0
  */
 @CompiledJson
 public record JwkKey(
@@ -169,7 +168,6 @@ String y      // EC y coordinate (Base64url-encoded, EC only)
      * represents the raw public key bytes rather than a BigInteger coordinate.
      *
      * @return Optional containing the decoded x coordinate as byte array, empty if null or invalid
-     * @since 1.0
      */
     public Optional<byte[]> getXCoordinateAsBytes() {
         return decodeBase64UrlToBytes(x);

@@ -132,7 +132,6 @@ import java.lang.annotation.Target;
  * @see BearerToken
  * @see de.cuioss.sheriff.oauth.quarkus.interceptor.BearerTokenInterceptor
  * @see de.cuioss.sheriff.oauth.quarkus.producer.BearerTokenResult
- * @since 1.0
  */
 @InterceptorBinding
 @Retention(RetentionPolicy.RUNTIME)

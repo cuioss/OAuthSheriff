@@ -49,7 +49,6 @@ import de.cuioss.sheriff.oauth.core.domain.claim.mapper.ClaimMapper;
  * {@link IllegalStateException}.
  * </p>
  *
- * @since 1.0
  * @see ClaimMapperRegistry
  * @see ClaimMapper
  */

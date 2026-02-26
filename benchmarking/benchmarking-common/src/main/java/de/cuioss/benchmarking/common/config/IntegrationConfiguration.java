@@ -28,7 +28,6 @@ import static de.cuioss.benchmarking.common.repository.TokenRepositoryConfig.req
  * String serviceUrl = integrationConfig.integrationServiceUrl();
  * }</pre>
  * 
- * @since 1.0
  */
 public record IntegrationConfiguration(
 String integrationServiceUrl,

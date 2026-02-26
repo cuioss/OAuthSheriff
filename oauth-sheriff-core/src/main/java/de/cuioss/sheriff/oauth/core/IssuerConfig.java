@@ -76,7 +76,6 @@ import java.util.*;
  * For more detailed specifications, see the
  * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#_issuerconfig_and_multi_issuer_support">Technical Components Specification - IssuerConfig and Multi-Issuer Support</a>
  *
- * @since 1.0
  */
 @Getter
 @EqualsAndHashCode
@@ -242,7 +241,6 @@ public class IssuerConfig implements LoadingStatusProvider {
      * </ol>
      *
      * @return the issuer identifier, never null
-     * @since 1.0
      */
    
     public String getIssuerIdentifier() {
@@ -284,7 +282,6 @@ public class IssuerConfig implements LoadingStatusProvider {
      * </ul>
      *
      * @return the current health status of this issuer configuration
-     * @since 1.0
      */
     @Override
     public LoaderStatus getLoaderStatus() {

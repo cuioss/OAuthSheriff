@@ -39,7 +39,6 @@ import static de.cuioss.benchmarking.common.util.BenchmarkingLogMessages.WARN.*;
  * Exports metrics data to JSON files in a target directory.
  * Handles JSON serialization, file writing, and metrics aggregation.
  *
- * @since 1.0
  */
 public class MetricsJsonExporter {
 

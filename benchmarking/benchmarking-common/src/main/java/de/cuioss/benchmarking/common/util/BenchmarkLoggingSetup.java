@@ -38,7 +38,6 @@ import java.util.logging.*;
  *   <li>Configurable java.util.logging levels</li>
  * </ul>
  *
- * @since 1.0
  */
 @SuppressWarnings("java:S106") // System.out and System.err usage is intentional for logging setup
 public final class BenchmarkLoggingSetup {

@@ -33,7 +33,6 @@ import static de.cuioss.sheriff.oauth.quarkus.config.JwtPropertyKeys.CACHE;
  *   <li>Eviction interval in seconds</li>
  * </ul>
  *
- * @since 1.0
  */
 @RequiredArgsConstructor
 public class AccessTokenCacheConfigResolver {

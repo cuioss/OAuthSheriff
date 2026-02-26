@@ -35,6 +35,5 @@
  * external monitoring systems like Micrometer/Prometheus in higher-level modules.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.core.metrics;

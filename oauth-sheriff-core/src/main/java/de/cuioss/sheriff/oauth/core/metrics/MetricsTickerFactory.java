@@ -25,7 +25,6 @@ import lombok.experimental.UtilityClass;
  * MeasurementType, TokenValidatorMonitor, and ActiveMetricsTicker.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @UtilityClass
 public class MetricsTickerFactory {

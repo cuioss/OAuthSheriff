@@ -38,7 +38,6 @@ import java.net.URI;
  * and provides comprehensive SSL/TLS configuration options through the HttpHandler builder pattern.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @ToString
 @EqualsAndHashCode

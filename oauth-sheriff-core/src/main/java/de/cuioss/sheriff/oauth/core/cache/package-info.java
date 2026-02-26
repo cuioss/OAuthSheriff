@@ -29,6 +29,5 @@
  *   <li>No external dependencies (Quarkus compatible)</li>
  * </ul>
  *
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.core.cache;

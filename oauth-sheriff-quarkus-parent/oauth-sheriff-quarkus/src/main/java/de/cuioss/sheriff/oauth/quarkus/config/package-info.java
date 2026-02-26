@@ -28,6 +28,5 @@
  * All properties are prefixed with "sheriff.oauth".
  * </p>
  * 
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.quarkus.config;

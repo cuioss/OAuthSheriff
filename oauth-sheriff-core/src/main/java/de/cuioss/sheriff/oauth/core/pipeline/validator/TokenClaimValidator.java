@@ -59,7 +59,6 @@ import java.util.Set;
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class TokenClaimValidator {
 

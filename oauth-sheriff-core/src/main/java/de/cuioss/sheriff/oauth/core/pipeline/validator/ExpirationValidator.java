@@ -36,7 +36,6 @@ import lombok.RequiredArgsConstructor;
  * to account for time differences between token issuer and validator.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @RequiredArgsConstructor
 public class ExpirationValidator {

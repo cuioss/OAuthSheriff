@@ -43,7 +43,6 @@ import java.security.PublicKey;
  *              valid keys may exist simultaneously.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public record KeyInfo(
 PublicKey key,

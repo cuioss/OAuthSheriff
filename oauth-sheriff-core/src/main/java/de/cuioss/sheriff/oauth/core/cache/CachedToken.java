@@ -33,7 +33,6 @@ import java.time.OffsetDateTime;
  * without needing to parse the token content.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @RequiredArgsConstructor
 @Builder

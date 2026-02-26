@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
  * JFR instrumentation for all benchmark types.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @State(Scope.Benchmark)
 @SuppressWarnings("java:S112")

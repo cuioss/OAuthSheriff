@@ -43,7 +43,6 @@ import de.cuioss.sheriff.oauth.core.json.MapRepresentation;
  *
  * @author Oliver Wolff
  * @see ClaimValue
- * @since 1.0
  */
 @FunctionalInterface
 public interface ClaimMapper {

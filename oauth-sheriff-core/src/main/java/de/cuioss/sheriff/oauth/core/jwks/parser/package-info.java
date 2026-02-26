@@ -26,6 +26,5 @@
  * with proper validation, error handling, and security event tracking.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.core.jwks.parser;

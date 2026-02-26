@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * This is a replacement for the org.eclipse.microprofile.jwt.ClaimNames interface
  * to provide a standardized set of JWT claim names and types.
  *
- * @since 1.0
  */
 @Getter
 public enum ClaimName {

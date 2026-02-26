@@ -24,7 +24,6 @@ import java.io.Serial;
  * not a validation failure of the token itself.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class InternalCacheException extends RuntimeException {
 

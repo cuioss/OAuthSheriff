@@ -33,7 +33,6 @@ import lombok.experimental.UtilityClass;
  * For more detailed information about log messages, see the
  * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/LogMessages.adoc">Log Messages Documentation</a>
  *
- * @since 1.0
  */
 @UtilityClass
 public final class JWTValidationLogMessages {

@@ -30,7 +30,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for {@link HttpServletRequestResolverMock}.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @DisplayName("HttpServletRequestResolverMock Tests")
 class HttpServletRequestResolverMockTest {

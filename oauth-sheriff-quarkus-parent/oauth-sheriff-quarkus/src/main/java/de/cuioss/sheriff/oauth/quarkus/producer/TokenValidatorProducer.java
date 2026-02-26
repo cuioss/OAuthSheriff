@@ -56,7 +56,6 @@ import static de.cuioss.sheriff.oauth.quarkus.OAuthSheriffQuarkusLogMessages.INF
  *   <li>{@link SecurityEventCounter} - Security event counter for monitoring</li>
  * </ul>
  *
- * @since 1.0
  */
 @ApplicationScoped
 public class TokenValidatorProducer {

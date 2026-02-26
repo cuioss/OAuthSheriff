@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
  * Contains only error scenario benchmarks (4 methods maximum).
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @State(Scope.Thread)
 @SuppressWarnings("java:S112")

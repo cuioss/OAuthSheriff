@@ -47,7 +47,6 @@
  * For more detailed specifications, see the
  * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification - JwksLoader</a>
  * 
- * @since 1.0
  * @see de.cuioss.sheriff.oauth.core.pipeline.validator.TokenSignatureValidator
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc7517">RFC 7517 - JSON Web Key (JWK)</a>
  */

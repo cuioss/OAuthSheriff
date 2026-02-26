@@ -58,7 +58,6 @@ import java.util.Set;
  * </pre>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @Builder
 @Getter

@@ -55,6 +55,5 @@
  * report.printSummary();
  * }</pre>
  * 
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.core.benchmark.jfr;

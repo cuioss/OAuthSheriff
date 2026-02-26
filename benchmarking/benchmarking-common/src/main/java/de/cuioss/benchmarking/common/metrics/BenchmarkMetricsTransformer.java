@@ -23,7 +23,6 @@ import java.util.*;
  * Transforms Prometheus time-series data into the benchmark server metrics format
  * as defined in benchmark-metrics.adoc.
  *
- * @since 1.0
  */
 public class BenchmarkMetricsTransformer {
 

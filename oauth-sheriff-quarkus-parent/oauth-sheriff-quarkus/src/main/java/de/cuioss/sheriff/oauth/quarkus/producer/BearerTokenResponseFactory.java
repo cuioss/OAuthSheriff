@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @UtilityClass
 public class BearerTokenResponseFactory {

@@ -72,7 +72,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @RequiredArgsConstructor
 public class VertxHttpServletRequestAdapter implements HttpServletRequest {

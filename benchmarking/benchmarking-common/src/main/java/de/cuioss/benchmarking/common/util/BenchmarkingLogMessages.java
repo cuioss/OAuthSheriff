@@ -30,7 +30,6 @@ import de.cuioss.tools.logging.LogRecordModel;
  *   <li>500-599: DEBUG messages</li>
  * </ul>
  *
- * @since 1.0.0
  */
 public final class BenchmarkingLogMessages {
 

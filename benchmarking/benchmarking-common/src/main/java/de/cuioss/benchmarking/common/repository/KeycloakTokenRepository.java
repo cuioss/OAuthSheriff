@@ -53,7 +53,6 @@ import static de.cuioss.benchmarking.common.util.BenchmarkingLogMessages.WARN.TO
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class KeycloakTokenRepository implements TokenProvider {
 

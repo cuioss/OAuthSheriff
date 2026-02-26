@@ -37,7 +37,6 @@ import lombok.ToString;
  * </ul>
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc9449">RFC 9449 - OAuth 2.0 Demonstrating Proof of Possession (DPoP)</a>
- * @since 1.1
  */
 @Getter
 @EqualsAndHashCode

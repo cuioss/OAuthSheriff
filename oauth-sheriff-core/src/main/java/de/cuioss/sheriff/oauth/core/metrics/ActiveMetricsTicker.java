@@ -31,7 +31,6 @@ import lombok.RequiredArgsConstructor;
  * Note: This implementation is not thread-safe. Each thread should use its own instance.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @RequiredArgsConstructor
 public final class ActiveMetricsTicker implements MetricsTicker {

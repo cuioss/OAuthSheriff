@@ -32,7 +32,6 @@
  * with automatic detection based on package naming conventions.
  * </p>
  *
- * @since 1.0.0
  * @author CUI-OpenSource-Software
  */
 @NullMarked

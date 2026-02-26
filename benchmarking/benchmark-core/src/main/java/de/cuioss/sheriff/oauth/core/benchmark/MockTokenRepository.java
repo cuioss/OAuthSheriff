@@ -49,7 +49,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </p>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @Getter
 public class MockTokenRepository implements TokenProvider {

@@ -51,7 +51,6 @@ import java.util.concurrent.ScheduledExecutorService;
  * </pre>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @Builder
 @Getter

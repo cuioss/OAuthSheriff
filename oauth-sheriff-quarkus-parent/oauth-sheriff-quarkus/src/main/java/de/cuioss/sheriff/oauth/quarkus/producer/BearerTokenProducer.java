@@ -99,7 +99,6 @@ import static de.cuioss.sheriff.oauth.quarkus.OAuthSheriffQuarkusLogMessages.WAR
  * }</pre>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @ApplicationScoped
 public class BearerTokenProducer {

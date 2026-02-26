@@ -33,7 +33,6 @@ import static de.cuioss.benchmarking.common.util.BenchmarkingLogMessages.WARN;
  * not during benchmark execution, preventing p99 latency spikes caused by setup costs.
  * 
  * @author Oliver Wolff
- * @since 1.0
  */
 public final class BenchmarkKeyCache {
 

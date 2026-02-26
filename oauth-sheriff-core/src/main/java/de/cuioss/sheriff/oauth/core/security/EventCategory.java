@@ -29,7 +29,6 @@ package de.cuioss.sheriff.oauth.core.security;
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public enum EventCategory {
     /**

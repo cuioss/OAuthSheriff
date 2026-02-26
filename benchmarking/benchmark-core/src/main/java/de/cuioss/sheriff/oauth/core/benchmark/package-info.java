@@ -20,7 +20,6 @@
  * the oauth-sheriff-library library in isolation, without any framework overhead.
  * </p>
  *
- * @since 1.0.0
  * @author CUI-OpenSource-Software
  */
 @NullMarked

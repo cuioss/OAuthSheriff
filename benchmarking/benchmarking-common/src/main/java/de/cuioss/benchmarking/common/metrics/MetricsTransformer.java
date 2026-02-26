@@ -25,7 +25,6 @@ import java.util.Map;
  * Transforms raw Prometheus metrics into structured Quarkus runtime metrics.
  * This class is responsible for all metric restructuring, renaming, and organization.
  *
- * @since 1.0
  */
 public class MetricsTransformer {
 
