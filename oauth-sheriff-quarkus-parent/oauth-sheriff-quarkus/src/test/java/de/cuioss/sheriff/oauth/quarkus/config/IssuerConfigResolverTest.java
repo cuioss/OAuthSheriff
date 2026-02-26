@@ -18,6 +18,7 @@ package de.cuioss.sheriff.oauth.quarkus.config;
 import de.cuioss.http.client.adapter.RetryConfig;
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.ParserConfig;
+import de.cuioss.sheriff.oauth.core.dpop.DpopConfig;
 import de.cuioss.sheriff.oauth.core.security.SignatureAlgorithmPreferences;
 import de.cuioss.sheriff.oauth.quarkus.test.TestConfig;
 import de.cuioss.test.juli.TestLogLevel;
@@ -388,6 +389,84 @@ class IssuerConfigResolverTest {
             assertEquals(1, result.size());
             IssuerConfig issuer = result.getFirst();
             assertFalse(issuer.isClaimSubOptional(), "Should default claimSubOptional to false");
+        }
+    }
+
+    @Nested
+    @DisplayName("DPoP Configuration (RFC 9449)")
+    class DpopConfiguration {
+
+        @Test
+        @DisplayName("should configure DPoP when enabled with defaults")
+        void shouldConfigureDpopWhenEnabled() {
+            TestConfig config = new TestConfig(Map.of(
+                    JwtPropertyKeys.ISSUERS.JWKS_URL.formatted(TEST_ISSUER), "https://example.com/jwks",
+                    JwtPropertyKeys.ISSUERS.DPOP_ENABLED.formatted(TEST_ISSUER), "true"
+            ));
+            IssuerConfigResolver resolver = new IssuerConfigResolver(config);
+
+            List<IssuerConfig> result = resolver.resolveIssuerConfigs();
+
+            assertEquals(1, result.size());
+            DpopConfig dpopConfig = result.getFirst().getDpopConfig();
+            assertNotNull(dpopConfig, "DPoP config should be present when enabled");
+            assertFalse(dpopConfig.isRequired(), "Should default to not required");
+            assertEquals(DpopConfig.DEFAULT_PROOF_MAX_AGE_SECONDS, dpopConfig.getProofMaxAgeSeconds());
+            assertEquals(DpopConfig.DEFAULT_NONCE_CACHE_SIZE, dpopConfig.getNonceCacheSize());
+            assertEquals(DpopConfig.DEFAULT_NONCE_CACHE_TTL_SECONDS, dpopConfig.getNonceCacheTtlSeconds());
+        }
+
+        @Test
+        @DisplayName("should not configure DPoP when disabled")
+        void shouldNotConfigureDpopWhenDisabled() {
+            TestConfig config = new TestConfig(Map.of(
+                    JwtPropertyKeys.ISSUERS.JWKS_URL.formatted(TEST_ISSUER), "https://example.com/jwks",
+                    JwtPropertyKeys.ISSUERS.DPOP_ENABLED.formatted(TEST_ISSUER), "false"
+            ));
+            IssuerConfigResolver resolver = new IssuerConfigResolver(config);
+
+            List<IssuerConfig> result = resolver.resolveIssuerConfigs();
+
+            assertEquals(1, result.size());
+            assertNull(result.getFirst().getDpopConfig(), "DPoP config should be null when disabled");
+        }
+
+        @Test
+        @DisplayName("should not configure DPoP when not specified")
+        void shouldNotConfigureDpopWhenNotSpecified() {
+            TestConfig config = new TestConfig(Map.of(
+                    JwtPropertyKeys.ISSUERS.JWKS_URL.formatted(TEST_ISSUER), "https://example.com/jwks"
+            ));
+            IssuerConfigResolver resolver = new IssuerConfigResolver(config);
+
+            List<IssuerConfig> result = resolver.resolveIssuerConfigs();
+
+            assertEquals(1, result.size());
+            assertNull(result.getFirst().getDpopConfig(), "DPoP config should be null when not specified");
+        }
+
+        @Test
+        @DisplayName("should configure DPoP with custom values")
+        void shouldConfigureDpopWithCustomValues() {
+            TestConfig config = new TestConfig(Map.of(
+                    JwtPropertyKeys.ISSUERS.JWKS_URL.formatted(TEST_ISSUER), "https://example.com/jwks",
+                    JwtPropertyKeys.ISSUERS.DPOP_ENABLED.formatted(TEST_ISSUER), "true",
+                    JwtPropertyKeys.ISSUERS.DPOP_REQUIRED.formatted(TEST_ISSUER), "true",
+                    JwtPropertyKeys.ISSUERS.DPOP_PROOF_MAX_AGE_SECONDS.formatted(TEST_ISSUER), "120",
+                    JwtPropertyKeys.ISSUERS.DPOP_NONCE_CACHE_SIZE.formatted(TEST_ISSUER), "5000",
+                    JwtPropertyKeys.ISSUERS.DPOP_NONCE_CACHE_TTL_SECONDS.formatted(TEST_ISSUER), "600"
+            ));
+            IssuerConfigResolver resolver = new IssuerConfigResolver(config);
+
+            List<IssuerConfig> result = resolver.resolveIssuerConfigs();
+
+            assertEquals(1, result.size());
+            DpopConfig dpopConfig = result.getFirst().getDpopConfig();
+            assertNotNull(dpopConfig, "DPoP config should be present");
+            assertTrue(dpopConfig.isRequired(), "Should be required");
+            assertEquals(120, dpopConfig.getProofMaxAgeSeconds());
+            assertEquals(5000, dpopConfig.getNonceCacheSize());
+            assertEquals(600, dpopConfig.getNonceCacheTtlSeconds());
         }
     }
 
