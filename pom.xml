@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>de.cuioss</groupId>
         <artifactId>cui-java-parent</artifactId>
         <version>1.4.4</version>
-        <relativePath/>
+        <relativePath />
     </parent>
     <groupId>de.cuioss.sheriff.oauth</groupId>
     <artifactId>oauth-sheriff-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.4.0</version>
     <packaging>pom</packaging>
     <name>OAuth Sheriff Parent</name>
     <description>A comprehensive framework for validating OAuth/JWT tokens in multi-issuer environments.
@@ -34,7 +32,7 @@
         <developerConnection>
             scm:git:https://github.com/cuioss/OAuthSheriff/
         </developerConnection>
-        <tag>HEAD</tag>
+        <tag>0.4.0</tag>
     </scm>
     <issueManagement>
         <url>https://github.com/cuioss/OAuthSheriff/issues</url>
