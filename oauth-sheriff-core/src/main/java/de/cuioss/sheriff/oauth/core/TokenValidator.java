@@ -22,6 +22,8 @@ import de.cuioss.sheriff.oauth.core.domain.context.RefreshTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
 import de.cuioss.sheriff.oauth.core.domain.token.IdTokenContent;
 import de.cuioss.sheriff.oauth.core.domain.token.RefreshTokenContent;
+import de.cuioss.sheriff.oauth.core.dpop.DpopProofValidator;
+import de.cuioss.sheriff.oauth.core.dpop.DpopReplayProtection;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.metrics.*;
 import de.cuioss.sheriff.oauth.core.pipeline.*;
@@ -36,6 +38,7 @@ import lombok.Getter;
 import lombok.Singular;
 import org.jspecify.annotations.Nullable;
 
+import java.io.Closeable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,7 +134,7 @@ import java.util.Map;
  * @since 1.0
  */
 @SuppressWarnings({"JavadocLinkAsPlainText", "java:S6539"}) // java:S6539: Intentional facade pattern - high coupling is by design
-public class TokenValidator {
+public class TokenValidator implements Closeable {
 
     private static final CuiLogger LOGGER = new CuiLogger(TokenValidator.class);
 
@@ -172,6 +175,13 @@ public class TokenValidator {
      * Handles opaque or lightly validated refresh tokens.
      */
     private final RefreshTokenValidationPipeline refreshTokenPipeline;
+
+    /**
+     * Shared DPoP replay protection instance, or null if no issuer has DPoP enabled.
+     * Stored for lifecycle management ({@link #close()}).
+     */
+    @Nullable
+    private final DpopReplayProtection dpopReplayProtection;
 
 
     /**
@@ -255,6 +265,31 @@ public class TokenValidator {
         Map<String, TokenClaimValidator> claimValidators = Map.copyOf(claimValidatorsMap);
         Map<String, TokenHeaderValidator> headerValidators = Map.copyOf(headerValidatorsMap);
 
+        // Initialize DPoP validators for issuers that have DPoP configured
+        // Shared replay protection across all issuers (jti must be globally unique per RFC 9449)
+        // Use max TTL and max cache size across all DPoP-enabled issuers for consistent behavior
+        Map<String, DpopProofValidator> dpopValidatorsMap = new HashMap<>();
+        long maxNonceCacheTtl = 0;
+        int maxNonceCacheSize = 0;
+        for (IssuerConfig issuerConfig : issuerConfigs) {
+            if (issuerConfig.getDpopConfig() != null) {
+                maxNonceCacheTtl = Math.max(maxNonceCacheTtl, issuerConfig.getDpopConfig().getNonceCacheTtlSeconds());
+                maxNonceCacheSize = Math.max(maxNonceCacheSize, issuerConfig.getDpopConfig().getNonceCacheSize());
+            }
+        }
+        this.dpopReplayProtection = maxNonceCacheSize > 0
+                ? new DpopReplayProtection(maxNonceCacheTtl, maxNonceCacheSize)
+                : null;
+        for (IssuerConfig issuerConfig : issuerConfigs) {
+            if (issuerConfig.getDpopConfig() != null) {
+                DpopProofValidator dpopValidator = new DpopProofValidator(
+                        issuerConfig, this.securityEventCounter, this.dpopReplayProtection);
+                dpopValidatorsMap.put(issuerConfig.getIssuerIdentifier(), dpopValidator);
+                LOGGER.debug("Pre-created DpopProofValidator for issuer: %s", issuerConfig.getIssuerIdentifier());
+            }
+        }
+        Map<String, DpopProofValidator> dpopValidators = Map.copyOf(dpopValidatorsMap);
+
         // Use default cache config if not provided
         if (cacheConfig == null) {
             cacheConfig = AccessTokenCacheConfig.defaultConfig();
@@ -290,6 +325,7 @@ public class TokenValidator {
                 tokenBuilders,
                 claimValidators,
                 headerValidators,
+                dpopValidators,
                 cacheConfig,
                 this.securityEventCounter,
                 this.performanceMonitor);
@@ -370,5 +406,16 @@ public class TokenValidator {
         securityEventCounter.increment(SecurityEventCounter.EventType.REFRESH_TOKEN_CREATED);
 
         return refreshToken;
+    }
+
+    /**
+     * Shuts down the DPoP replay protection scheduler if active.
+     * This should be called when the TokenValidator is no longer needed.
+     */
+    @Override
+    public void close() {
+        if (dpopReplayProtection != null) {
+            dpopReplayProtection.close();
+        }
     }
 }

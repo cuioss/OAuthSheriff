@@ -220,6 +220,65 @@ public final class JwtPropertyKeys {
          */
         public static final String EXPECTED_TOKEN_TYPE = BASE + "expected-token-type";
 
+        // === DPoP Configuration (RFC 9449) ===
+
+        /**
+         * Base template for DPoP configurations.
+         */
+        public static final String DPOP_BASE = BASE + "dpop.";
+
+        /**
+         * Whether DPoP validation is enabled for this issuer.
+         * Template: "sheriff.oauth.issuers.%s.dpop.enabled"
+         * <p>
+         * When set to {@code true}, DPoP validation per RFC 9449 is activated.
+         * Tokens with a {@code cnf.jkt} claim will be validated against a DPoP proof JWT.
+         * </p>
+         * <p>
+         * Default value is {@code false}.
+         * </p>
+         *
+         * @see <a href="https://datatracker.ietf.org/doc/html/rfc9449">RFC 9449</a>
+         */
+        public static final String DPOP_ENABLED = DPOP_BASE + "enabled";
+
+        /**
+         * Whether DPoP is required for all tokens from this issuer.
+         * Template: "sheriff.oauth.issuers.%s.dpop.required"
+         * <p>
+         * When {@code true}, tokens without a {@code cnf.jkt} claim are rejected.
+         * When {@code false} (default), tokens without {@code cnf.jkt} pass normally (bearer mode).
+         * </p>
+         */
+        public static final String DPOP_REQUIRED = DPOP_BASE + "required";
+
+        /**
+         * Maximum age in seconds for DPoP proof {@code iat} claims.
+         * Template: "sheriff.oauth.issuers.%s.dpop.proof-max-age-seconds"
+         * <p>
+         * Default value is {@code 300} (5 minutes).
+         * </p>
+         */
+        public static final String DPOP_PROOF_MAX_AGE_SECONDS = DPOP_BASE + "proof-max-age-seconds";
+
+        /**
+         * Maximum number of jti entries in the DPoP replay protection cache.
+         * Template: "sheriff.oauth.issuers.%s.dpop.nonce-cache-size"
+         * <p>
+         * Default value is {@code 10000}.
+         * </p>
+         */
+        public static final String DPOP_NONCE_CACHE_SIZE = DPOP_BASE + "nonce-cache-size";
+
+        /**
+         * Time-to-live in seconds for jti entries in the DPoP replay cache.
+         * Template: "sheriff.oauth.issuers.%s.dpop.nonce-cache-ttl-seconds"
+         * <p>
+         * Default value is {@code 300} (5 minutes).
+         * </p>
+         */
+        public static final String DPOP_NONCE_CACHE_TTL_SECONDS = DPOP_BASE + "nonce-cache-ttl-seconds";
+
         // === JWKS Source Configuration (Mutually Exclusive) ===
 
         /**

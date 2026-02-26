@@ -53,7 +53,7 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-010 |ISSUER |Issuer configuration loaded successfully: %s |Logged when an issuer configuration is successfully loaded
 |===
 
-== WARN Level (100-148)
+== WARN Level (100-156)
 
 [cols="1,1,2,2", options="header"]
 |===
@@ -107,6 +107,14 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-146 |JWKS |Failed to parse JWKS content: %s |Logged when JWKS content parsing fails due to IO error or invalid JSON structure
 |JWTValidation-147 |JWKS |Failed to parse OKP key with ID %s: %s |Logged when OKP (EdDSA) key parsing fails for a specific key ID
 |JWTValidation-148 |TOKEN |Token type '%s' does not match expected type '%s' |Logged when the JWT typ header does not match the expected token type configured for the issuer (RFC 9068 validation)
+|JWTValidation-149 |DPOP |DPoP proof is required but the DPoP HTTP header is missing |Logged when a DPoP proof is expected (cnf.jkt present or dpop.required=true) but the DPoP HTTP header is absent
+|JWTValidation-150 |DPOP |DPoP proof has invalid format: %s |Logged when the DPoP proof JWT cannot be decoded or has structural issues (wrong typ, unsupported algorithm, missing jwk, invalid signature)
+|JWTValidation-151 |DPOP |DPoP proof iat claim is outside acceptable freshness window |Logged when the DPoP proof iat claim is too old or too far in the future
+|JWTValidation-152 |DPOP |DPoP proof JWK thumbprint '%s' does not match token cnf.jkt '%s' |Logged when the computed JWK Thumbprint (RFC 7638) of the DPoP proof's public key does not match the cnf.jkt claim in the access token
+|JWTValidation-153 |DPOP |DPoP proof replay detected for jti: %s |Logged when a DPoP proof with a previously seen jti value is detected (replay attack)
+|JWTValidation-154 |DPOP |DPoP proof is missing required claim: %s |Logged when the DPoP proof JWT body is missing a required claim (jti, iat, or ath)
+|JWTValidation-155 |DPOP |DPoP proof ath claim does not match access token hash |Logged when the DPoP proof ath claim (SHA-256 hash of the access token) does not match the actual access token
+|JWTValidation-156 |DPOP |DPoP is required but access token does not contain cnf.jkt claim |Logged when DPoP validation is required or a DPoP proof is provided but the access token lacks the cnf.jkt claim
 |===
 
 == ERROR Level (200-211)

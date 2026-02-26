@@ -72,6 +72,7 @@ The token validation pipeline consists of the following components:
 * **TokenSignatureValidator**: Validates token signatures using JWKS
 * **TokenBuilder**: Creates token content objects
 * **TokenClaimValidator**: Validates token claims (expiration, audience, etc.)
+* **DpopProofValidator**: Validates DPoP proof JWTs per RFC 9449 (optional, per-issuer)
 
 ==== NonValidatingJwtParser
 _See Requirement xref:Requirements.adoc#OAUTH-SHERIFF-5[OAUTH-SHERIFF-5: Token Parsing]_

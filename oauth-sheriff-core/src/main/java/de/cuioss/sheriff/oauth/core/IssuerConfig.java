@@ -16,6 +16,7 @@
 package de.cuioss.sheriff.oauth.core;
 
 import de.cuioss.sheriff.oauth.core.domain.claim.mapper.ClaimMapper;
+import de.cuioss.sheriff.oauth.core.dpop.DpopConfig;
 import de.cuioss.sheriff.oauth.core.jwks.JwksLoader;
 import de.cuioss.sheriff.oauth.core.jwks.JwksLoaderFactory;
 import de.cuioss.sheriff.oauth.core.jwks.http.HttpJwksLoaderConfig;
@@ -156,6 +157,23 @@ public class IssuerConfig implements LoadingStatusProvider {
      */
     @Nullable
     String expectedTokenType;
+
+    /**
+     * Optional DPoP (Demonstrating Proof of Possession) configuration per RFC 9449.
+     * <p>
+     * When non-null, DPoP validation is enabled for this issuer. Tokens containing
+     * a {@code cnf.jkt} claim will be validated against a DPoP proof JWT from
+     * the {@code DPoP} HTTP header.
+     * </p>
+     * <p>
+     * When {@code null} (default), DPoP validation is disabled and tokens are
+     * treated as bearer tokens.
+     * </p>
+     *
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc9449">RFC 9449</a>
+     */
+    @Nullable
+    DpopConfig dpopConfig;
 
     SignatureAlgorithmPreferences algorithmPreferences;
 
@@ -310,6 +328,7 @@ public class IssuerConfig implements LoadingStatusProvider {
         private Set<String> expectedClientId;
         private boolean claimSubOptional = false;
         private String expectedTokenType;
+        private DpopConfig dpopConfig;
         private SignatureAlgorithmPreferences algorithmPreferences = new SignatureAlgorithmPreferences();
         private Map<String, ClaimMapper> claimMappers;
         private JwksLoader jwksLoader;
@@ -492,6 +511,22 @@ public class IssuerConfig implements LoadingStatusProvider {
          */
         public IssuerConfigBuilder expectedTokenType(String expectedTokenType) {
             this.expectedTokenType = expectedTokenType;
+            return this;
+        }
+
+        /**
+         * Sets the DPoP (Demonstrating Proof of Possession) configuration for this issuer.
+         * <p>
+         * When set, DPoP validation per RFC 9449 is enabled. Tokens with a {@code cnf.jkt}
+         * claim will require a valid DPoP proof JWT in the {@code DPoP} HTTP header.
+         * </p>
+         *
+         * @param dpopConfig the DPoP configuration, or {@code null} to disable
+         * @return this builder instance for method chaining
+         * @see <a href="https://datatracker.ietf.org/doc/html/rfc9449">RFC 9449</a>
+         */
+        public IssuerConfigBuilder dpopConfig(DpopConfig dpopConfig) {
+            this.dpopConfig = dpopConfig;
             return this;
         }
 
@@ -778,7 +813,7 @@ public class IssuerConfig implements LoadingStatusProvider {
             }
 
             return new IssuerConfig(enabled, issuerIdentifier, expectedAudience, expectedClientId,
-                    claimSubOptional, expectedTokenType, algorithmPreferences, claimMappers, jwksLoader);
+                    claimSubOptional, expectedTokenType, dpopConfig, algorithmPreferences, claimMappers, jwksLoader);
         }
 
         private void validateConfiguration() {
@@ -827,6 +862,7 @@ public class IssuerConfig implements LoadingStatusProvider {
     @SuppressWarnings("java:S107") // ok for private constructor
     private IssuerConfig(boolean enabled, @Nullable String issuerIdentifier, @Nullable Set<String> expectedAudience,
             @Nullable Set<String> expectedClientId, boolean claimSubOptional, @Nullable String expectedTokenType,
+            @Nullable DpopConfig dpopConfig,
             @Nullable SignatureAlgorithmPreferences algorithmPreferences,
             @Nullable Map<String, ClaimMapper> claimMappers, @Nullable JwksLoader jwksLoader) {
         this.enabled = enabled;
@@ -835,6 +871,7 @@ public class IssuerConfig implements LoadingStatusProvider {
         this.expectedClientId = expectedClientId != null ? expectedClientId : Set.of();
         this.claimSubOptional = claimSubOptional;
         this.expectedTokenType = expectedTokenType;
+        this.dpopConfig = dpopConfig;
         this.algorithmPreferences = algorithmPreferences != null ? algorithmPreferences : new SignatureAlgorithmPreferences();
         this.claimMappers = claimMappers != null ? claimMappers : Map.of();
         this.jwksLoader = jwksLoader;

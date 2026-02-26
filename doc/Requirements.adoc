@@ -50,12 +50,7 @@ OAuthSheriff already satisfies the OAuth 2.1 resource server requirements:
 * **Issuer validation** - `iss` mandatory, matched against configured issuers
 * **Signature verification** - Full cryptographic validation pipeline
 * **RFC 9068 token type validation** - Optional per-issuer `typ: at+jwt` header validation (see xref:#OAUTH-SHERIFF-8.6[OAUTH-SHERIFF-8.6])
-
-=== Future Enhancements (Optional)
-
-The following optional enhancements are tracked as separate issues:
-
-* **https://datatracker.ietf.org/doc/html/rfc9449[RFC 9449] - DPoP sender-constrained tokens**: Proof-of-possession mechanism where access tokens contain a `cnf.jkt` claim binding them to a client's public key. This is a major feature requiring HTTP context (DPoP header), not just a token string.
+* **RFC 9449 DPoP sender-constrained tokens** - Optional per-issuer DPoP proof validation binding access tokens to client public keys (see xref:#OAUTH-SHERIFF-8.7[OAUTH-SHERIFF-8.7])
 
 == Functional Requirements
 
@@ -400,6 +395,19 @@ The library must support optional per-issuer validation of the JWT `typ` header 
 * When not configured (default), no token type validation is performed for backward compatibility
 * Comparison is case-insensitive per RFC convention
 * Validation occurs in the `TokenHeaderValidator` as part of the header validation pipeline step
+
+_See specification: xref:specification/technical-components.adoc#token-validation-pipeline[Token Validation Pipeline]_
+
+[#OAUTH-SHERIFF-8.7]
+==== OAUTH-SHERIFF-8.7: DPoP Sender-Constrained Tokens (RFC 9449)
+
+The library must support optional per-issuer validation of DPoP (Demonstrating Proof of Possession) sender-constrained tokens as defined in https://datatracker.ietf.org/doc/html/rfc9449[RFC 9449 - OAuth 2.0 Demonstrating Proof of Possession (DPoP)] (September 2023).
+
+* When `dpop.enabled=true` for an issuer, tokens with a `cnf.jkt` claim are validated against the DPoP proof JWT from the `DPoP` HTTP header
+* When `dpop.required=true`, tokens without a `cnf.jkt` claim are rejected
+* When `dpop.required=false` (default), tokens without a `cnf.jkt` claim pass normally (bearer mode)
+* DPoP validation includes: JWT format and signature verification, JWK Thumbprint (https://datatracker.ietf.org/doc/html/rfc7638[RFC 7638]) binding against `cnf.jkt`, access token hash (`ath`) verification, `iat` freshness check, and `jti` replay prevention
+* Only asymmetric algorithms are permitted in DPoP proofs (HMAC and "none" are rejected)
 
 _See specification: xref:specification/technical-components.adoc#token-validation-pipeline[Token Validation Pipeline]_
 

@@ -18,6 +18,7 @@ package de.cuioss.sheriff.oauth.quarkus.config;
 import de.cuioss.http.client.adapter.RetryConfig;
 import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.ParserConfig;
+import de.cuioss.sheriff.oauth.core.dpop.DpopConfig;
 import de.cuioss.sheriff.oauth.core.jwks.http.HttpJwksLoaderConfig;
 import de.cuioss.sheriff.oauth.core.security.SignatureAlgorithmPreferences;
 import de.cuioss.sheriff.oauth.quarkus.mapper.ClaimMapperRegistry;
@@ -231,6 +232,7 @@ public class IssuerConfigResolver {
         configureAlgorithmPreferences(builder, issuerName);
         configureClaimSubOptional(builder, issuerName);
         configureExpectedTokenType(builder, issuerName);
+        configureDpop(builder, issuerName);
 
         // Configure JWKS source (mutually exclusive)
         configureJwksSource(builder, issuerName);
@@ -344,6 +346,44 @@ public class IssuerConfigResolver {
         if (expectedTokenType.isPresent()) {
             builder.expectedTokenType(expectedTokenType.get());
             LOGGER.debug("Set expected token type for %s: %s", issuerName, expectedTokenType.get());
+        }
+    }
+
+    /**
+     * Configures DPoP (Demonstrating Proof of Possession) settings per RFC 9449.
+     */
+    private void configureDpop(IssuerConfig.IssuerConfigBuilder builder, String issuerName) {
+        Optional<Boolean> dpopEnabled = config.getOptionalValue(
+                JwtPropertyKeys.ISSUERS.DPOP_ENABLED.formatted(issuerName),
+                Boolean.class
+        );
+
+        if (dpopEnabled.isPresent() && Boolean.TRUE.equals(dpopEnabled.get())) {
+            DpopConfig.DpopConfigBuilder dpopBuilder = DpopConfig.builder();
+
+            config.getOptionalValue(
+                    JwtPropertyKeys.ISSUERS.DPOP_REQUIRED.formatted(issuerName),
+                    Boolean.class
+            ).ifPresent(dpopBuilder::required);
+
+            config.getOptionalValue(
+                    JwtPropertyKeys.ISSUERS.DPOP_PROOF_MAX_AGE_SECONDS.formatted(issuerName),
+                    Long.class
+            ).ifPresent(dpopBuilder::proofMaxAgeSeconds);
+
+            config.getOptionalValue(
+                    JwtPropertyKeys.ISSUERS.DPOP_NONCE_CACHE_SIZE.formatted(issuerName),
+                    Integer.class
+            ).ifPresent(dpopBuilder::nonceCacheSize);
+
+            config.getOptionalValue(
+                    JwtPropertyKeys.ISSUERS.DPOP_NONCE_CACHE_TTL_SECONDS.formatted(issuerName),
+                    Long.class
+            ).ifPresent(dpopBuilder::nonceCacheTtlSeconds);
+
+            builder.dpopConfig(dpopBuilder.build());
+            LOGGER.debug("Configured DPoP for %s: required=%s", issuerName,
+                    dpopBuilder.build().isRequired());
         }
     }
 
