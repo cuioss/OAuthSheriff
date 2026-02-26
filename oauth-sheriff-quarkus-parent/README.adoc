@@ -23,7 +23,7 @@ A Quarkus extension for the OAuth Sheriff validation library, consisting of:
 ./mvnw clean verify -Pintegration-tests -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests -am
 
 # JFR profiling build (UBI-based native image) - from project root
-./mvnw clean verify -Pjfr -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
+./mvnw clean verify -Pjfr -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests -am
 
 # Run unit tests only
 ./mvnw test -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus
