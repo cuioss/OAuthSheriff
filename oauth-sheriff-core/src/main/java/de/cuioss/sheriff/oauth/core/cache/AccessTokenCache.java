@@ -58,7 +58,6 @@ import java.util.concurrent.TimeUnit;
  * JWTs self-expire via their exp claim, reducing need for complex eviction strategies.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class AccessTokenCache {
 

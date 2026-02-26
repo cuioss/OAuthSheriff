@@ -28,7 +28,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
  * HTTP responses can be created using {@link BearerTokenResult#createErrorResponse()}.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @RegisterForReflection(methods = false, fields = false)
 public enum BearerTokenStatus {

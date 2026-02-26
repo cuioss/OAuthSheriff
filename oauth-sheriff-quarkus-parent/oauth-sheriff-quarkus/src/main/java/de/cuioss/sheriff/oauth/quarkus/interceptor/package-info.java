@@ -29,6 +29,5 @@
  * validation (interceptor).
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.quarkus.interceptor;

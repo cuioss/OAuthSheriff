@@ -47,7 +47,6 @@ import java.util.*;
  * }</pre>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @Getter
 @Setter

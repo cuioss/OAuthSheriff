@@ -42,7 +42,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * The compareAndSet pattern prevents duplicate loads while allowing concurrent access.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class HttpWellKnownResolver implements LoadingStatusProvider {
 

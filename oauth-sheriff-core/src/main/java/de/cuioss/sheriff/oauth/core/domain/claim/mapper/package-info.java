@@ -51,7 +51,6 @@
  * specification.
  * 
  * @author Oliver Wolff
- * @since 1.0
  * @see de.cuioss.sheriff.oauth.core.domain.claim.ClaimName
  * @see de.cuioss.sheriff.oauth.core.domain.claim.ClaimValue
  */

@@ -58,7 +58,6 @@ import java.util.*;
  * specification.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)

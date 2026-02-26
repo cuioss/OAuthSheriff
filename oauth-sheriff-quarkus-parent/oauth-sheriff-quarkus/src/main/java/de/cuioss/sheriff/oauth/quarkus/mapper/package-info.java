@@ -29,6 +29,5 @@
  *       Registry that collects and manages discovered mappers</li>
  * </ul>
  *
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.quarkus.mapper;

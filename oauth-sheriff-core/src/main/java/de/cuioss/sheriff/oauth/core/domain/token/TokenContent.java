@@ -48,7 +48,6 @@ import java.util.Optional;
  * specification.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public interface TokenContent extends MinimalTokenContent {
 

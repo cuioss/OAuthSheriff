@@ -20,6 +20,5 @@
  * including build steps, configuration validation, and Dev UI integration.
  * </p>
  *
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.quarkus.deployment;

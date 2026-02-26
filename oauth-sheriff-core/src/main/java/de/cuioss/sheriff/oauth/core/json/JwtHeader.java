@@ -70,7 +70,6 @@ import java.util.Optional;
  *             OPTIONAL by RFC 7515. Contains a list of header parameter names that are critical. Stored as String for DSL-JSON compatibility.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @CompiledJson
 public record JwtHeader(

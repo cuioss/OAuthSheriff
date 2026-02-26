@@ -22,7 +22,6 @@ package de.cuioss.sheriff.oauth.core.metrics;
  * by the JVM's JIT compiler. The singleton pattern ensures minimal memory footprint.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @SuppressWarnings("java:S6548") // owolff: fits for its purpose as a no-op implementation
 public final class NoOpMetricsTicker implements MetricsTicker {

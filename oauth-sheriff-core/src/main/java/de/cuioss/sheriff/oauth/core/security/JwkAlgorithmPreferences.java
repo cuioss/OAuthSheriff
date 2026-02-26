@@ -32,7 +32,6 @@ import java.util.List;
  * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class JwkAlgorithmPreferences {
 

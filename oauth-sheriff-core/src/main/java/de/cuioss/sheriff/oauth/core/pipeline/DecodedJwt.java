@@ -55,7 +55,6 @@ import java.util.Optional;
  * @param rawToken the original raw token string
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public record DecodedJwt(
 JwtHeader header,

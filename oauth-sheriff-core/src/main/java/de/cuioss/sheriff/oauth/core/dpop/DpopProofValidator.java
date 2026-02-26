@@ -62,7 +62,6 @@ import java.util.Optional;
  * while DSL-JSON's {@code JwtHeader} expects it as a String.
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc9449">RFC 9449</a>
- * @since 1.1
  */
 public class DpopProofValidator {
 

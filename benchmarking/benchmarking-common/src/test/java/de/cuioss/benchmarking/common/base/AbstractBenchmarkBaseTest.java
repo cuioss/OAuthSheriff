@@ -35,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for {@link AbstractBenchmarkBase}.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 class AbstractBenchmarkBaseTest {
 

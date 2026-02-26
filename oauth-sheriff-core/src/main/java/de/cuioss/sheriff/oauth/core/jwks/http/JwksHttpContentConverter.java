@@ -40,7 +40,6 @@ import static de.cuioss.sheriff.oauth.core.JWTValidationLogMessages.WARN;
  * and provides proper empty value semantics for error cases.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class JwksHttpContentConverter extends StringContentConverter<Jwks> {
 

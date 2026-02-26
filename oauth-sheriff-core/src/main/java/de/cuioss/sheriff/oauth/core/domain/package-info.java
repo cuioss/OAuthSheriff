@@ -24,6 +24,5 @@
  * </ul>
  * <p>
  * 
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.core.domain;

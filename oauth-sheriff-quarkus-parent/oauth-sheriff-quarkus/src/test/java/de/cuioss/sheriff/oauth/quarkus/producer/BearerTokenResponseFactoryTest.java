@@ -40,7 +40,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * {@link BearerTokenResult} objects.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @DisplayName("BearerTokenResponseFactory Tests")
 class BearerTokenResponseFactoryTest {

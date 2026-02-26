@@ -35,7 +35,6 @@ import java.util.*;
  * implementations may throw {@link IllegalStateException} which gets wrapped by CDI.</p>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public interface HttpServletRequestResolver {
 

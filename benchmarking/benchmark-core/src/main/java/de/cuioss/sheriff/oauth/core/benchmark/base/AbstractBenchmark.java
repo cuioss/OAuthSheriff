@@ -32,7 +32,6 @@ import static de.cuioss.benchmarking.common.util.BenchmarkingLogMessages.ERROR;
  * Provides token repository and validator setup for library-specific benchmarks.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public abstract class AbstractBenchmark {
 

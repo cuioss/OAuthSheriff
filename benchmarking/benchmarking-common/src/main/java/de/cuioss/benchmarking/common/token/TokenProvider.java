@@ -30,7 +30,6 @@ package de.cuioss.benchmarking.common.token;
  * </p>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public interface TokenProvider {
 

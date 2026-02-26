@@ -50,7 +50,6 @@
  * specification.
  * 
  * @author Oliver Wolff
- * @since 1.0
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519 - JSON Web Token (JWT)</a>
  * @see <a href="https://openid.net/specs/openid-connect-core-1_0.html">OpenID Connect Core 1.0</a>
  */

@@ -36,7 +36,6 @@ import java.lang.annotation.Target;
  * }</pre>
  * 
  * @author Oliver Wolff
- * @since 1.0
  */
 @Qualifier
 @Retention(RetentionPolicy.RUNTIME)

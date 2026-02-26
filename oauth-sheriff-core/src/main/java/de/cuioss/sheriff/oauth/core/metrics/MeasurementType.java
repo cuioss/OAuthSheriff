@@ -58,7 +58,6 @@ import lombok.RequiredArgsConstructor;
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @RequiredArgsConstructor
 @Getter

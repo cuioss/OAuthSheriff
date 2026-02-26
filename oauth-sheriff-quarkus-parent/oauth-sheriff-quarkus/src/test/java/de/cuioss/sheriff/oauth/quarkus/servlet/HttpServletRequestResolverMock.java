@@ -47,7 +47,6 @@ import lombok.NonNull;
  * }</pre>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class HttpServletRequestResolverMock implements HttpServletRequestResolver {
 

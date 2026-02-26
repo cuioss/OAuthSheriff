@@ -31,7 +31,6 @@ import java.util.Optional;
  * validation should happen later in the validation chain.
  * 
  * @author Generated
- * @since 1.0
  */
 @CompiledJson
 public record Jwks(List<JwkKey> keys) {

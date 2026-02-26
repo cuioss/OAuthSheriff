@@ -25,7 +25,6 @@ import org.openjdk.jmh.annotations.TearDown;
  * Extends AbstractBenchmark to add JFR-specific functionality.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public abstract class AbstractJfrBenchmark extends AbstractBenchmark {
 

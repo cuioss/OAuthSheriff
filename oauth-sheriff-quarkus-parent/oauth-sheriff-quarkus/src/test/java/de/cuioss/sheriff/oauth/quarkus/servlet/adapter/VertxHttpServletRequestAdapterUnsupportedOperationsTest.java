@@ -38,7 +38,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * descriptive messages.</p>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @DisplayName("VertxHttpServletRequestAdapter Unsupported Operations Tests")
 class VertxHttpServletRequestAdapterUnsupportedOperationsTest {

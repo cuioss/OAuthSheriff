@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
  * subject claim in access tokens by default.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @RequiredArgsConstructor
 public class MandatoryClaimsValidator {

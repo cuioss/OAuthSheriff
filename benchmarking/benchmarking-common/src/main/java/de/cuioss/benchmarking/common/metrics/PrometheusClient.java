@@ -44,7 +44,6 @@ import static de.cuioss.benchmarking.common.util.BenchmarkingLogMessages.WARN.FA
  * HTTP client for querying Prometheus API endpoints.
  * Supports query_range operations for time-series data retrieval during benchmark execution.
  *
- * @since 1.0
  */
 public class PrometheusClient {
 

@@ -38,7 +38,6 @@ import java.util.Map;
  * Uses only {@link MessageDigest} and {@link Base64} — no external dependencies.
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc7638">RFC 7638 - JSON Web Key (JWK) Thumbprint</a>
- * @since 1.1
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class JwkThumbprintUtil {

@@ -35,7 +35,6 @@ import java.util.Set;
  * one of the expected client IDs if client ID validation is configured.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @RequiredArgsConstructor
 public class AuthorizedPartyValidator {

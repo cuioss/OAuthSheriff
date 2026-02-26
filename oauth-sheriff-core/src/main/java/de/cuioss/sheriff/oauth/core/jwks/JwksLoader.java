@@ -40,7 +40,6 @@ import java.util.concurrent.CompletableFuture;
  * </pre>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @SuppressWarnings("JavadocLinkAsPlainText")
 public interface JwksLoader extends LoadingStatusProvider {

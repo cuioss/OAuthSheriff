@@ -63,7 +63,6 @@ import java.util.Set;
  * }</pre>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @Value
 @Builder
@@ -300,7 +299,6 @@ public class BearerTokenResult implements Serializable {
      *
      * @return Response object with appropriate HTTP status code, headers, and body
      * @throws IllegalStateException if called on a successfully authorized token
-     * @since 1.0
      */
     public Response createErrorResponse() {
         if (isSuccessfullyAuthorized()) {

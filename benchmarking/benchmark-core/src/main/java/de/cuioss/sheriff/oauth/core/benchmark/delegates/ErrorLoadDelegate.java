@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Delegate for error load benchmarks that test validation behavior under various error conditions.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class ErrorLoadDelegate extends BenchmarkDelegate {
 

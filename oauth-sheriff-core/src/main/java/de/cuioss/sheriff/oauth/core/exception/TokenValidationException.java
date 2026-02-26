@@ -37,7 +37,6 @@ import java.io.Serial;
  * validation.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class TokenValidationException extends RuntimeException {
 

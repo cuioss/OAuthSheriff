@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
  * Designed to eliminate JMH threading contention by removing @Param annotations.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @State(Scope.Thread)
 @SuppressWarnings("java:S112")

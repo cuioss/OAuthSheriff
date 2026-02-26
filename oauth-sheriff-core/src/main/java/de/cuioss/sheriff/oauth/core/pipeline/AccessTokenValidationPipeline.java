@@ -75,7 +75,6 @@ import java.util.Optional;
  * and cached in immutable maps for optimal performance.
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public class AccessTokenValidationPipeline {
 

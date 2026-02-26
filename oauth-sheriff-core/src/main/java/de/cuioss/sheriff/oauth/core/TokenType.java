@@ -47,7 +47,6 @@ import static de.cuioss.sheriff.oauth.core.domain.claim.ClaimName.*;
  * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#_token_architecture_and_types">Technical Components Specification - Token Architecture and Types</a>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 public enum TokenType {
 

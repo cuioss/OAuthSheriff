@@ -53,6 +53,5 @@
  * @author Oliver Wolff
  * @see de.cuioss.sheriff.oauth.core.pipeline.validator.TokenSignatureValidator
  * @see de.cuioss.sheriff.oauth.core.jwks.http.HttpJwksLoader
- * @since 1.0
  */
 package de.cuioss.sheriff.oauth.core.security;

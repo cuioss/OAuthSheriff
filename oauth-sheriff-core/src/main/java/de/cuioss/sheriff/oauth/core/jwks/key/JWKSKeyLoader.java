@@ -62,7 +62,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @ToString(of = {"keyInfoMap", "parserConfig", "securityEventCounter"})
 @EqualsAndHashCode(of = {"keyInfoMap", "parserConfig", "securityEventCounter"})

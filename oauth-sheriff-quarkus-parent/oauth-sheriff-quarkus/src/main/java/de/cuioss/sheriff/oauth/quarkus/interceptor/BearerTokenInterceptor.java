@@ -77,7 +77,6 @@ import static de.cuioss.sheriff.oauth.quarkus.OAuthSheriffQuarkusLogMessages.WAR
  * </ul>
  *
  * @author Oliver Wolff
- * @since 1.0
  */
 @BearerAuth
 @Interceptor

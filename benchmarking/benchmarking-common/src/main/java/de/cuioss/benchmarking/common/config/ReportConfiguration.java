@@ -39,7 +39,6 @@ import static de.cuioss.benchmarking.common.util.BenchmarkingLogMessages.WARN.UN
  *     .build();
  * }</pre>
  * 
- * @since 1.0
  */
 public record ReportConfiguration(
 BenchmarkType benchmarkType,
