@@ -20,9 +20,11 @@ import de.cuioss.sheriff.oauth.core.domain.claim.ClaimValue;
 import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.context.IdTokenRequest;
 import de.cuioss.sheriff.oauth.core.domain.context.RefreshTokenRequest;
+import de.cuioss.sheriff.oauth.core.dpop.DpopConfig;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.sheriff.oauth.core.test.InMemoryJWKSFactory;
+import de.cuioss.sheriff.oauth.core.test.InMemoryKeyMaterialHandler;
 import de.cuioss.sheriff.oauth.core.test.TestTokenHolder;
 import de.cuioss.sheriff.oauth.core.test.generator.TestTokenGenerators;
 import de.cuioss.sheriff.oauth.core.test.junit.TestTokenSource;
@@ -326,6 +328,61 @@ class TokenValidatorTest {
             LogAsserts.assertLogMessagePresentContaining(TestLogLevel.WARN, "key");
         }
 
+    }
+
+    @Nested
+    @DisplayName("DPoP Lifecycle Tests")
+    class DpopLifecycleTests {
+
+        @Test
+        @DisplayName("Should create TokenValidator with DPoP config and close cleanly")
+        void shouldCreateAndCloseWithDpopConfig() {
+            IssuerConfig dpopIssuerConfig = IssuerConfig.builder()
+                    .issuerIdentifier("https://dpop-issuer.example.com")
+                    .dpopConfig(DpopConfig.builder().build())
+                    .jwksContent(InMemoryKeyMaterialHandler.createDefaultJwks())
+                    .build();
+
+            try (var dpopValidator = TokenValidator.builder()
+                         .issuerConfig(dpopIssuerConfig)
+                         .build()) {
+                assertNotNull(dpopValidator);
+                assertNotNull(dpopValidator.getSecurityEventCounter());
+                assertNotNull(dpopValidator.getPerformanceMonitor());
+            }
+        }
+
+        @Test
+        @DisplayName("Should close cleanly without DPoP config")
+        void shouldCloseWithoutDpopConfig() {
+            try (var validator = TokenValidator.builder()
+                         .issuerConfig(issuerConfig)
+                         .build()) {
+                assertNotNull(validator);
+            }
+        }
+
+        @Test
+        @DisplayName("Should create TokenValidator with multiple DPoP-enabled issuers")
+        void shouldCreateWithMultipleDpopIssuers() {
+            IssuerConfig issuer1 = IssuerConfig.builder()
+                    .issuerIdentifier("https://issuer1.example.com")
+                    .dpopConfig(DpopConfig.builder().nonceCacheSize(5000).nonceCacheTtlSeconds(120).build())
+                    .jwksContent(InMemoryKeyMaterialHandler.createDefaultJwks())
+                    .build();
+            IssuerConfig issuer2 = IssuerConfig.builder()
+                    .issuerIdentifier("https://issuer2.example.com")
+                    .dpopConfig(DpopConfig.builder().nonceCacheSize(8000).nonceCacheTtlSeconds(200).build())
+                    .jwksContent(InMemoryKeyMaterialHandler.createDefaultJwks())
+                    .build();
+
+            try (var multiValidator = TokenValidator.builder()
+                         .issuerConfig(issuer1)
+                         .issuerConfig(issuer2)
+                         .build()) {
+                assertNotNull(multiValidator);
+            }
+        }
     }
 
 }
