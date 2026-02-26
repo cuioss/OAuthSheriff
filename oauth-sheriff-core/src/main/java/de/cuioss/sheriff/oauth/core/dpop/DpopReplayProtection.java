@@ -18,6 +18,8 @@ package de.cuioss.sheriff.oauth.core.dpop;
 import de.cuioss.tools.logging.CuiLogger;
 
 import java.io.Closeable;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -118,22 +120,16 @@ public class DpopReplayProtection implements Closeable {
     }
 
     private void evictOldest() {
-        // Find and remove entries exceeding maxSize, oldest insertion order first
-        while (seenJti.size() > maxSize) {
-            String oldestKey = null;
-            long oldestOrder = Long.MAX_VALUE;
-            for (var entry : seenJti.entrySet()) {
-                if (entry.getValue().insertionOrder() < oldestOrder) {
-                    oldestOrder = entry.getValue().insertionOrder();
-                    oldestKey = entry.getKey();
-                }
-            }
-            if (oldestKey != null) {
-                seenJti.remove(oldestKey);
-            } else {
-                break;
-            }
+        int overflow = seenJti.size() - maxSize;
+        if (overflow <= 0) {
+            return;
         }
+        // Single-pass: sort by insertion order and remove oldest entries atomically
+        seenJti.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(
+                        Comparator.comparingLong(Entry::insertionOrder)))
+                .limit(overflow)
+                .forEach(entry -> seenJti.remove(entry.getKey(), entry.getValue()));
     }
 
     @Override

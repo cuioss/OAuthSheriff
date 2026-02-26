@@ -259,23 +259,24 @@ public class DpopProofValidator {
     }
 
     private PublicKey parsePublicKey(Map<String, Object> jwkMap) {
-        String kty = (String) jwkMap.get("kty");
+        MapRepresentation jwkRep = new MapRepresentation(jwkMap);
+        String kty = jwkRep.getString("kty").orElse(null);
         if (kty == null) {
             rejectWith(EventType.DPOP_PROOF_INVALID, JWTValidationLogMessages.WARN.DPOP_PROOF_INVALID,
-                    "DPoP proof JWK is missing 'kty' field");
+                    "DPoP proof JWK is missing required 'kty' field or it is not a string");
         }
 
         try {
-            // Create a JwkKey from the map for use with JwkKeyHandler
+            // Create a JwkKey from the map using type-safe accessors
             JwkKey jwkKey = new JwkKey(
                     kty,
-                    (String) jwkMap.get("kid"),
-                    (String) jwkMap.get("alg"),
-                    (String) jwkMap.get("n"),
-                    (String) jwkMap.get("e"),
-                    (String) jwkMap.get("crv"),
-                    (String) jwkMap.get("x"),
-                    (String) jwkMap.get("y")
+                    jwkRep.getString("kid").orElse(null),
+                    jwkRep.getString("alg").orElse(null),
+                    jwkRep.getString("n").orElse(null),
+                    jwkRep.getString("e").orElse(null),
+                    jwkRep.getString("crv").orElse(null),
+                    jwkRep.getString("x").orElse(null),
+                    jwkRep.getString("y").orElse(null)
             );
 
             return switch (kty) {
