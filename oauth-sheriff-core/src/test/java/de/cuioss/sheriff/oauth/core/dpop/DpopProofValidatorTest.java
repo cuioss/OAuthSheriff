@@ -338,6 +338,81 @@ class DpopProofValidatorTest {
     }
 
     @Test
+    void shouldRejectProofWithMissingJwk() {
+        String thumbprint = "some-thumbprint";
+        DecodedJwt accessToken = createAccessTokenJwt(thumbprint);
+
+        // Build a proof JWT manually without jwk in header
+        String headerJson = """
+                {"typ":"dpop+jwt","alg":"RS256"}""";
+        String bodyJson = """
+                {"jti":"test-jti","iat":%d,"ath":"test-ath"}""".formatted(System.currentTimeMillis() / 1000);
+        String header = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String body = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(bodyJson.getBytes(StandardCharsets.UTF_8));
+        String proof = header + "." + body + ".dummy-sig";
+
+        AccessTokenRequest request = new AccessTokenRequest("dummy-token",
+                Map.of("dpop", List.of(proof)));
+
+        var ex = assertThrows(TokenValidationException.class,
+                () -> validator.validate(request, accessToken, "dummy-token"));
+        assertEquals(EventType.DPOP_PROOF_INVALID, ex.getEventType());
+        assertTrue(ex.getMessage().contains("jwk"));
+    }
+
+    @Test
+    void shouldRejectProofWithUnsupportedKeyType() {
+        String thumbprint = "some-thumbprint";
+        DecodedJwt accessToken = createAccessTokenJwt(thumbprint);
+
+        // Build a proof JWT with unsupported kty in jwk
+        String headerJson = """
+                {"typ":"dpop+jwt","alg":"RS256","jwk":{"kty":"oct","k":"secret"}}""";
+        String bodyJson = """
+                {"jti":"test-jti","iat":%d,"ath":"test-ath"}""".formatted(System.currentTimeMillis() / 1000);
+        String header = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String body = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(bodyJson.getBytes(StandardCharsets.UTF_8));
+        String proof = header + "." + body + ".dummy-sig";
+
+        AccessTokenRequest request = new AccessTokenRequest("dummy-token",
+                Map.of("dpop", List.of(proof)));
+
+        var ex = assertThrows(TokenValidationException.class,
+                () -> validator.validate(request, accessToken, "dummy-token"));
+        assertEquals(EventType.DPOP_PROOF_INVALID, ex.getEventType());
+        assertTrue(ex.getMessage().contains("Unsupported"));
+    }
+
+    @Test
+    void shouldRejectProofWithMissingKty() {
+        String thumbprint = "some-thumbprint";
+        DecodedJwt accessToken = createAccessTokenJwt(thumbprint);
+
+        // Build a proof JWT with jwk that has no kty
+        String headerJson = """
+                {"typ":"dpop+jwt","alg":"RS256","jwk":{"n":"abc","e":"AQAB"}}""";
+        String bodyJson = """
+                {"jti":"test-jti","iat":%d,"ath":"test-ath"}""".formatted(System.currentTimeMillis() / 1000);
+        String header = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+        String body = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(bodyJson.getBytes(StandardCharsets.UTF_8));
+        String proof = header + "." + body + ".dummy-sig";
+
+        AccessTokenRequest request = new AccessTokenRequest("dummy-token",
+                Map.of("dpop", List.of(proof)));
+
+        var ex = assertThrows(TokenValidationException.class,
+                () -> validator.validate(request, accessToken, "dummy-token"));
+        assertEquals(EventType.DPOP_PROOF_INVALID, ex.getEventType());
+        assertTrue(ex.getMessage().contains("kty"));
+    }
+
+    @Test
     void shouldAcceptCaseInsensitiveTyp() {
         KeyPair keyPair = generateRsaKeyPair();
         Map<String, Object> jwkMap = rsaPublicKeyToJwkMap((RSAPublicKey) keyPair.getPublic());
