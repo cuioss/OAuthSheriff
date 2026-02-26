@@ -78,7 +78,7 @@ Mandatory for 3+ similar test variants. Annotation hierarchy (preferred order):
 ./mvnw test
 
 # Run integration tests
-./mvnw clean verify -Pintegration-tests -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
+./mvnw clean verify -Pintegration-tests -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests -am
 
 # Run micro-benchmarks
 ./mvnw clean verify -pl benchmarking/benchmark-core -Pbenchmark
@@ -107,7 +107,7 @@ Mandatory for 3+ similar test variants. Annotation hierarchy (preferred order):
 
 3. **Integration tests**:
    ```bash
-   ./mvnw clean verify -Pintegration-tests -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
+   ./mvnw clean verify -Pintegration-tests -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests -am
    ```
 
 Tasks are complete ONLY after all three steps succeed.

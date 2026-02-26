@@ -20,8 +20,7 @@ jobs:
     with:
       report-name: oauth-sheriff-integration-tests
       maven-args-input: |
-        install -DskipTests
-        verify -Pintegration-tests -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
+        verify -Pintegration-tests -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests -am
       reports-folder: |
         oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/failsafe-reports
     secrets:
