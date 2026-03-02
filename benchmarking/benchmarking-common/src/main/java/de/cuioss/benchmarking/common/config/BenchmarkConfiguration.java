@@ -142,6 +142,10 @@ IntegrationConfiguration integrationConfig
         return reportConfig.resultFile();
     }
 
+    public String projectName() {
+        return reportConfig.projectName();
+    }
+
 
     private static TimeValue parseTimeValue(String timeStr) {
         if (timeStr == null || timeStr.isEmpty()) {
@@ -279,6 +283,16 @@ IntegrationConfiguration integrationConfig
         public Builder withResultFormat(ResultFormatType format) {
             ensureReportConfigBuilder();
             this.reportConfigBuilder.withResultFormat(format);
+            return this;
+        }
+
+        /**
+         * Convenience method to set project name for dashboard display.
+         * Creates a report config builder if needed.
+         */
+        public Builder withProjectName(String name) {
+            ensureReportConfigBuilder();
+            this.reportConfigBuilder.withProjectName(name);
             return this;
         }
 

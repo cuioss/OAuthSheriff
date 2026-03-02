@@ -85,6 +85,18 @@ class BenchmarkDataLoader {
         if (titleElement && data.metadata?.benchmarkType) {
             titleElement.textContent = data.metadata.benchmarkType;
         }
+
+        // Update project name in title
+        const projectNameElement = document.getElementById('project-name');
+        if (projectNameElement && data.metadata?.projectName) {
+            projectNameElement.textContent = data.metadata.projectName;
+        }
+
+        // Update document title
+        if (data.metadata?.projectName) {
+            document.title = data.metadata.projectName + ' ' +
+                (data.metadata.benchmarkType || 'Benchmarking') + ' Dashboard';
+        }
     }
 
     /**
@@ -736,15 +748,28 @@ function adjustNavigationForBenchmarkType(data) {
         if (detailedLink) detailedLink.style.display = 'none';
     }
 
-    // Hide the current benchmark type link (only show link to the OTHER type)
-    // On Micro pages: hide Micro link, show Integration link
-    // On Integration pages: hide Integration link, show Micro link
+    // Cross-type navigation: only show links to the OTHER benchmark type if it exists
+    // Links and separator are hidden by default in the HTML
+    const separator = document.getElementById('benchmark-type-separator');
+    const microLink = document.getElementById('nav-micro');
+    const integrationLink = document.getElementById('nav-integration');
+
+    const showLinkIfExists = (linkElement, path) => {
+        if (!linkElement) return;
+        fetch(path, { method: 'HEAD' })
+            .then(response => {
+                if (response.ok) {
+                    linkElement.style.display = '';
+                    if (separator) separator.style.display = '';
+                }
+            })
+            .catch(() => { /* page not available, keep hidden */ });
+    };
+
     if (benchmarkType.includes('micro')) {
-        const microLink = document.querySelector('a.nav-link[href="../micro/index.html"]');
-        if (microLink) microLink.style.display = 'none';
+        showLinkIfExists(integrationLink, '../integration/index.html');
     } else if (benchmarkType.includes('integration')) {
-        const integrationLink = document.querySelector('a.nav-link[href="../integration/index.html"]');
-        if (integrationLink) integrationLink.style.display = 'none';
+        showLinkIfExists(microLink, '../micro/index.html');
     }
 }
 

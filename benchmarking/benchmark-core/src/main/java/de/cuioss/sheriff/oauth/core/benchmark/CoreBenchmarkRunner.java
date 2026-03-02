@@ -54,6 +54,7 @@ public class CoreBenchmarkRunner extends AbstractBenchmarkRunner {
                 .withBenchmarkType(BenchmarkType.MICRO)
                 .withThroughputBenchmarkName("measureThroughput")  // SimpleCoreValidationBenchmark.measureThroughput
                 .withLatencyBenchmarkName("measureAverageTime")    // SimpleCoreValidationBenchmark.measureAverageTime
+                .withProjectName("OAuth Sheriff")
                 .build();
     }
 

@@ -29,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static de.cuioss.benchmarking.common.constants.BenchmarkConstants.Files.Data.BENCHMARK_DATA_JSON;
-import static de.cuioss.benchmarking.common.constants.BenchmarkConstants.Files.Data.BENCHMARK_SUMMARY_JSON;
 import static de.cuioss.benchmarking.common.constants.BenchmarkConstants.Files.Html.ERROR_404;
 import static de.cuioss.benchmarking.common.constants.BenchmarkConstants.Files.Support.ROBOTS_TXT;
 import static de.cuioss.benchmarking.common.constants.BenchmarkConstants.Files.Support.SITEMAP_XML;
@@ -121,19 +120,28 @@ public class GitHubPagesGenerator {
 
     private void createLatestEndpoint(Path deployDir, Path apiDir) throws IOException {
         Path latestFile = apiDir.resolve(LATEST_JSON);
-        Path summaryFile = deployDir.resolve(BENCHMARK_SUMMARY_JSON);
+        Path benchmarkDataFile = deployDir.resolve("data").resolve(BENCHMARK_DATA_JSON);
 
         Map<String, Object> latestData = new LinkedHashMap<>();
         latestData.put(TIMESTAMP, Instant.now().toString());
         latestData.put(STATUS, STATUS_SUCCESS);
 
         Map<String, Object> summary = new LinkedHashMap<>();
-        if (Files.exists(summaryFile)) {
-            String summaryContent = Files.readString(summaryFile);
-            @SuppressWarnings("unchecked") Map<String, Object> summaryData = JsonSerializationHelper.jsonToMap(summaryContent);
-            summary.put(TOTAL_BENCHMARKS, summaryData.getOrDefault(TOTAL_BENCHMARKS, 0));
-            summary.put(PERFORMANCE_GRADE_KEY, summaryData.getOrDefault(PERFORMANCE_GRADE_KEY, N_A));
-            summary.put(AVERAGE_THROUGHPUT, summaryData.getOrDefault(AVERAGE_THROUGHPUT, 0.0));
+        if (Files.exists(benchmarkDataFile)) {
+            String content = Files.readString(benchmarkDataFile);
+            @SuppressWarnings("unchecked") Map<String, Object> data = JsonSerializationHelper.jsonToMap(content);
+            // Count benchmarks from the benchmarks list
+            Object benchmarks = data.get(BENCHMARKS);
+            int count = (benchmarks instanceof java.util.List<?> list) ? list.size() : 0;
+            summary.put(TOTAL_BENCHMARKS, count);
+            // Get performance grade from overview
+            Object overview = data.get(OVERVIEW);
+            if (overview instanceof Map<?, ?> overviewMap) {
+                Object grade = overviewMap.get(PERFORMANCE_GRADE);
+                summary.put(PERFORMANCE_GRADE_KEY, grade != null ? grade : N_A);
+            } else {
+                summary.put(PERFORMANCE_GRADE_KEY, N_A);
+            }
         } else {
             summary.put(TOTAL_BENCHMARKS, 0);
             summary.put(PERFORMANCE_GRADE_KEY, N_A);
@@ -175,19 +183,26 @@ public class GitHubPagesGenerator {
 
     private void createStatusEndpoint(Path deployDir, Path apiDir) throws IOException {
         Path statusFile = apiDir.resolve(STATUS_JSON);
-        Path summaryFile = deployDir.resolve(BENCHMARK_SUMMARY_JSON);
+        Path benchmarkDataFile = deployDir.resolve("data").resolve(BENCHMARK_DATA_JSON);
 
+        String now = Instant.now().toString();
         Map<String, Object> statusData = new LinkedHashMap<>();
         statusData.put(STATUS, STATUS_HEALTHY);
-        statusData.put(TIMESTAMP, Instant.now().toString());
+        statusData.put(TIMESTAMP, now);
 
-        if (Files.exists(summaryFile)) {
-            String summaryContent = Files.readString(summaryFile);
-            @SuppressWarnings("unchecked") Map<String, Object> summaryData = JsonSerializationHelper.jsonToMap(summaryContent);
-            statusData.put(LAST_RUN, summaryData.getOrDefault(TIMESTAMP, Instant.now().toString()));
-        } else {
-            statusData.put(LAST_RUN, Instant.now().toString());
+        String lastRun = now;
+        if (Files.exists(benchmarkDataFile)) {
+            String content = Files.readString(benchmarkDataFile);
+            @SuppressWarnings("unchecked") Map<String, Object> data = JsonSerializationHelper.jsonToMap(content);
+            Object metadata = data.get(METADATA);
+            if (metadata instanceof Map<?, ?> metadataMap) {
+                Object ts = metadataMap.get(TIMESTAMP);
+                if (ts instanceof String tsString) {
+                    lastRun = tsString;
+                }
+            }
         }
+        statusData.put(LAST_RUN, lastRun);
 
         Files.writeString(statusFile, JsonSerializationHelper.toJson(statusData));
         LOGGER.debug(CREATED_API_ENDPOINT_S, statusFile);

@@ -39,6 +39,7 @@ public class BenchmarkData {
         private String displayTimestamp;
         private String benchmarkType;
         private String reportVersion;
+        private String projectName;
     }
 
     /**
