@@ -754,26 +754,22 @@ function adjustNavigationForBenchmarkType(data) {
     const microLink = document.getElementById('nav-micro');
     const integrationLink = document.getElementById('nav-integration');
 
-    if (benchmarkType.includes('micro') && integrationLink) {
-        // On micro pages: check if integration benchmarks exist, show link if so
-        fetch('../integration/index.html', { method: 'HEAD' })
+    const showLinkIfExists = (linkElement, path) => {
+        if (!linkElement) return;
+        fetch(path, { method: 'HEAD' })
             .then(response => {
                 if (response.ok) {
-                    integrationLink.style.display = '';
+                    linkElement.style.display = '';
                     if (separator) separator.style.display = '';
                 }
             })
-            .catch(() => { /* integration page not available, keep hidden */ });
-    } else if (benchmarkType.includes('integration') && microLink) {
-        // On integration pages: check if micro benchmarks exist, show link if so
-        fetch('../micro/index.html', { method: 'HEAD' })
-            .then(response => {
-                if (response.ok) {
-                    microLink.style.display = '';
-                    if (separator) separator.style.display = '';
-                }
-            })
-            .catch(() => { /* micro page not available, keep hidden */ });
+            .catch(() => { /* page not available, keep hidden */ });
+    };
+
+    if (benchmarkType.includes('micro')) {
+        showLinkIfExists(integrationLink, '../integration/index.html');
+    } else if (benchmarkType.includes('integration')) {
+        showLinkIfExists(microLink, '../micro/index.html');
     }
 }
 

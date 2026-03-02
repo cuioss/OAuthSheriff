@@ -185,24 +185,24 @@ public class GitHubPagesGenerator {
         Path statusFile = apiDir.resolve(STATUS_JSON);
         Path benchmarkDataFile = deployDir.resolve("data").resolve(BENCHMARK_DATA_JSON);
 
+        String now = Instant.now().toString();
         Map<String, Object> statusData = new LinkedHashMap<>();
         statusData.put(STATUS, STATUS_HEALTHY);
-        statusData.put(TIMESTAMP, Instant.now().toString());
+        statusData.put(TIMESTAMP, now);
 
+        String lastRun = now;
         if (Files.exists(benchmarkDataFile)) {
             String content = Files.readString(benchmarkDataFile);
             @SuppressWarnings("unchecked") Map<String, Object> data = JsonSerializationHelper.jsonToMap(content);
-            // Get timestamp from metadata
             Object metadata = data.get(METADATA);
             if (metadata instanceof Map<?, ?> metadataMap) {
                 Object ts = metadataMap.get(TIMESTAMP);
-                statusData.put(LAST_RUN, ts != null ? ts : Instant.now().toString());
-            } else {
-                statusData.put(LAST_RUN, Instant.now().toString());
+                if (ts instanceof String tsString) {
+                    lastRun = tsString;
+                }
             }
-        } else {
-            statusData.put(LAST_RUN, Instant.now().toString());
         }
+        statusData.put(LAST_RUN, lastRun);
 
         Files.writeString(statusFile, JsonSerializationHelper.toJson(statusData));
         LOGGER.debug(CREATED_API_ENDPOINT_S, statusFile);
