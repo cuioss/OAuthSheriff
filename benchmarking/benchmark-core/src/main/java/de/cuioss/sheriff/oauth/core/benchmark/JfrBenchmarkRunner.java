@@ -59,6 +59,7 @@ public class JfrBenchmarkRunner extends AbstractBenchmarkRunner {
                 .withBenchmarkType(BenchmarkType.MICRO)
                 .withThroughputBenchmarkName("measureThroughput")  // JFR benchmarks also measure throughput
                 .withLatencyBenchmarkName("measureAverageTime")    // JFR benchmarks also measure latency
+                .withProjectName("OAuth Sheriff")
                 .withIncludePattern("de\\.cuioss\\.jwt\\.validation\\.benchmark\\.jfr\\.benchmarks\\..*")
                 .withForks(1)
                 .withWarmupIterations(5)

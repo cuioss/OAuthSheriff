@@ -100,7 +100,7 @@ class ReportGeneratorTest {
 
         String htmlContent = Files.readString(indexFile);
         assertTrue(htmlContent.contains("<!DOCTYPE html>"));
-        assertTrue(htmlContent.contains("OAuth Sheriff"));
+        assertTrue(htmlContent.contains("Benchmarking Dashboard"));
 
         // Verify data loader script is included
         assertTrue(htmlContent.contains("data-loader.js"));
@@ -152,7 +152,7 @@ class ReportGeneratorTest {
 
         String htmlContent = Files.readString(trendsFile);
         assertTrue(htmlContent.contains("<!DOCTYPE html>"));
-        assertTrue(htmlContent.contains("Performance Trends"));
+        assertTrue(htmlContent.contains("Benchmarking Dashboard"));
     }
 
     @Test

@@ -111,7 +111,8 @@ public class BenchmarkResultProcessor {
         // Convert JMH JSON to BenchmarkData using converter, passing configured benchmark names
         JmhBenchmarkConverter converter = reportConfig != null
                 ? new JmhBenchmarkConverter(benchmarkType,
-                reportConfig.throughputBenchmarkName(), reportConfig.latencyBenchmarkName())
+                reportConfig.throughputBenchmarkName(), reportConfig.latencyBenchmarkName(),
+                reportConfig.projectName())
                 : new JmhBenchmarkConverter(benchmarkType);
         BenchmarkData benchmarkData;
         try {

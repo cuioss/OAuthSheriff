@@ -46,7 +46,8 @@ String throughputBenchmarkName,
 String latencyBenchmarkName,
 String resultsDirectory,
 String resultFile,
-ResultFormatType resultFormat
+ResultFormatType resultFormat,
+String projectName
 ) {
     private static final CuiLogger LOGGER = new CuiLogger(ReportConfiguration.class);
 
@@ -72,7 +73,8 @@ ResultFormatType resultFormat
                 .withLatencyBenchmarkName(latencyBenchmarkName)
                 .withResultsDirectory(resultsDirectory)
                 .withResultFile(resultFile)
-                .withResultFormat(resultFormat);
+                .withResultFormat(resultFormat)
+                .withProjectName(projectName);
     }
 
     /**
@@ -111,6 +113,7 @@ ResultFormatType resultFormat
         private String resultsDirectory = Directories.RESULTS_DIR;
         private String resultFile;
         private ResultFormatType resultFormat = parseResultFormat(System.getProperty(Jmh.RESULT_FORMAT, "JSON"));
+        private String projectName;
 
         public Builder withBenchmarkType(BenchmarkType type) {
             this.benchmarkType = type;
@@ -142,6 +145,11 @@ ResultFormatType resultFormat
             return this;
         }
 
+        public Builder withProjectName(String name) {
+            this.projectName = name;
+            return this;
+        }
+
         /**
          * Builds the configuration.
          * 
@@ -166,7 +174,8 @@ ResultFormatType resultFormat
                     latencyBenchmarkName,
                     resultsDirectory,
                     resultFile,
-                    resultFormat
+                    resultFormat,
+                    projectName
             );
         }
 

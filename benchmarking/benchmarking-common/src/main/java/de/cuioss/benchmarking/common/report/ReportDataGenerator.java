@@ -131,6 +131,7 @@ public class ReportDataGenerator {
         result.put(DISPLAY_TIMESTAMP, metadata.getDisplayTimestamp());
         result.put(BENCHMARK_TYPE, metadata.getBenchmarkType());
         result.put(BenchmarkConstants.Report.JsonFields.REPORT_VERSION, metadata.getReportVersion());
+        result.put("projectName", metadata.getProjectName());
         return result;
     }
 
@@ -142,6 +143,7 @@ public class ReportDataGenerator {
                 .format(now.atOffset(ZoneOffset.UTC)));
         metadata.put(BENCHMARK_TYPE, BenchmarkType.MICRO.getDisplayName());
         metadata.put(BenchmarkConstants.Report.JsonFields.REPORT_VERSION, BenchmarkConstants.Report.Versions.REPORT_VERSION);
+        metadata.put("projectName", null);
         return metadata;
     }
 

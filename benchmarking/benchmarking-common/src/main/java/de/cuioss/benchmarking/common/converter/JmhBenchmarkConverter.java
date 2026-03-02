@@ -42,16 +42,23 @@ public class JmhBenchmarkConverter implements BenchmarkConverter {
     private final BenchmarkType benchmarkType;
     private final String configuredThroughputName;
     private final String configuredLatencyName;
+    private final String projectName;
 
     public JmhBenchmarkConverter(BenchmarkType benchmarkType) {
-        this(benchmarkType, null, null);
+        this(benchmarkType, null, null, null);
     }
 
     public JmhBenchmarkConverter(BenchmarkType benchmarkType,
             String configuredThroughputName, String configuredLatencyName) {
+        this(benchmarkType, configuredThroughputName, configuredLatencyName, null);
+    }
+
+    public JmhBenchmarkConverter(BenchmarkType benchmarkType,
+            String configuredThroughputName, String configuredLatencyName, String projectName) {
         this.benchmarkType = benchmarkType;
         this.configuredThroughputName = configuredThroughputName;
         this.configuredLatencyName = configuredLatencyName;
+        this.projectName = projectName;
     }
 
     @Override
@@ -142,6 +149,7 @@ public class JmhBenchmarkConverter implements BenchmarkConverter {
                         .format(now))
                 .benchmarkType(benchmarkType.getDisplayName())
                 .reportVersion("2.0")
+                .projectName(projectName)
                 .build();
     }
 
