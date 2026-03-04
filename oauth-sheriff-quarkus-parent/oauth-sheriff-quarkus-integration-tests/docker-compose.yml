@@ -81,10 +81,6 @@ services:
       - "10443:8443"  # External test port for integration tests
 
     environment:
-      # JVM SSL Session Cache Optimization for TLS Performance
-      # JFR configuration handled by image variant (distroless vs JFR-enabled)
-      - JAVA_OPTS_APPEND=-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Djdk.tls.rejectClientInitiatedRenegotiation=true -Djavax.net.ssl.sessionCacheSize=20480 -Djavax.net.ssl.sessionTimeout=300 -Djsse.enableSNIExtension=true -Djdk.tls.maxHandshakeMessageSize=65536 -Djdk.tls.maxCertificateChainLength=10 -Djdk.tls.useExtendedMasterSecret=true
-      - QUARKUS_LOG_LEVEL=INFO
       # Log file path configuration - write to mounted /logs directory
       - LOG_FILE_PATH=/logs/quarkus.log
 
@@ -148,9 +144,3 @@ services:
 networks:
   jwt-integration:
     driver: bridge
-    # Control inter-container communication (production setting)
-    internal: false
-    driver_opts:
-      com.docker.network.bridge.enable_icc: "true"
-      com.docker.network.bridge.enable_ip_masquerade: "true"
-      com.docker.network.driver.mtu: "1500"
