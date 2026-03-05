@@ -32,5 +32,7 @@ ENTRYPOINT ["/app/application", \
   "-Djavax.net.ssl.trustStore=/app/certificates/localhost-truststore.p12", \
   "-Djavax.net.ssl.trustStorePassword=localhost-trust", \
   "-Djavax.net.ssl.trustStoreType=PKCS12", \
+  "-Djdk.tls.rejectClientInitiatedRenegotiation=true", \
+  "-Djavax.net.ssl.sessionCacheSize=20480", \
   "-XX:+FlightRecorder", \
   "-XX:StartFlightRecording=filename=/tmp/jfr-output/jwt-profile.jfr,dumponexit=true,duration=240s,settings=profile"]
