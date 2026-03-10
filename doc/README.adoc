@@ -34,6 +34,10 @@ This is the central navigation for OAuthSheriff documentation.
 * xref:../benchmarking/doc/Analysis-01.2026-Integration.adoc[Integration Benchmark Analysis (January 2026)]
 * xref:../benchmarking/doc/performance-scoring.adoc[Performance Metrics]
 
+== Configuration
+
+* xref:../oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus/src/main/resources/META-INF/quarkus-config-doc.adoc[Configuration Reference] - All `sheriff.oauth.*` properties
+
 == FAQ
 
-* xref:faq/[FAQ Directory]
+* xref:faq/keycloak.adoc[Keycloak FAQ]
