@@ -159,7 +159,7 @@ Based on a dedicated JMH benchmark run (1,024 samples). Note: the test resource 
 
 **Observation:** Library micro-benchmarks achieve 159k ops/s while integration tests (WRK) show 23k ops/s.
 
-**Gap Analysis:**
+**Gap Analysis (50 connections baseline):**
 
 [cols="2,3", options="header"]
 |===
@@ -169,20 +169,22 @@ Based on a dedicated JMH benchmark run (1,024 samples). Note: the test resource 
 |Pure library (micro-benchmark)
 |159,100 ops/s, 77µs P50 latency
 
-|Integration (WRK, 150 conns stress)
-|23,800 ops/s, 5.49ms P50 latency
+|Integration (WRK, 50 conns baseline)
+|22,700 ops/s, 1.93ms P50 latency
 
 |Throughput gap
-|7x slower (135k ops/s difference)
+|7x slower (136k ops/s difference)
 
 |Latency gap
-|71x slower (5.413ms overhead)
+|25x slower (1.853ms overhead)
 
-|Integration overhead includes
-|HTTP/REST stack, Docker networking, CDI context, serialization (individual contributions unmeasured)
+|Integration overhead breakdown
+|Measured via ablation study — see link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition]
 |===
 
-**Conclusion:** The core library validation is highly optimized at 159k ops/s with 77µs latency. Integration testing shows 23k ops/s and 5.49ms latency - the 5.413ms overhead includes HTTP/REST framework stack components (individual contributions unmeasured).
+NOTE: Stress profile (150 connections) shows higher latency (5.49ms P50) due to connection queuing, not additional per-request overhead. The 50-connection baseline is used here for a fair comparison with JMH, which runs without queuing effects.
+
+**Conclusion:** The core library validation is highly optimized at 159k ops/s with 77µs latency. Integration testing at 50 connections shows 22.7k ops/s and 1.93ms P50 latency. A five-layer ablation study (link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition]) decomposes the 1.85ms overhead into: shared infrastructure 0.510ms (27%), JAX-RS POST routing 0.274ms (14%), Vert.x context resolution 0.036ms (2%), authorization parsing 0.003ms (<1%), and CDI producer chain + JWT validation 1.087ms (57%).
 
 === Bottleneck Identification
 
@@ -219,7 +221,7 @@ Based on a dedicated JMH benchmark run (1,024 samples). Note: the test resource 
 |===
 |Metric
 |Micro (Library)
-|Integration (WRK)
+|Integration (WRK, 50 conns)
 |Difference
 
 |Throughput
@@ -229,13 +231,13 @@ Based on a dedicated JMH benchmark run (1,024 samples). Note: the test resource 
 
 |Latency P50
 |77 µs
-|5,490 µs
-|**71x faster** (library)
+|1,930 µs
+|**25x faster** (library)
 
 |Latency P99
 |163 µs
-|32,590 µs
-|**200x faster** (library)
+|12,030 µs
+|**74x faster** (library)
 
 |Environment
 |In-memory JMH
@@ -243,7 +245,9 @@ Based on a dedicated JMH benchmark run (1,024 samples). Note: the test resource 
 |Network + framework overhead
 |===
 
-**Key Takeaway:** The core library is extremely fast (77µs P50). Integration overhead (HTTP, REST framework) adds ~5.4ms, which is acceptable for real-world HTTP-based microservices.
+NOTE: Previous versions of this table used stress profile numbers (150 connections: 5.49ms P50, 32.59ms P99). The 50-connection baseline is a fairer comparison because JMH runs without connection queuing.
+
+**Key Takeaway:** The core library is extremely fast (77µs P50). Integration overhead at 50 connections adds ~1.85ms (measured decomposition in link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition]), which is acceptable for real-world HTTP-based microservices.
 
 == Conclusion
 
@@ -253,7 +257,7 @@ Comprehensive JMH micro-benchmark analysis reveals:
 * **Signature validation dominates**: 88% of validation time (68µs) spent in cryptographic operations (expected and unavoidable)
 * **Minimal overhead**: Non-cryptographic operations (parsing, cache, claims) add only ~9µs (12% of total)
 * **Fast-fail optimization**: 50% invalid token rate improves throughput to 222k ops/s
-* **Integration reality check**: 7x throughput gap (159k ops/s library vs 23k ops/s integration) and 71x latency gap (77µs vs 5.49ms) - integration includes HTTP/REST framework stack (individual contributions unmeasured)
+* **Integration reality check**: 7x throughput gap (159k vs 23k ops/s) and 25x latency gap (77µs vs 1.93ms at 50 connections) — integration overhead decomposed via ablation study (link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition])
 * **Production readiness**: Library meets performance requirements with sub-100µs validation latency
 
 **Recommendation:** Current library performance is excellent. Further optimization would require algorithmic changes to signature validation (e.g., EdDSA instead of RSA), which is outside the scope of this library.

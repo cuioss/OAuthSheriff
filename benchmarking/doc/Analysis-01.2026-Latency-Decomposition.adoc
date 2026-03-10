@@ -138,10 +138,10 @@ The ablation study decomposes the full JWT P50 latency (1.91ms) into measured la
 |0.2%
 |Mock JWT minus C (0.823 − 0.820)
 
-|**6. JWT validation**
+|**6. CDI producer chain + JWT validation** (`Instance.get()`, producer resolution, `createAccessToken()`, claims checking)
 |1.087ms
 |56.9%
-|JWT minus Mock JWT (1.91 − 0.823)
+|JWT minus Mock JWT (1.91 − 0.823) — combined measurement, see note below
 |===
 
 **Total JWT P50**: 1.91ms = 0.510 + 0.274 + 0.036 + 0.003 + 1.087 = 1.91ms
@@ -156,7 +156,7 @@ The ablation study decomposes the full JWT P50 latency (1.91ms) into measured la
 
 **Authorization parsing is negligible.** The full header parsing pipeline — extracting the `authorization` key, checking the `Bearer ` prefix, substring extraction, and `HashMap` construction — costs only 0.003ms (3µs), effectively free.
 
-** JWT validation remains the dominant cost at 57%.** The 1.087ms gap between JWT and mock JWT (consistent with the previous measurement of 1.117ms) confirms that `Instance<BearerTokenResult>` proxy resolution, `@Timed` instrumentation, and concurrent JWT validation are the primary optimization targets.
+**CDI producer chain + JWT validation remains the dominant cost at 57%.** The 1.087ms gap between JWT and mock JWT (consistent with the previous measurement of 1.117ms) is a **combined measurement** of two factors: (1) `tokenValidator.createAccessToken()` running under concurrency (~600-800µs estimated, 8-10x slower than the 77µs JMH baseline due to cache contention, memory barriers, and real object allocation), and (2) CDI `Instance.get()` overhead (~160-325µs estimated, including `CreationalContext` allocation, `InjectionPoint` introspection, and `@Timed` instrumentation). The existing ablation study does not separate these two factors — an additional variant calling `createAccessToken()` directly (bypassing `Instance.get()`) would provide a measured split.
 
 === Ablation Variant Descriptions
 
@@ -193,12 +193,21 @@ The five-layer decomposition refines the middle layer (0.417ms "header extractio
 
 == JMH vs Integration Validation Cost
 
-The JMH micro-benchmark measures isolated JWT library validation at 0.077ms (77µs). The mock endpoint experiment reveals the actual cost difference between JWT and mock is 1.087ms — **14.1x more** than the isolated library. This gap includes:
+The JMH micro-benchmark measures isolated JWT library validation at 0.077ms (77µs). The mock endpoint experiment reveals the actual cost difference between JWT and mock is 1.087ms — **14.1x more** than the isolated library. This gap is a combined measurement of two contributing factors:
 
-* **CDI `Instance<BearerTokenResult>` proxy resolution** — CDI creates and invokes the producer per request
-* **`InjectionPoint` metadata extraction** — CDI inspects `@BearerToken` annotation parameters
-* **`@Timed` micrometer instrumentation** — metrics recording overhead on every validation
+**Primary factor (~55-74%, estimated): JWT validation under concurrency**
+
 * **`tokenValidator.createAccessToken()` under concurrency** — 50 concurrent connections competing for the lock-free cache, CPU cache line invalidation, memory barriers
 * **`AccessTokenContent` construction** — real object allocation from parsed claims (vs JMH reusing pre-parsed data)
+* Estimated at ~600-800µs (8-10x concurrency multiplier over 77µs JMH baseline)
+
+**Secondary factor (~15-30%, estimated): CDI Instance.get() overhead**
+
+* **CDI `Instance<BearerTokenResult>` proxy resolution** — CDI creates `CreationalContext` and invokes the producer per request
+* **`InjectionPoint` metadata extraction** — CDI inspects `@BearerToken` annotation parameters
+* **`@Timed` micrometer instrumentation** — metrics recording overhead on every validation
+* Estimated at ~160-325µs (from JFR allocation data: 250 `CreationalContextImpl` samples)
+
+NOTE: This split is estimated from JFR data. The ablation study measures the combined 1.087ms but does not separate CDI overhead from validation concurrency cost. An additional ablation variant calling `createAccessToken()` directly would provide a measured split.
 
 The previous (inferred) decomposition attributed 74% to "CDI/serialization" and only 4% to the JWT library. The measured data reverses this: header extraction and serialization cost only 16% (0.313ms across three sub-layers), while the CDI producer chain combined with JWT validation accounts for 57% (1.087ms).

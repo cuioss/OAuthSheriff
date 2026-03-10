@@ -218,9 +218,60 @@ The ~3.9x throughput difference (95K health vs 24K JWT at 100 conns) is fully ex
 
 The measured latency decomposition (see <<Latency Decomposition>>) shows JWT-specific overhead at 50 connections breaks into: 0.274ms for JAX-RS POST routing + Jackson, 0.039ms for Vert.x context resolution and header parsing, plus 1.087ms for the CDI producer chain and JWT validation — none of which the health endpoint requires.
 
+=== P99 Tail Latency Analysis
+
+P99 latency grows faster than P50 as connection count increases, driven by GC pauses and connection queuing:
+
+[cols="1,2,2,2,2", options="header"]
+|===
+|Connections
+|JWT P50 (ms)
+|JWT P99 (ms)
+|P99/P50 Ratio
+|Health P99 (ms)
+
+|50
+|1.93
+|12.59
+|**6.5x**
+|7.89
+
+|100
+|3.56
+|22.81
+|**6.4x**
+|9.15
+
+|150
+|5.49
+|32.59
+|**5.9x**
+|12.06
+
+|200
+|7.66
+|42.48
+|**5.5x**
+|14.55
+
+|250
+|9.51
+|49.00
+|**5.2x**
+|16.62
+
+|300
+|11.55
+|56.13
+|**4.9x**
+|19.13
+|===
+
+The P99/P50 ratio *decreases* with connection count (6.5x → 4.9x), indicating that the tail latency growth is driven by connection queuing (which affects P50 and P99 proportionally) rather than by increasing GC impact. At 50 connections, JFR data (link:Analysis-01.2026-JFR-Profiling.adoc#_garbage_collection_analysis[GC analysis]) shows 127 GC events >10ms over 60 seconds — these stop-the-world pauses directly explain the P99 outliers. At ~21K req/s with 22 GCs/second, roughly 1 in 950 requests encounters a GC pause, consistent with the observed P99 (worst 1%) being ~6x above the median.
+
 === Endpoint Implementation Comparison
 
-Both endpoints use CDI injection and beans. CDI itself is NOT the differentiator.
+Both endpoints use CDI `@ApplicationScoped` constructor injection, which has zero per-request cost (confirmed by ablation study). The differentiator is the JWT endpoint's use of `Instance<BearerTokenResult>.get()` — a `@Dependent`-scoped CDI producer that triggers per-request `InjectionPoint` introspection and the full JWT validation pipeline.
 
 [cols="2,2,2,2", options="header"]
 |===
@@ -309,8 +360,8 @@ Comprehensive WRK stress testing across 50-300 connections reveals:
 * **CDI `@ApplicationScoped` confirmed zero per-request cost**: Bare baseline (zero CDI) was 0.086ms _slower_ than CDI-injected baseline — proving constructor injection is resolved at startup, not per request
 * **Throughput gap explained**: The ~3.9x throughput difference is fully accounted for by the ~4.5x per-request latency ratio
 * **Cache effectiveness**: Lock-free cache achieves 100% hit rate (size 20), zero performance collapse
-* **JMH vs integration gap**: Core library validates in 77µs (JMH isolation), but integration validation costs 1.087ms — 14.1x more due to CDI producer resolution, `@Timed` instrumentation, concurrent cache contention, and real object allocation
-* **Dominant cost**: CDI producer chain combined with JWT validation accounts for 57% (1.087ms) of request latency — the primary optimization target. JAX-RS POST routing adds 14% (0.274ms); Vert.x context resolution and header parsing are negligible (~2% combined)
+* **JMH vs integration gap**: Core library validates in 77µs (JMH isolation), but integration validation costs 1.087ms — 14.1x more. Estimated split: JWT validation under concurrency ~600-800µs (concurrency multiplier, real object allocation) + CDI `Instance.get()` overhead ~160-325µs (CreationalContext, InjectionPoint introspection, `@Timed` instrumentation). This split is estimated from JFR data, not measured via ablation.
+* **Dominant cost**: CDI producer chain combined with JWT validation accounts for 57% (1.087ms) of request latency. Within this layer, the concurrency penalty on `createAccessToken()` is the estimated primary contributor (~55-74%), with CDI `Instance.get()` machinery secondary (~15-30%). JAX-RS POST routing adds 14% (0.274ms); Vert.x context resolution and header parsing are negligible (~2% combined)
 
 == Aspects Evaluated but Ruled Out
 
@@ -365,7 +416,7 @@ The `CustomAccessLogFilter` runs on **all** JAX-RS endpoints (both health and JW
 | JWT/Health ratio | 4.55x | 4.70x | ~same
 |===
 
-**Conclusion**: Filter overhead is ~0.1ms per request, visible equally on both endpoints. The 1.4ms JWT-health gap (1.91ms − 0.51ms) remains unchanged when the filter is disabled, confirming it does not explain JWT-specific latency.
+**Conclusion**: Filter overhead is ~0.1ms per request, measurable on the health endpoint (0.510ms → 0.417ms) but within noise on the JWT endpoint. The 1.4ms JWT-health gap (1.91ms − 0.51ms) remains unchanged when the filter is disabled, confirming it does not explain JWT-specific latency.
 
 === CDI @ApplicationScoped Injection
 
@@ -396,31 +447,46 @@ The `BearerTokenProducer.produceBearerTokenResult()` method is `@Dependent` scop
 
 **Conclusion**: The `@Dependent` scope is semantically required for correct security behavior.
 
-=== Root Cause Analysis: CDI `Instance.get()` Overhead (Investigation Complete)
+=== Root Cause Analysis: Combined CDI Producer + JWT Validation Cost (Investigation Complete)
 
-After systematically ruling out lock contention, GC, access log filter, CDI `@ApplicationScoped` injection, and `@RequestScoped` refactoring, the 1.087ms token validation cost has been traced to its root cause:
+After systematically ruling out lock contention, GC, access log filter, CDI `@ApplicationScoped` injection, and `@RequestScoped` refactoring, the 1.087ms cost has been decomposed into two contributing factors. The ablation study measures the combined cost as a single layer (JWT minus Mock JWT) — the breakdown below is **estimated from JFR data**, not measured via ablation.
 
-==== Primary Cause: CDI Instance.get() with InjectionPoint Introspection
+==== Contributing Factor 1: JWT Validation Under Concurrency (~600-800µs, estimated 55-74%)
+
+The core JWT library validates in 77µs (JMH, single-thread isolation). Under 50 concurrent connections, this cost increases by an estimated 8-10x due to:
+
+* **CPU cache line invalidation** — concurrent access to shared lock-free cache
+* **Memory barriers** — `ConcurrentHashMap` operations require ordering guarantees
+* **Real object allocation** — `AccessTokenContent`, `HashMap` for claims, `Set` for scopes/roles/groups (vs JMH reusing pre-parsed data)
+* **Thread scheduling** — 50 concurrent connections cause frequent context switches
+
+==== Contributing Factor 2: CDI Instance.get() Overhead (~160-325µs, estimated 15-30%)
 
 Each `Instance.get()` call in Quarkus ArC performs:
 
-1. **Child CreationalContext allocation** — `this.creationalContext.child(bean)` (250 JFR allocation samples)
-2. **InjectionPointImpl construction** — type, qualifiers, annotations, member info
+1. **Child CreationalContext allocation** — `this.creationalContext.child(bean)` (~100-200µs; 250 JFR allocation samples)
+2. **InjectionPointImpl construction** — type, qualifiers, annotations, member info (~50-100µs)
 3. **InjectionPoint introspection** — CDI extracts `@BearerToken` annotation parameters per request
 4. **Bean instance creation** — for @Dependent scope producers
-5. **Object allocation** — HashMap, Set, and result objects created per request (3,915 HashMap-related JFR samples)
+5. **`@Timed` Micrometer instrumentation** — metrics recording per validation (~1-5µs)
 
 These operations consume wall-clock time without proportionally consuming CPU cycles. JFR shows CUI library at only 0.3% of CPU samples, yet latency decomposition shows token validation at 57% of request time.
 
-==== Why This Cannot Be Optimized
+==== Why Neither Factor Can Be Optimized
 
-Quarkus ArC provides `@WithCaching` to cache `Instance.get()` results, but it **cannot be applied** here:
+**JWT concurrency penalty**: Inherent to concurrent workloads with real object allocation. The lock-free cache design is already optimal (14 lock events over 240 seconds).
+
+**CDI `Instance.get()` overhead**: Quarkus ArC provides `@WithCaching` to cache `Instance.get()` results, but it **cannot be applied** here:
 
 * The `JwtValidationEndpoint` uses 5 different `Instance<BearerTokenResult>` fields with different `@BearerToken` annotation parameters
 * Each field requires different authorization validation (scopes, roles, groups)
 * Caching would return the wrong result → **security bypass**
 
-**Conclusion**: The `@Dependent` scope with per-request `InjectionPoint` introspection is **semantically required** for correct security behavior. The 1.087ms overhead is inherent to this design pattern and cannot be reduced without API changes.
+**Conclusion**: Both the `@Dependent` scope with per-request `InjectionPoint` introspection and the concurrent validation cost are **inherent to this design**. The 1.087ms combined overhead cannot be reduced without API changes.
+
+==== Decomposition Gap: Unmeasured Split
+
+The existing ablation study measures the 1.087ms as a single layer. The split between CDI `Instance.get()` overhead (~160-325µs) and `createAccessToken()` under concurrency (~600-800µs) is **estimated from JFR allocation data**, not measured. An additional ablation variant that calls `tokenValidator.createAccessToken()` directly (bypassing `Instance.get()`) would provide a measured split — the existing `/jwt/validate-explicit` endpoint is a candidate but was not included in the benchmark suite.
 
 ==== Investigation Status: Complete
 
@@ -428,21 +494,25 @@ Quarkus ArC provides `@WithCaching` to cache `Instance.get()` results, but it **
 |===
 | Aspect | Status | Conclusion
 
-| Root cause identified
+| Cost factors identified
 | ✅
-| CDI Instance.get() + InjectionPoint introspection
+| Combined: JWT validation under concurrency + CDI Instance.get() overhead
+
+| Individual factor split
+| ⚠️
+| Estimated from JFR data, not measured via ablation
 
 | Optimization feasibility
 | ❌
-| Blocked by security requirements
+| Both factors blocked (concurrency is inherent; CDI blocked by security requirements)
 
 | Performance targets met
 | ✅
 | 23K ops/s exceeds 10K target, 1.9ms P50 under 5ms target
 
 | Further investigation value
-| ❌
-| Diminishing returns — cause understood, outcome unchanged
+| Low
+| An additional ablation variant could measure the split, but neither factor is optimizable
 |===
 
-Full CDI research findings: link:Analysis-01.2026-JFR-Profiling.adoc#_cdi_instanceget_research_findings[JFR Profiling Analysis — CDI Instance.get() Research]
+Full CDI research findings: link:Analysis-01.2026-JFR-Profiling.adoc#_cdi_producer_chain_research_findings[JFR Profiling Analysis — CDI Producer Chain Research]

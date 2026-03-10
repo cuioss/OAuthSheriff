@@ -373,9 +373,9 @@ The `BearerTokenProducer.produceBearerTokenResult()` method is implicitly `@Depe
 
 **Optimization consideration**: If the producer were `@RequestScoped`, the result would be cached for the duration of a request, eliminating redundant validation if `Instance.get()` is called multiple times. However, the current endpoint design calls it only once per request, so the benefit would be minimal unless the usage pattern changes.
 
-== CDI Instance.get() Research Findings
+== CDI Producer Chain Research Findings
 
-This section documents research into Quarkus CDI `Instance.get()` overhead and optimization options, explaining why the 1.087ms token validation cost cannot be reduced without API changes.
+This section documents research into the 1.087ms combined cost of CDI `Instance.get()` overhead and JWT validation under concurrency, and why neither component can be reduced without API changes.
 
 === Quarkus @WithCaching Annotation
 
@@ -436,36 +436,46 @@ Each field requires **different authorization validation** via `InjectionPoint` 
 
 === Estimated Overhead Breakdown
 
-[cols="2,1,1", options="header"]
+The ablation study measures the 1,087µs as a single layer (JWT minus Mock JWT). The split below is **estimated from JFR allocation data and concurrency modeling**, not measured via ablation.
+
+[cols="2,1,1,1", options="header"]
 |===
-| Component | Estimated | Confidence
+| Component | Estimated | % of 1,087µs | Confidence
+
+| **JWT validation under concurrency**
+| **~600-800µs**
+| **55-74%**
+| MEDIUM (JMH=77µs, 8-10x concurrency multiplier from cache contention, memory barriers, real object allocation)
 
 | Child CreationalContext allocation
 | ~100-200µs
-| HIGH (documented)
+| 9-18%
+| HIGH (250 JFR allocation samples)
 
 | InjectionPoint construction + annotation extraction
 | ~50-100µs
+| 5-9%
 | MEDIUM (reflection)
 
 | Set.copyOf() × 3 for scopes/roles/groups
 | ~10-20µs
+| ~1-2%
 | LOW
 
 | @Timed Micrometer instrumentation
 | ~1-5µs
+| <1%
 | HIGH (Micrometer docs)
-
-| TokenValidator.createAccessToken() under load
-| ~600-800µs
-| MEDIUM (JMH=77µs, 8-10x concurrency multiplier)
 
 | **Total**
 | **~760-1125µs**
 | -
+| -
 |===
 
 **Matches observed**: 1,087µs
+
+NOTE: The estimated split shows JWT validation under concurrency as the primary contributor (~55-74%), with CDI `Instance.get()` machinery secondary (~15-30%). An additional ablation variant calling `createAccessToken()` directly (bypassing `Instance.get()`) would provide a measured split.
 
 === Historical Benchmark Context
 
@@ -490,12 +500,12 @@ From struberg/cdi-performance (2015, 10M invocations, 100 threads):
 
 === Investigation Conclusion
 
-The 14x JMH-to-integration gap (77µs → 1,087µs) is **understood but not optimizable** without API changes:
+The 14x JMH-to-integration gap (77µs → 1,087µs) is **understood but not optimizable**:
 
-1. **Root cause identified**: CDI `Instance.get()` with per-request `InjectionPoint` introspection
-2. **Optimization blocked**: Security requires different annotation parameters per injection point
-3. **Performance acceptable**: 23K ops/s at 1.9ms P50 exceeds targets (>10K ops/s, <5ms)
-4. **Investigation complete**: Further measurement would confirm but not change the outcome
+1. **Two contributing factors identified**: JWT validation under concurrency (~55-74%, estimated) and CDI `Instance.get()` with per-request `InjectionPoint` introspection (~15-30%, estimated)
+2. **Neither is optimizable**: Concurrency penalty is inherent to real workloads; CDI overhead is blocked by security requirements (different annotation parameters per injection point)
+3. **Split is estimated, not measured**: An additional ablation variant would be needed to confirm the relative contributions
+4. **Performance acceptable**: 23K ops/s at 1.9ms P50 exceeds targets (>10K ops/s, <5ms)
 
 == Related Documents
 
