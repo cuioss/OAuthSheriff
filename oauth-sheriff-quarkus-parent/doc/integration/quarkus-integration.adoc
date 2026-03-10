@@ -32,7 +32,7 @@ Leverages CDI for component management. All runtime initialization is handled by
 === Health Checks
 
 * `JwksEndpointHealthCheck` (`@Readiness`): Monitors JWKS endpoint connectivity
-* `TokenValidatorHealthCheck` (`@Liveness`): Validates TokenValidator configuration
+* `TokenValidatorHealthCheck` (`@Liveness`): Checks whether issuer configurations are present
 
 Automatically discovered by Quarkus -- no explicit registration needed. See xref:health-checks.adoc[Health Checks] for details.
 

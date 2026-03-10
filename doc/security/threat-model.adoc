@@ -46,7 +46,7 @@ _See Requirements xref:../Requirements.adoc#OAUTH-SHERIFF-8.1[OAUTH-SHERIFF-8.1]
 
 |S3
 |Expired/revoked token reuse
-|Expiration (`exp`), not-before (`nbf`), and issued-at (`iat`) validation in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenClaimValidator.java[TokenClaimValidator]
+|Expiration (`exp`) and not-before (`nbf`) validation in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenClaimValidator.java[TokenClaimValidator]
 |link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenClaimValidatorTest.java[TokenClaimValidatorTest]
 
 |S4
@@ -160,7 +160,7 @@ _See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8.3[OAUTH-SHERIFF-8.3: 
 
 |I1
 |Sensitive claims in logs
-|Claim sanitization and data masking in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/JWTValidationLogMessages.java[JWTValidationLogMessages]; no sensitive data in `toString()`
+|Log templates in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/JWTValidationLogMessages.java[JWTValidationLogMessages] avoid logging sensitive token content by design; no sensitive data in `toString()`
 |Logging tests
 
 |I2
@@ -206,7 +206,7 @@ _See Requirements xref:../Requirements.adoc#OAUTH-SHERIFF-8.1[OAUTH-SHERIFF-8.1:
 
 |D1
 |JWKS endpoint flooding
-|JWKS refresh interval controls (default 600s); caching in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/jwks/http/HttpJwksLoader.java[HttpJwksLoader]; exponential backoff retry with jitter
+|JWKS refresh interval controls (default 600s); caching in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/jwks/http/HttpJwksLoader.java[HttpJwksLoader]; retry behavior via cui-http-client `ResilientHttpAdapter`
 |link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/jwks/http/HttpJwksLoaderGracePeriodTest.java[HttpJwksLoaderGracePeriodTest]
 
 |D2
@@ -278,7 +278,7 @@ _See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8.4[OAUTH-SHERIFF-8.4: 
 |E6
 |Key confusion attacks
 |Key ID (`kid`) validation; pre-loaded keys only — no dynamic file/DB lookup
-|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/KeyInjectionAttackTest.java[KeyInjectionAttackTest]
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/security/KeyInjectionAttackTest.java[KeyInjectionAttackTest]
 
 |E7
 |Client confusion attacks

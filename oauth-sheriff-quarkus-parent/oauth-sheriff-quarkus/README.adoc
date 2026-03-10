@@ -53,6 +53,8 @@ Configuration resolution is handled by dedicated resolver classes:
 * link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/IssuerConfigResolver.java[IssuerConfigResolver] - Resolves issuer configurations from properties
 * link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/ParserConfigResolver.java[ParserConfigResolver] - Handles parser configuration
 * link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/AccessTokenCacheConfigResolver.java[AccessTokenCacheConfigResolver] - Manages cache configuration
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/RetryStrategyConfigResolver.java[RetryStrategyConfigResolver] - Resolves retry strategy configuration
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/AccessLogFilterConfigResolver.java[AccessLogFilterConfigResolver] - Resolves access log filter configuration
 * link:src/main/java/de/cuioss/sheriff/oauth/quarkus/mapper/ClaimMapperRegistry.java[ClaimMapperRegistry] - CDI-based claim mapper discovery and registration
 
 ==== JwtPropertyKeys

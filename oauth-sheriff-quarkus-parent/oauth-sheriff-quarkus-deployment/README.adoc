@@ -57,17 +57,17 @@ For detailed component architecture, implementation details, and testing framewo
 == Usage Examples
 
 === Basic Extension Usage
-To use the Quarkus extension, add the deployment module dependency:
+To use the Quarkus extension, add the runtime module dependency:
 
 [source, xml]
 ----
 <dependency>
     <groupId>de.cuioss.sheriff.oauth</groupId>
-    <artifactId>oauth-sheriff-quarkus-deployment</artifactId>
+    <artifactId>oauth-sheriff-quarkus</artifactId>
 </dependency>
 ----
 
-This will automatically include the runtime module as a transitive dependency.
+The Quarkus build system automatically discovers and applies the deployment module during augmentation.
 
 === Development Mode
 Access DevUI components during development:

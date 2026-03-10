@@ -21,7 +21,7 @@ Common issues and solutions when integrating the OAuth Sheriff library with Keyc
 
 === Problem: Missing 'sub' Claim
 
-*Error:* `JWTValidation-109: Token is missing required claim: sub`
+*Warning:* `JWTValidation-109: Token is missing required claim: sub`
 
 *Cause:* Some Keycloak configurations or custom client scopes may exclude the `sub` claim from access tokens. While Keycloak includes `sub` by default, certain service account configurations or custom protocol mappers can remove it. The `sub` claim is mandatory for ACCESS_TOKEN and ID_TOKEN types per RFC 7519.
 
@@ -176,7 +176,7 @@ Expected token structure after configuration:
 **Common symptoms:**
 
 - BearerToken validation fails with `CONSTRAINT_VIOLATION` status
-- Error: `Bearer token requirements not met - missing groups: [test-group]`
+- HTTP response includes `WWW-Authenticate: Bearer error="insufficient_privileges", required_groups="test-group"`
 - Tests pass for roles but fail for groups
 - User is definitely assigned to the group in Keycloak admin console
 

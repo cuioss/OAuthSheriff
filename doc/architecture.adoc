@@ -81,7 +81,7 @@ image::plantuml/key-management.png[Key Management]
 
 The `JwksLoader` interface handles retrieval, caching, and rotation of cryptographic keys. Implementations:
 
-* **HttpJwksLoader** - Fetches keys via HTTPS with ETag caching (`ETagAwareHttpAdapter` from cui-http-client) and resilient retry (`ResilientHttpAdapter` from cui-http-client). Returns `CompletableFuture<LoaderStatus>` internally; public API is synchronous.
+* **HttpJwksLoader** - Fetches keys via HTTPS with ETag caching (`ETagAwareHttpAdapter` from cui-http-client) and resilient retry (`ResilientHttpAdapter` from cui-http-client). Initialization via `initJWKSLoader()` returns `CompletableFuture<LoaderStatus>` for async startup; key retrieval via `getKeyInfo()` is synchronous.
 * **JWKSKeyLoader** - In-memory and file-based key loading.
 * **JwksLoaderFactory** - Factory for creating loader instances.
 

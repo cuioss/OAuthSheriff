@@ -33,7 +33,7 @@ Supported algorithms (preference order: ECDSA > EdDSA > RSA-PSS > RSA PKCS#1 v1.
 * **iss** (issuer) - validated by `IssuerConfigResolver` during issuer resolution
 * **sub** (subject) - mandatory, validated by `TokenClaimValidator`
 * **exp** (expiration) - mandatory, with configurable clock skew
-* **iat** (issued at) - validated by `TokenClaimValidator`
+* **iat** (issued at) - extracted into token content but not actively validated
 * **nbf** (not before) - validated if present
 * **aud** (audience) - validated when `expectedAudience` is configured
 * **azp** (authorized party) - validated when `expectedClientId` is configured

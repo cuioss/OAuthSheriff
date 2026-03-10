@@ -137,7 +137,7 @@ Each run generates:
 
 === GitHub Pages
 
-View trends at: https://cuioss.github.io/OAuth-Sheriff/benchmarks/performance-trends.html
+View trends at: https://cuioss.github.io/OAuthSheriff/benchmarks/performance-trends.html
 
 Features:
 

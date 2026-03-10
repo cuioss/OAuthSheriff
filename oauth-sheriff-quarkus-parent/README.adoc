@@ -228,7 +228,7 @@ xref:doc/development/quarkus-test-setup.adoc[Quarkus Test Setup]
 The extension supports GraalVM Native Image compilation with dual-image builds for production and profiling:
 
 * **Production**: Distroless images (104MB) with minimal attack surface
-* **Profiling**: UBI-based images (187MB) with full JFR support
+* **Profiling**: UBI-based images (96MB) with full JFR support
 
 More information: xref:doc/configuration/native-image-configuration.adoc[Native Image Support]
 

@@ -277,7 +277,7 @@ benchmarking/benchmark-core/target/
 |**No JFR file created**
 a|
 
-* Verify Java 11+ is used
+* Verify Java 21+ is used
 * Check Maven output for `-XX:StartFlightRecording` argument
 * Ensure `target/benchmark-jfr-results/` directory is created
 * Check for JVM errors in console output
