@@ -35,6 +35,7 @@ oauth-sheriff-quarkus-deployment/src/test/js/
 
 * `qwc-jwt-status-config.test.js` -- Status and configuration viewer
 * `qwc-jwt-debugger.test.js` -- Token validation tool
+* `simple-component.test.js` -- Basic component rendering
 
 === Custom Test Utilities
 

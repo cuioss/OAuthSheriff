@@ -276,13 +276,20 @@ Does the code generate reports/badges/artifacts?
 
 [source,java]
 ----
-public final void runBenchmark() {
-    createConfiguration();
+public final void runBenchmark() throws IOException, RunnerException {
+    config = createConfiguration();
     validateConfiguration(config);
-    prepareBenchmark(config);
-    executeBenchmark(options);
-    processResults(results, config);
-    cleanup(config);
+    try {
+        prepareBenchmark(config);
+        beforeBenchmark(config);           // pre-benchmark hook
+        options = buildCommonOptions(config).build();
+        results = executeBenchmark(options);
+        processTimestampData(results, outputPath);
+        processResults(results, config);
+        afterBenchmark(results, config);   // post-benchmark hook
+    } finally {
+        cleanup(config);
+    }
 }
 ----
 

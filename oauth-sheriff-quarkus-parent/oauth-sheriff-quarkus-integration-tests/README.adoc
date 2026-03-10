@@ -265,7 +265,7 @@ sheriff.oauth.issuers.integration.jwks.http.url=https://keycloak:8443/realms/int
 
 Self-signed certificates via `generate-certificates.sh`:
 
-* Keystore/Truststore: `*.p12` (password: `localhost-trust`)
+* Truststore: `localhost-truststore.p12` (password: `localhost-trust`)
 * Subject: `CN=localhost`
 * SAN: `dns:localhost,dns:keycloak,ip:127.0.0.1,ip:0.0.0.0`
 
@@ -322,7 +322,7 @@ curl -k https://localhost:10443/q/health/live
 curl -k https://localhost:10443/q/health/ready
 
 # Metrics
-curl -k https://localhost:10443/q/metrics | grep cui_jwt
+curl -k https://localhost:10443/q/metrics | grep sheriff_oauth
 ----
 
 == Docker Integration

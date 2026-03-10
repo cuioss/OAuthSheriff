@@ -135,7 +135,7 @@ Key findings: TLS encryption is the largest CPU consumer (18.7%). RSA/BigInteger
 docker compose -f docker-compose.yml -f docker-compose.jfr.yml up -d
 
 # 2. Run load test
-wrk -t4 -c50 -d60s --latency -s jwt_benchmark.lua https://localhost:10443/jwt/validate
+wrk -t4 -c50 -d60s --latency -s benchmarking/benchmark-integration-wrk/src/main/resources/wrk-scripts/jwt_benchmark.lua https://localhost:10443/jwt/validate
 
 # 3. Stop containers (triggers JFR dump)
 docker compose down

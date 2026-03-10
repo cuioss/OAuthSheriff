@@ -218,5 +218,5 @@ void shouldRejectUnknownIssuer() {
 %test.sheriff.oauth.parser.max-payload-size=16384
 
 # Logging for test debugging
-%test.quarkus.log.category."de.cuioss.jwt".level=DEBUG
+%test.quarkus.log.category."de.cuioss.sheriff.oauth".level=DEBUG
 ----

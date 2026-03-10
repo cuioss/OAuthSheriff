@@ -134,7 +134,7 @@ _See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-7[OAUTH-SHERIFF-7: Logg
 
 |R4
 |Inability to trace token usage
-|Token ID tracking in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/domain/token/BaseTokenContent.java[BaseTokenContent]; security event counters
+|Token claims accessible via generic claims map in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/domain/token/BaseTokenContent.java[BaseTokenContent] (including `jti` if present); security event counters
 |Token content tests
 
 |R5

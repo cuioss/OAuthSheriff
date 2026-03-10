@@ -88,11 +88,11 @@ public class IssuerConfig implements LoadingStatusProvider {
 [source,java]
 ----
 public class ParserConfig {
-    public static class Builder {
-        public Builder maxTokenSize(int bytes);      // Default: 8192 (8KB)
-        public Builder maxPayloadSize(int bytes);    // Default: 8192 (8KB)
-        public Builder maxStringLength(int bytes);   // Default: 4096 (4KB)
-        public Builder maxBufferSize(int bytes);     // Default: 131072 (128KB)
+    public static class ParserConfigBuilder {
+        public ParserConfigBuilder maxTokenSize(int bytes);      // Default: 8192 (8KB)
+        public ParserConfigBuilder maxPayloadSize(int bytes);    // Default: 8192 (8KB)
+        public ParserConfigBuilder maxStringLength(int bytes);   // Default: 4096 (4KB)
+        public ParserConfigBuilder maxBufferSize(int bytes);     // Default: 131072 (128KB)
     }
 }
 ----
@@ -102,9 +102,9 @@ public class ParserConfig {
 [source,java]
 ----
 public class AccessTokenCacheConfig {
-    public static class Builder {
-        public Builder maxSize(int entries);                  // Default: 1000
-        public Builder evictionIntervalSeconds(long seconds); // Default: 10
+    public static class AccessTokenCacheConfigBuilder {
+        public AccessTokenCacheConfigBuilder maxSize(int entries);                  // Default: 1000
+        public AccessTokenCacheConfigBuilder evictionIntervalSeconds(long seconds); // Default: 10
     }
 }
 ----
@@ -126,6 +126,7 @@ public class HttpJwksLoaderConfig {
         public HttpJwksLoaderConfigBuilder retryConfig(RetryConfig config);
         public HttpJwksLoaderConfigBuilder issuerIdentifier(String issuer);
         public HttpJwksLoaderConfigBuilder keyRotationGracePeriod(Duration period);
+        public HttpJwksLoaderConfigBuilder maxRetiredKeySets(int maxRetiredKeySets);
         public HttpJwksLoaderConfigBuilder parserConfig(ParserConfig config);
     }
 }
