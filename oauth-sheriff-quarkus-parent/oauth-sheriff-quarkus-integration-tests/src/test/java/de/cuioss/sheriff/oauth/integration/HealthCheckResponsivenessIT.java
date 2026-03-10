@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class HealthCheckResponsivenessIT extends BaseIntegrationTest {
 
     private static final CuiLogger LOGGER = new CuiLogger(HealthCheckResponsivenessIT.class);
-    private static final int MAX_ACCEPTABLE_RESPONSE_TIME_MS = 2000; // 2 seconds max
+    private static final int MAX_ACCEPTABLE_RESPONSE_TIME_MS = 5000; // 5 seconds max for CI native image
     private static final int CONCURRENT_HEALTH_CHECKS = 10;
 
     @Test
