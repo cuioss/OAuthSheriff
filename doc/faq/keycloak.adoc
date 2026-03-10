@@ -21,13 +21,13 @@ Common issues and solutions when integrating the OAuth Sheriff library with Keyc
 
 === Problem: Missing 'sub' Claim
 
-*Error:* `OAUTH_SHERIFF_QUARKUS-124: Bearer token validation failed: Missing mandatory claims: [sub]`
+*Error:* `JWTValidation-109: Token is missing required claim: sub`
 
-*Cause:* Keycloak access tokens don't include the `sub` claim by default, which is mandatory for ACCESS_TOKEN and ID_TOKEN types per RFC 7519.
+*Cause:* Some Keycloak configurations or custom client scopes may exclude the `sub` claim from access tokens. While Keycloak includes `sub` by default, certain service account configurations or custom protocol mappers can remove it. The `sub` claim is mandatory for ACCESS_TOKEN and ID_TOKEN types per RFC 7519.
 
-=== Solution 1: Configure claimSubOptional (Recommended)
+=== Solution 1: Configure claimSubOptional (For Specific Edge Cases)
 
-The simplest solution is to configure the OAuth Sheriff library to make the `sub` claim optional for Keycloak issuers:
+If your Keycloak setup legitimately excludes the `sub` claim (e.g., certain service account configurations), you can configure the OAuth Sheriff library to make the `sub` claim optional:
 
 [source,properties]
 ----
@@ -38,11 +38,11 @@ sheriff.oauth.issuers.keycloak.claim-sub-optional=true
 *Benefits:*
 
 - No Keycloak realm configuration changes needed
-- Works immediately with default Keycloak token structure
+- Useful for service accounts or custom client scopes that omit `sub`
 - Maintains RFC compliance warnings for awareness
 - Per-issuer configuration allows mixed environments
 
-*Warning:* This relaxes RFC 7519 compliance. The library will log a warning when this setting is enabled.
+*Warning:* This relaxes RFC 7519 compliance. The library will log a warning (`JWTValidation-134`) when this setting is enabled.
 
 === Solution 2: Add Subject Protocol Mapper
 

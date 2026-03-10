@@ -49,7 +49,7 @@ Properties under `sheriff.oauth.issuers.<name>.*` — one block per issuer.
 |`jwks.http.connect-timeout-seconds` |int |`10` |HTTP connect timeout
 |`jwks.http.read-timeout-seconds` |int |`30` |HTTP read timeout
 |`jwks.http.key-rotation-grace-period-seconds` |int |`300` |Grace period for retired keys during rotation
-|`jwks.http.max-retired-key-sets` |int |`10` |Max retained retired key sets
+|`jwks.http.max-retired-key-sets` |int |`3` |Max retained retired key sets
 |===
 
 === DPoP (RFC 9449)

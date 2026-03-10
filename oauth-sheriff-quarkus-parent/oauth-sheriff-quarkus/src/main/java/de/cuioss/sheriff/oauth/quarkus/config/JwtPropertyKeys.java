@@ -429,7 +429,7 @@ public final class JwtPropertyKeys {
          * key sets beyond this limit are removed even if still within the grace period.
          * </p>
          * <p>
-         * Default value is {@code 10}.
+         * Default value is {@code 3}.
          * </p>
          * <p>
          * <strong>Only applicable</strong> for {@link #JWKS_URL} and {@link #WELL_KNOWN_URL}.

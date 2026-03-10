@@ -152,7 +152,7 @@ public class JwtAuthenticationService {
 
     public Optional<AccessTokenContent> validateAccessToken(String token) {
         try {
-            return tokenValidator.validateAccessToken(token);
+            return Optional.of(tokenValidator.createAccessToken(AccessTokenRequest.of(token)));
         } catch (TokenValidationException e) {
             // Handle validation exception
             return Optional.empty();

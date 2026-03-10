@@ -14,13 +14,17 @@ The library supports validating tokens from multiple identity providers simultan
 ----
 TokenValidator tokenValidator = TokenValidator.builder()
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://keycloak.example.com/auth/realms/main")
-        .jwksUri("https://keycloak.example.com/auth/realms/main/protocol/openid-connect/certs")
+        .issuerIdentifier("https://keycloak.example.com/auth/realms/main")
+        .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
+            .jwksUrl("https://keycloak.example.com/auth/realms/main/protocol/openid-connect/certs")
+            .build())
         .expectedAudience("my-app")
         .build())
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://auth0.example.com/")
-        .jwksUri("https://auth0.example.com/.well-known/jwks.json")
+        .issuerIdentifier("https://auth0.example.com/")
+        .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
+            .jwksUrl("https://auth0.example.com/.well-known/jwks.json")
+            .build())
         .expectedAudience("my-app-auth0")
         .build())
     .build();
@@ -41,16 +45,18 @@ The library automatically detects the issuer from the token's `iss` claim, selec
 ----
 TokenValidator tokenValidator = TokenValidator.builder()
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://internal.example.com")
-        .signatureKey("static-secret-key")
+        .issuerIdentifier("https://internal.example.com")
+        .jwksContent(internalJwksJsonString)
         .build())
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://external.example.com")
-        .jwksUri("https://external.example.com/.well-known/jwks.json")
+        .issuerIdentifier("https://external.example.com")
+        .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
+            .jwksUrl("https://external.example.com/.well-known/jwks.json")
+            .build())
         .build())
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://partner.example.com")
-        .jwksContent(jwksJsonString)
+        .issuerIdentifier("https://partner.example.com")
+        .jwksContent(partnerJwksJsonString)
         .build())
     .build();
 ----
@@ -59,29 +65,31 @@ TokenValidator tokenValidator = TokenValidator.builder()
 
 [source,java]
 ----
-// Keycloak uses nested roles
-RolesGroupsConfig keycloakConfig = RolesGroupsConfig.builder()
-    .rolesPath("realm_access/roles")
-    .groupsPath("groups")
-    .build();
-
-// Auth0 uses flat structure
-RolesGroupsConfig auth0Config = RolesGroupsConfig.builder()
-    .rolesPath("roles")
-    .groupsPath("groups")
-    .build();
+// Keycloak uses nested roles - use custom ClaimMapper
+ClaimMapper keycloakRolesMapper = (mapRepresentation, claimName) -> {
+    // Custom logic to extract from realm_access/roles
+    return mapRepresentation.getClaimValue(claimName);
+};
 
 TokenValidator tokenValidator = TokenValidator.builder()
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://keycloak.example.com/auth/realms/main")
-        .rolesGroupsConfig(keycloakConfig)
+        .issuerIdentifier("https://keycloak.example.com/auth/realms/main")
+        .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
+            .wellKnownUrl("https://keycloak.example.com/auth/realms/main/.well-known/openid-configuration")
+            .build())
+        .claimMapper("roles", keycloakRolesMapper)
         .build())
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://auth0.example.com/")
-        .rolesGroupsConfig(auth0Config)
+        .issuerIdentifier("https://auth0.example.com/")
+        .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
+            .wellKnownUrl("https://auth0.example.com/.well-known/openid-configuration")
+            .build())
         .build())
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://login.microsoftonline.com/tenant-id/v2.0")
+        .issuerIdentifier("https://login.microsoftonline.com/tenant-id/v2.0")
+        .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
+            .wellKnownUrl("https://login.microsoftonline.com/tenant-id/v2.0/.well-known/openid-configuration")
+            .build())
         .claimMapper("wids", new StringSplitterMapper(','))
         .build())
     .build();

@@ -23,16 +23,16 @@ quarkus.native.monitoring=jcmd,jfr,heapdump
 
 [source,dockerfile]
 ----
-# Dockerfile.native.distroless (Production)
+# Dockerfile.native.distroless (Production) - single-stage, copies pre-built native executable
 FROM quay.io/quarkus/quarkus-distroless-image:2.0
-COPY --from=build /build/target/*-runner /app/application
+COPY --chmod=0755 target/*-runner /app/application
 ----
 
 [source,dockerfile]
 ----
-# Dockerfile.native.jfr (Profiling)
+# Dockerfile.native.jfr (Profiling) - single-stage, copies pre-built native executable
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
-RUN mkdir -p /tmp/jfr-output && chown 1001:0 /tmp/jfr-output && chmod 775 /tmp/jfr-output
+RUN mkdir -p /tmp/jfr-output && chmod 777 /tmp/jfr-output
 ENTRYPOINT ["/app/application", "-XX:+FlightRecorder", \
   "-XX:StartFlightRecording=filename=/tmp/jfr-output/jwt-profile.jfr,dumponexit=true,duration=240s,settings=profile"]
 ----
@@ -134,7 +134,7 @@ Key findings: TLS encryption is the largest CPU consumer (18.7%). RSA/BigInteger
 docker compose -f docker-compose.yml -f docker-compose.jfr.yml up -d
 
 # 2. Run load test
-wrk -t4 -c50 -d60s --latency -s benchmark.lua https://localhost:10443/jwt/validate
+wrk -t4 -c50 -d60s --latency -s jwt_benchmark.lua https://localhost:10443/jwt/validate
 
 # 3. Stop containers (triggers JFR dump)
 docker compose down

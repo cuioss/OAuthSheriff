@@ -48,21 +48,17 @@ The well-known endpoint returns a JSON document with issuer metadata:
 
 [source,java]
 ----
-try {
-    WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
-        .wellKnownUrl(wellKnownUrl.toString())
-        .parserConfig(ParserConfig.builder()
-            .maxPayloadSize(4096)  // Adjust for large discovery documents
-            .build())
-        .build();
+WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
+    .wellKnownUrl(wellKnownUrl.toString())
+    .parserConfig(ParserConfig.builder()
+        .maxPayloadSize(4096)  // Adjust for large discovery documents
+        .build())
+    .build();
 
-    HttpWellKnownResolver wellKnownResolver = new HttpWellKnownResolver(wellKnownConfig);
+HttpWellKnownResolver wellKnownResolver = new HttpWellKnownResolver(wellKnownConfig);
 
-    Optional<HttpHandler> jwksHandler = wellKnownResolver.getJwksUri();
-    Optional<HttpHandler> issuerHandler = wellKnownResolver.getIssuer();
-} catch (IOException e) {
-    LOGGER.error("OIDC Discovery failed: %s", e.getMessage());
-}
+Optional<String> jwksUri = wellKnownResolver.getJwksUri();
+Optional<String> issuer = wellKnownResolver.getIssuer();
 ----
 
 == Configuring HttpJwksLoaderConfig

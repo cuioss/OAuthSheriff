@@ -7,7 +7,7 @@
 
 == Overview
 
-The oauth-sheriff-quarkus extension automatically exposes metrics when the Quarkus Micrometer extension is present. The `JwtMetricsCollector` registers Micrometer counters and timers, using scheduled polling (every 10 seconds) to update from `SecurityEventCounter` and `TokenValidatorMonitor`.
+The oauth-sheriff-quarkus extension automatically exposes metrics when the Quarkus Micrometer extension is present. The `JwtMetricsCollector` registers Micrometer counters, using scheduled polling (every 10 seconds) to update from `SecurityEventCounter`.
 
 == Available Metrics
 
@@ -16,26 +16,26 @@ The oauth-sheriff-quarkus extension automatically exposes metrics when the Quark
 |Metric Name |Type |Description |Tags
 
 |`sheriff.oauth.validation.errors` |Counter |JWT validation errors by type |event_type, result, category
-|`sheriff.oauth.validation.duration` |Timer |Validation pipeline step durations |step
+|`sheriff.oauth.validation.success` |Counter |Successful JWT operations by type |event_type, result
 |===
 
 === Error Metric Tags
 
 * **`event_type`**: e.g., `TOKEN_EXPIRED`, `SIGNATURE_VALIDATION_FAILED`
-* **`result`**: Always "failure"
-* **`category`**: `STRUCTURE`, `SIGNATURE`, or `SEMANTIC`
+* **`result`**: Always `failure`
+* **`category`**: `INVALID_STRUCTURE`, `INVALID_SIGNATURE`, or `SEMANTIC_ISSUES`
 
-=== Performance Metric Steps
+=== Success Metric Tags
 
-`complete_validation`, `token_parsing`, `header_validation`, `signature_validation`, `claims_validation`, `jwks_operations`
+* **`event_type`**: e.g., `ACCESS_TOKEN_CREATED`, `ID_TOKEN_CREATED`
+* **`result`**: Always `success`
 
 === Supported Event Types
 
-* **Structure**: `TOKEN_EMPTY`, `TOKEN_SIZE_EXCEEDED`, `INVALID_JWT_FORMAT`, `FAILED_TO_DECODE_JWT`, `FAILED_TO_DECODE_HEADER`, `FAILED_TO_DECODE_PAYLOAD`, `DECODED_PART_SIZE_EXCEEDED`
-* **Semantic**: `MISSING_CLAIM`, `MISSING_RECOMMENDED_ELEMENT`, `TOKEN_EXPIRED`, `TOKEN_NBF_FUTURE`, `AUDIENCE_MISMATCH`, `AZP_MISMATCH`, `ISSUER_MISMATCH`
-* **Signature**: `NO_ISSUER_CONFIG`, `SIGNATURE_VALIDATION_FAILED`, `KEY_NOT_FOUND`, `UNSUPPORTED_ALGORITHM`
-* **JWKS**: `JWKS_FETCH_FAILED`, `JWKS_JSON_PARSE_FAILED`, `FAILED_TO_READ_JWKS_FILE`, `KEY_ROTATION_DETECTED`
-* **Token Creation**: `ACCESS_TOKEN_CREATED`, `ID_TOKEN_CREATED`, `REFRESH_TOKEN_CREATED`
+* **INVALID_STRUCTURE**: `TOKEN_EMPTY`, `TOKEN_SIZE_EXCEEDED`, `FAILED_TO_DECODE_JWT`, `INVALID_JWT_FORMAT`, `DECODED_PART_SIZE_EXCEEDED`, `DPOP_PROOF_INVALID`
+* **SEMANTIC_ISSUES**: `MISSING_CLAIM`, `MISSING_RECOMMENDED_ELEMENT`, `TOKEN_EXPIRED`, `TOKEN_NBF_FUTURE`, `AUDIENCE_MISMATCH`, `AZP_MISMATCH`, `NO_ISSUER_CONFIG`, `ISSUER_MISMATCH`, `TOKEN_TYPE_MISMATCH`, `DPOP_PROOF_MISSING`, `DPOP_PROOF_EXPIRED`, `DPOP_REPLAY_DETECTED`, `DPOP_ATH_MISMATCH`, `DPOP_CNF_MISSING`
+* **INVALID_SIGNATURE**: `SIGNATURE_VALIDATION_FAILED`, `KEY_NOT_FOUND`, `UNSUPPORTED_ALGORITHM`, `JWKS_JSON_PARSE_FAILED`, `DPOP_THUMBPRINT_MISMATCH`
+* **Success (no category)**: `ACCESS_TOKEN_CREATED`, `ID_TOKEN_CREATED`, `REFRESH_TOKEN_CREATED`, `ACCESS_TOKEN_CACHE_HIT`
 
 == Configuration
 
@@ -71,11 +71,11 @@ rate(sheriff_oauth_validation_errors_total[5m]) by (category)
 # Signature verification failures
 sum(sheriff_oauth_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"})
 
-# Average signature validation duration
-rate(sheriff_oauth_validation_duration_seconds_sum{step="signature_validation"}[5m]) / rate(sheriff_oauth_validation_duration_seconds_count{step="signature_validation"}[5m])
+# Successful token creations
+sum(sheriff_oauth_validation_success_total)
 
-# 95th percentile of complete validation
-histogram_quantile(0.95, rate(sheriff_oauth_validation_duration_seconds_bucket{step="complete_validation"}[5m]))
+# Success rate by type
+rate(sheriff_oauth_validation_success_total[5m]) by (event_type)
 ----
 
 === Alerting Examples
@@ -90,15 +90,15 @@ histogram_quantile(0.95, rate(sheriff_oauth_validation_duration_seconds_bucket{s
   annotations:
     summary: "JWT signature verification failures detected"
 
-- alert: JwtSlowSignatureValidation
-  expr: histogram_quantile(0.95, rate(sheriff_oauth_validation_duration_seconds_bucket{step="signature_validation"}[5m])) > 0.1
+- alert: JwtHighErrorRate
+  expr: rate(sheriff_oauth_validation_errors_total[5m]) / (rate(sheriff_oauth_validation_errors_total[5m]) + rate(sheriff_oauth_validation_success_total[5m])) > 0.5
   for: 5m
   labels:
     severity: warning
   annotations:
-    summary: "JWT signature validation P95 above 100ms"
+    summary: "JWT validation error rate above 50%"
 ----
 
 == Grafana Dashboard
 
-A pre-configured dashboard is available at link:jwt-metrics-grafana-dashboard.json[jwt-metrics-grafana-dashboard.json] covering error rates, event distribution, performance metrics, and duration histograms.
+A pre-configured dashboard is available at link:../jwt-metrics-grafana-dashboard.json[jwt-metrics-grafana-dashboard.json] covering error rates, event distribution, and security event monitoring.

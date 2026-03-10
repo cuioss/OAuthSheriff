@@ -15,7 +15,7 @@ image:https://github.com/cuioss/OAuthSheriff/actions/workflows/maven.yml/badge.s
 image:https://github.com/cuioss/OAuthSheriff/actions/workflows/integration-tests.yml/badge.svg?branch=main[Integration Tests,link=https://github.com/cuioss/OAuthSheriff/actions/workflows/integration-tests.yml]
 
 image:https://img.shields.io/github/last-commit/cuioss/OAuthSheriff/main[Last Build,link=https://github.com/cuioss/OAuthSheriff/commits/main]
-image:http://img.shields.io/:license-apache-blue.svg[License,link=http://www.apache.org/licenses/LICENSE-2.0.html]
+image:https://img.shields.io/:license-apache-blue.svg[License,link=http://www.apache.org/licenses/LICENSE-2.0.html]
 image:https://img.shields.io/maven-central/v/de.cuioss.sheriff.oauth/oauth-sheriff-parent.svg?label=Maven%20Central["Maven Central", link="https://central.sonatype.com/artifact/de.cuioss.sheriff.oauth/oauth-sheriff-parent"]
 
 image:https://sonarcloud.io/api/project_badges/measure?project=cuioss_OAuth-Sheriff&metric=alert_status[Quality Gate Status,link=https://sonarcloud.io/summary/new_code?id=cuioss_OAuth-Sheriff]

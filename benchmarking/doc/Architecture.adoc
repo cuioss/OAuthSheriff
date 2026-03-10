@@ -50,7 +50,7 @@ The OAuth Sheriff benchmarking infrastructure consists of three specialized modu
       ▼                 ▼
 ┌──────────────┐  ┌─────────────────────────┐
 │benchmark-    │  │benchmark-integration-wrk│
-│library       │  │                         │
+│core          │  │                         │
 │              │  │ Shell-based WRK testing │
 │JMH Benchmarks│  │ 1 Java post-processor   │
 └──────────────┘  └─────────────────────────┘
@@ -145,7 +145,7 @@ Executes JMH-based micro-benchmarks directly against the JWT validation library 
 |`CoreJfrBenchmark`, `ErrorJfrBenchmark`, `MixedJfrBenchmark`, `UnifiedJfrBenchmark`
 
 |Runners
-|`LibraryBenchmarkRunner`, `JfrBenchmarkRunner`
+|`CoreBenchmarkRunner`, `JfrBenchmarkRunner`
 
 |Support Classes
 |`BenchmarkKeyCache`, `MockTokenRepository`, `LibraryMetricsExporter`
@@ -287,7 +287,7 @@ public final void runBenchmark() {
 }
 ----
 
-Subclasses: `LibraryBenchmarkRunner`, `JfrBenchmarkRunner`
+Subclasses: `CoreBenchmarkRunner`, `JfrBenchmarkRunner`
 
 === Builder Pattern
 Configuration uses builders:

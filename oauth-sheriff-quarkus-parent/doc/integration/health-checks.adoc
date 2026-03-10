@@ -22,9 +22,9 @@ The oauth-sheriff-quarkus extension provides MicroProfile Health checks for JWT 
   "name": "jwks-endpoints",
   "data": {
     "checkedEndpoints": 3,
-    "issuer.keycloak.url": "https://keycloak.example.com/auth/realms/master",
-    "issuer.keycloak.jwksType": "HTTP",
-    "issuer.keycloak.status": "UP"
+    "issuer.0.url": "https://keycloak.example.com/auth/realms/master",
+    "issuer.0.jwksType": "HTTP",
+    "issuer.0.status": "UP"
   }
 }
 ----
@@ -44,7 +44,7 @@ The oauth-sheriff-quarkus extension provides MicroProfile Health checks for JWT 
 
 == Configuration
 
-See xref:../../oauth-sheriff-quarkus/src/main/resources/META-INF/quarkus-config-doc.adoc#health-check-configuration[Health Check Configuration] for options.
+See xref:../../oauth-sheriff-quarkus/src/main/resources/META-INF/quarkus-config-doc.adoc#_health_checks[Health Check Configuration] for options.
 
 [source,xml]
 ----
@@ -82,6 +82,6 @@ readinessProbe:
 
 === Token Validator Health Check
 
-* Validates configuration without performing token validation
-* Returns DOWN if TokenValidator is not available or has no issuers
-* Lightweight check focused on component availability
+* Injects `List<IssuerConfig>` and checks whether the list is non-empty
+* Returns DOWN if no issuer configurations are found
+* Lightweight check focused on configuration availability (does not inject `TokenValidator`)

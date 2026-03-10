@@ -17,11 +17,7 @@ Technical configuration for optimizing Quarkus native images for JWT validation 
 ----
 # application.properties
 quarkus.native.monitoring=jfr
-quarkus.native.additional-build-args=-O2
-quarkus.native.additional-build-args=--enable-all-security-services
-quarkus.native.additional-build-args=--enable-url-protocols=https,http
-quarkus.native.native-image-xmx=8g
-quarkus.native.container-runtime-options=-m=4g
+quarkus.native.additional-build-args=--enable-url-protocols=https,--enable-http,--enable-https,-O2
 ----
 
 === GraalVM/Mandrel 25 Features
@@ -42,12 +38,13 @@ The OAuth Sheriff Quarkus deployment automatically registers 4,734+ types for re
 
 === Garbage Collection
 
-[source,properties]
+[source,bash]
 ----
-# Serial GC (default, optimal for JWT validation)
-quarkus.native.additional-build-args=--gc=serial
+# Serial GC is the default for native images and optimal for JWT validation workloads.
+# No additional build args needed.
+
 # G1GC: Oracle GraalVM only, Linux only
-quarkus.native.additional-build-args=-J-Xms64m,-J-Xmx512m
+native-image --gc=G1 YourApp
 ----
 
 == Runtime Configuration
@@ -65,7 +62,7 @@ quarkus.virtual-threads.shutdown-timeout=10s
 [source,java]
 ----
 @RunOnVirtualThread
-public class JwtValidationResource { }
+public class JwtValidationEndpoint { }
 ----
 
 === JFR Monitoring (Dual-Image Maven Profiles)
@@ -94,26 +91,23 @@ public class JwtValidationResource { }
 
 == Complete Configuration Examples
 
-=== Production
+=== Production (Example)
+
+NOTE: These are example configurations for reference. The actual project configuration is in `application.properties`.
 
 [source,properties]
 ----
-quarkus.native.monitoring=jcmd,jfr,heapdump
-quarkus.native.additional-build-args=-O2,--gc=serial,--enable-all-security-services,--enable-url-protocols=https
-quarkus.native.native-image-xmx=8g
-quarkus.native.container-runtime-options=-m=512m,--cpus=2.0
+quarkus.native.monitoring=jfr
+quarkus.native.additional-build-args=--enable-url-protocols=https,--enable-http,--enable-https,-O2
 quarkus.virtual-threads.name-prefix=jwt-validation
 quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key
-quarkus.native.enable-reports=true
 ----
 
-=== Development
+=== Development (Example)
 
 [source,properties]
 ----
 quarkus.native.additional-build-args=-O2,--enable-monitoring=jfr,heapdump
-quarkus.native.native-image-xmx=4g
-quarkus.native.reuse-existing=true
 ----
 
 == Build Commands

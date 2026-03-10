@@ -66,9 +66,7 @@ Performance benchmarking for JWT token validation core library using JMH.
 === Standard Benchmarks
 
 * `SimpleCoreValidationBenchmark` - Core JWT validation performance (throughput and latency)
-* `SimpleErrorLoadBenchmark` - Streamlined error handling scenarios
-* `ErrorLoadBenchmark` - Comprehensive error scenario testing with various token failures
-* `PerformanceIndicatorBenchmark` - Performance scoring metrics
+* `SimpleErrorLoadBenchmark` - Streamlined error handling scenarios with various token failures
 
 === JFR-Enabled Benchmarks
 
@@ -122,7 +120,7 @@ jq '.overallScore, .grade' target/benchmark-results/benchmark-summary.json
 ----
 # Analyze variance
 java -cp "target/classes:target/dependency/*" \
-  de.cuioss.sheriff.oauth.core.benchmark.jfr.JfrVarianceAnalyzer \
+  de.cuioss.benchmarking.common.jfr.JfrVarianceAnalyzer \
   target/benchmark-results/jfr-benchmark.jfr
 
 # View hot methods
@@ -166,7 +164,7 @@ For custom benchmarking:
 
 For comprehensive documentation on benchmarking, analysis, and visualization:
 
-📚 **link:../doc/README.adoc[Complete Documentation]**
+**link:../README.adoc[Complete Documentation]**
 
 === Quick Links
 

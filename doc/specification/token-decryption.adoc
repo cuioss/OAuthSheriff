@@ -17,9 +17,8 @@ _See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-1.4[OAUTH-SHERIFF-1.4: 
 * xref:../Requirements.adoc[Requirements] - Functional and non-functional requirements
 * xref:../architecture.adoc[Architecture] - Architecture reference
 * xref:../LogMessages.adoc[Log Messages] - Reference for all log messages
-* xref:technical-components.adoc[Technical Components] - Implementation details
+* xref:../architecture.adoc[Architecture] - Implementation details
 * xref:../security/security-reference.adoc[Security Reference] - Security measures
-* xref:testing.adoc[Testing] - Testing approach and coverage
 
 ==== Status: NOT IMPLEMENTED
 

@@ -93,10 +93,12 @@ Automatically enabled with `-O2` and `-O3`. XGBoost-based static profiler provid
 ----
 native-image -O2 \
   --enable-monitoring=jcmd,jfr,heapdump \
-  --enable-all-security-services \
-  --enable-url-protocols=https,http \
+  --enable-url-protocols=https \
+  --enable-http --enable-https \
   YourApp
 ----
+
+NOTE: `--enable-all-security-services` was removed in GraalVM 25 -- all security services are now enabled by default.
 
 === Enterprise Edition (Oracle GraalVM)
 
@@ -106,8 +108,8 @@ native-image -O3 \
   --pgo=production.iprof \
   --gc=G1 \
   --enable-monitoring=jcmd,jfr,heapdump \
-  --enable-all-security-services \
-  --enable-url-protocols=https,http \
+  --enable-url-protocols=https \
+  --enable-http --enable-https \
   -march=native \
   YourApp
 ----

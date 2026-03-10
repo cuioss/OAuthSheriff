@@ -14,10 +14,8 @@ The `ParserConfig` class provides security settings for token processing, implem
 ----
 ParserConfig config = ParserConfig.builder()
         .maxTokenSize(4 * 1024)        // 4KB (default 8KB)
-        .maxPayloadSize(1 * 1024)      // 1KB (default 2KB)
-        .maxStringSize(512)            // 512B (default 1KB)
-        .maxArraySize(32)              // 32 elements (default 64)
-        .maxDepth(5)                   // 5 levels (default 10)
+        .maxPayloadSize(4 * 1024)      // 4KB (default 8KB)
+        .maxStringLength(2 * 1024)     // 2KB (default 4KB)
         .build();
 
 TokenValidator validator = TokenValidator.builder()
@@ -39,26 +37,16 @@ TokenValidator validator = TokenValidator.builder()
 
 |`maxPayloadSize`
 |Limits each decoded JWT part
-|2KB
+|8KB
 |After Base64 decoding
 
-|`maxStringSize`
-|Limits individual JSON string values
-|1KB
-|During JSON parsing
-
-|`maxArraySize`
-|Limits JSON array size
-|64 elements
-|During JSON parsing
-
-|`maxDepth`
-|Limits JSON nesting depth
-|10 levels
+|`maxStringLength`
+|DSL-JSON enforced limit on maximum string buffer size
+|4KB
 |During JSON parsing
 |===
 
-Base64 encoding increases size by ~33%: an 8KB token yields ~6KB decoded content. The 2KB per-part limit accommodates header + payload; the 1KB string limit prevents individual field attacks.
+Base64 encoding increases size by ~33%: an 8KB token yields ~6KB decoded content. The 8KB per-part limit accommodates header + payload; the 4KB string limit prevents individual field attacks.
 
 == Recommended Settings
 
@@ -68,10 +56,8 @@ Base64 encoding increases size by ~33%: an 8KB token yields ~6KB decoded content
 ----
 ParserConfig highSecurity = ParserConfig.builder()
         .maxTokenSize(2 * 1024)      // 2KB tokens
-        .maxPayloadSize(512)         // 512B payloads
-        .maxStringSize(256)          // 256B strings
-        .maxArraySize(16)            // 16 array elements
-        .maxDepth(3)                 // 3 nesting levels
+        .maxPayloadSize(2 * 1024)    // 2KB payloads
+        .maxStringLength(1 * 1024)   // 1KB strings
         .build();
 ----
 
@@ -80,7 +66,7 @@ ParserConfig highSecurity = ParserConfig.builder()
 [source,java]
 ----
 ParserConfig standard = ParserConfig.builder()
-        // Use defaults: 8KB token, 2KB payload, 1KB strings
+        // Use defaults: 8KB token, 8KB payload, 4KB strings
         .build();
 ----
 
@@ -90,10 +76,8 @@ ParserConfig standard = ParserConfig.builder()
 ----
 ParserConfig legacy = ParserConfig.builder()
         .maxTokenSize(16 * 1024)     // 16KB tokens
-        .maxPayloadSize(4 * 1024)    // 4KB payloads
-        .maxStringSize(2 * 1024)     // 2KB strings
-        .maxArraySize(128)           // 128 array elements
-        .maxDepth(15)                // 15 nesting levels
+        .maxPayloadSize(16 * 1024)   // 16KB payloads
+        .maxStringLength(8 * 1024)   // 8KB strings
         .build();
 ----
 

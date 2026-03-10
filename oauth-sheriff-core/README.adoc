@@ -27,19 +27,19 @@ Comprehensive JWT token validation library for multi-issuer environments with ty
 // Create TokenValidator
 TokenValidator tokenValidator = TokenValidator.builder()
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://example.com")
-        .signatureKey("your-secret-key")
+        .issuerIdentifier("https://example.com")
+        .jwksContent(jwksJson)
         .build())
     .build();
 
 // Validate and create token (throws TokenValidationException if invalid)
 try {
     AccessTokenContent token = tokenValidator.createAccessToken(AccessTokenRequest.of(jwtString));
-    String subject = token.getSubject();
+    Optional<String> subject = token.getSubject();
     List<String> roles = token.getRoles();
 } catch (TokenValidationException e) {
     // Handle validation failure
-    LOGGER.error("Token validation failed: {}", e.getMessage(), e);
+    LOGGER.error("Token validation failed: %s", e.getMessage(), e);
 }
 ----
 

@@ -31,7 +31,7 @@ This pipeline provides separation of concerns, clear error signaling through `To
 The pipeline uses `TokenValidationException` for error handling, encapsulating:
 
 * **EventType** - The security event type (integrated with `SecurityEventCounter`)
-* **EventCategory** - `InvalidStructure`, `InvalidSignature`, or `SemanticIssues`
+* **EventCategory** - `INVALID_STRUCTURE`, `INVALID_SIGNATURE`, or `SEMANTIC_ISSUES`
 * A detailed error message
 
 == Component Specifications
@@ -95,7 +95,7 @@ Key features:
 
 _See Requirement xref:Requirements.adoc#OAUTH-SHERIFF-4.1[OAUTH-SHERIFF-4.1: JWKS Endpoint Support]_
 
-`HttpWellKnownResolver` fetches `/.well-known/openid-configuration` documents. The `issuer` field from the discovery document is validated against the URL used to construct the well-known URI, preventing impersonation attacks. The discovered `jwks_uri` is used by `HttpJwksLoader` to fetch public keys.
+`HttpWellKnownResolver` fetches `/.well-known/openid-configuration` documents and caches the result using lock-free `AtomicReference`. The discovered `issuer` field is used by `IssuerConfigResolver` for issuer matching, and the discovered `jwks_uri` is used by `HttpJwksLoader` to fetch public keys.
 
 [[securityeventcounter]]
 === SecurityEventCounter
@@ -115,13 +115,9 @@ High-performance, lock-free monitoring of validation pipeline metrics with micro
 |Parameter |Default |Purpose
 |`maxTokenSize` |8 KB |Entire JWT string before processing
 |`maxPayloadSize` |8 KB |Each Base64-decoded part
-|`maxStringSize` |4 KB |Individual JSON string values
-|`maxArraySize` |64 |JSON array element count
-|`maxDepth` |10 |JSON nesting depth
-|JWKS content |64 KB |Default upper bound for JWKS payloads
+|`maxStringLength` |4 KB |Individual JSON string values (DSL-JSON enforced)
+|`maxBufferSize` |128 KB |Maximum buffer size for DSL-JSON parsing
 |===
-
-Conservative (16 KB) and permissive (256 KB) JWKS bounds are available for specific environments.
 
 == References
 

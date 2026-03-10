@@ -21,7 +21,7 @@ The extension follows standard Quarkus extension architecture with separate depl
 Handles build-time processing:
 
 * Registers the `oauth-sheriff` feature
-* Sets up reflection for `JwtValidationConfig`, `TokenValidator`, `IssuerConfig`, etc.
+* Sets up reflection for `TokenValidator`, `IssuerConfig`, etc.
 * Registers `HttpJwksLoader` for runtime initialization (native image support)
 * Configures DevUI components for development mode
 

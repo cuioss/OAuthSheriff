@@ -35,12 +35,12 @@ The log messages can be used for troubleshooting issues with the JWT Token Valid
 
 For more details about security events related to these log messages, see the SecurityEventCounter implementation in xref:architecture.adoc#securityeventcounter[Architecture].
 
-== INFO Level (001-008)
+== INFO Level (001-010)
 
 [cols="1,1,2,2", options="header"]
 |===
 |ID |Component |Message |Description
-|JWTValidation-001 |TOKEN |TokenValidator initialized with %s issuer configurations |Logged when TokenValidator is initialized with issuer configurations
+|JWTValidation-001 |TOKEN |TokenValidator initialized with %s |Logged when TokenValidator is initialized with issuer configurations
 |JWTValidation-002 |JWKS |Keys updated due to data change - load state: %s |Logged when JWKS keys are updated due to data changes from the endpoint
 |JWTValidation-003 |JWKS |Successfully loaded JWKS from HTTP endpoint |Logged when JWKS is successfully loaded from HTTP endpoint
 |JWTValidation-004 |JWKS |Background JWKS refresh started with interval: %s seconds |Logged when background JWKS refresh is started with specified interval
@@ -162,6 +162,8 @@ This section documents log messages specific to the Quarkus integration module (
 |OAUTH_SHERIFF_QUARKUS-011 |INITIALIZING_JWT_VALIDATION_COMPONENTS |"Initializing JWT validation components from configuration" |Indicates the start of JWT validation component initialization
 |OAUTH_SHERIFF_QUARKUS-012 |JWT_VALIDATION_COMPONENTS_INITIALIZED |"JWT validation components initialized successfully with %s issuers" |Confirms successful initialization with issuer count
 |OAUTH_SHERIFF_QUARKUS-013 |RESOLVING_ACCESS_LOG_FILTER_CONFIG |"Resolving access log filter configuration from properties" |Indicates the start of access log filter configuration resolution
+|OAUTH_SHERIFF_QUARKUS-014 |CLAIM_MAPPER_REGISTRY_INITIALIZED |"Claim mapper registry initialized with %s custom mapper(s): %s" |Shows the number of custom claim mappers discovered and their names
+|OAUTH_SHERIFF_QUARKUS-015 |NO_CUSTOM_CLAIM_MAPPERS_DISCOVERED |"No custom claim mappers discovered" |Indicates that no custom claim mappers were found during CDI discovery
 |===
 
 ==== Metrics Messages (021-030)
@@ -248,6 +250,7 @@ This section documents log messages specific to the Quarkus integration module (
 |OAUTH_SHERIFF_QUARKUS-133 |NO_MICROMETER_COUNTER_FOUND |"No Micrometer counter found for event type %s, delta %s lost" |Indicates that a metrics counter was not found and a delta value was lost
 |OAUTH_SHERIFF_QUARKUS-134 |JWKS_LOADING_RETRY_WARNING |"JWKS loading failed for issuer %s: %s - will retry via background refresh" |Indicates that JWKS loading failed but will be retried
 |OAUTH_SHERIFF_QUARKUS-135 |BACKGROUND_JWKS_ISSUES_WARNING |"Background JWKS initialization encountered issues: %s - on-demand loading will handle this" |Indicates issues during background JWKS initialization with fallback to on-demand loading
+|OAUTH_SHERIFF_QUARKUS-136 |BEARER_TOKEN_ANNOTATION_NOT_FOUND |"@BearerAuth annotation not found on method or class: %s" |Indicates that the @BearerAuth annotation was not found on the intercepted method or its declaring class
 |===
 
 === Quarkus ERROR Level (200-299)

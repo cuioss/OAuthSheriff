@@ -44,15 +44,12 @@ WRK runs via Docker for multi-architecture support (ARM64 + x86_64):
 
 * **Docker Image**: `wrk:local` built from `Dockerfile.wrk` (Alpine-based, 10MB)
 * **Lua Scripts**: Embedded in image at `/scripts/` (health_live_check.lua, jwt_benchmark.lua)
-* **Wrapper**: `wrk-docker-wrapper.sh` handles one-time build and parameter pass-through
 * **No Installation Required**: Docker automatically selects correct architecture variant
-
-The wrapper is minimal (36 lines) and necessary for image build logic, TOKEN_DATA forwarding, and network configuration.
 
 === Components
 
 * **WRK Scripts** (`src/main/resources/wrk-scripts/`) - Lua scripts for request generation
-* **Java Post-processor** (`WrkIntegrationRunner.java`) - Parses output, fetches metrics, generates reports
+* **Java Post-processor** (`WrkResultPostProcessor.java`) - Parses output, fetches metrics, generates reports
 * **Maven Integration** - Lifecycle management via exec-maven-plugin
 
 === Benchmark Flow
@@ -198,7 +195,7 @@ The `skip.container.lifecycle` property optimizes benchmark iteration:
 === Health Check Benchmark
 
 * **Endpoint**: `/q/health/live`
-* **Script**: `health_check.lua`
+* **Script**: `health_live_check.lua`
 * **Purpose**: Baseline performance without authentication
 * **Expected** (150 connections, stress profile): 70,000+ req/s, P50 <2ms latency
 * **Measured**: 88,700 req/s, P50 1.25ms (see link:../doc/Analysis-01.2026-Integration.adoc[Integration Analysis])
@@ -402,6 +399,6 @@ See link:../../.github/workflows/benchmark.yml[GitHub Actions Benchmark Workflow
 
 == Related Documentation
 
-* link:../doc/README.adoc[Main Documentation Hub]
+* link:../README.adoc[Main Documentation Hub]
 * link:../benchmark-core/README.adoc[Library Benchmarks]
 * link:../../oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/README.adoc[Integration Test Infrastructure]

@@ -51,12 +51,12 @@ de.cuioss.benchmarking.common/
 
 === Metrics Collection (`metrics/`)
 
-* **MetricsFetcher** - Interface for fetching metrics from various sources
+* **MetricsOrchestrator** - Coordinates metrics collection and timestamps
   - Standardized metrics collection API
-  - Key-value pair return format
+  - Prometheus time-range queries
 
-* **QuarkusMetricsFetcher** - Quarkus-specific metrics implementation
-  - Fetches metrics from `/q/metrics` endpoint
+* **PrometheusMetricsManager** - Prometheus-specific metrics implementation
+  - Manages Prometheus availability checks
   - Prometheus format parsing
   - Raw metrics data persistence for debugging
 
@@ -94,7 +94,7 @@ de.cuioss.benchmarking.common/
 
 === Repository Components (`repository/`)
 
-* **TokenRepository** - JWT token management for benchmarks
+* **KeycloakTokenRepository** - JWT token management for benchmarks
   - Token pool management with rotation
   - Keycloak integration for token fetching
   - Shared instance pattern for benchmark reuse
@@ -168,7 +168,7 @@ public class MyBenchmarkRunner extends AbstractBenchmarkRunner {
 
 [source,java]
 ----
-import de.cuioss.benchmarking.common.repository.TokenRepository;
+import de.cuioss.benchmarking.common.repository.KeycloakTokenRepository;
 import de.cuioss.benchmarking.common.repository.TokenRepositoryConfig;
 
 TokenRepositoryConfig config = TokenRepositoryConfig.builder()
@@ -180,7 +180,7 @@ TokenRepositoryConfig config = TokenRepositoryConfig.builder()
     .verifySsl(false)
     .build();
 
-TokenRepository repository = new TokenRepository(config);
+KeycloakTokenRepository repository = new KeycloakTokenRepository(config);
 String token = repository.getNextToken();
 ----
 
@@ -188,10 +188,10 @@ String token = repository.getNextToken();
 
 [source,java]
 ----
-import de.cuioss.benchmarking.common.metrics.QuarkusMetricsFetcher;
+import de.cuioss.benchmarking.common.metrics.PrometheusMetricsManager;
 
-QuarkusMetricsFetcher fetcher = new QuarkusMetricsFetcher("https://localhost:10443");
-Map<String, Double> metrics = fetcher.fetchMetrics();
+PrometheusMetricsManager manager = new PrometheusMetricsManager("http://localhost:9090");
+// Use manager to check Prometheus availability and collect metrics
 ----
 
 === Process Results
@@ -281,7 +281,7 @@ This module depends on:
 
 For comprehensive benchmarking documentation:
 
-* link:../doc/README.adoc[Main Documentation Hub]
+* link:../README.adoc[Main Documentation Hub]
 * link:../doc/Architecture.adoc[Module Architecture] - Detailed architecture and code placement guidelines
 * link:../doc/workflow.adoc[Benchmark Workflow] - Complete execution workflow
 * link:../doc/local-testing.adoc[Local Testing] - How to view results locally

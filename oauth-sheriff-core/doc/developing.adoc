@@ -14,14 +14,25 @@ The `de.cuioss.sheriff.oauth.core.metrics` package provides lightweight, thread-
 
 [source,java]
 ----
-TokenValidatorMonitor monitor = new TokenValidatorMonitor();
+// Create monitor via TokenValidatorMonitorConfig
+TokenValidatorMonitorConfig monitorConfig = TokenValidatorMonitorConfig.builder()
+    .windowSize(100)
+    .measurementType(MeasurementType.SIGNATURE_VALIDATION)
+    .build();
+TokenValidatorMonitor monitor = monitorConfig.createMonitor();
+
 MetricsTicker ticker = MetricsTickerFactory.createTicker(MeasurementType.SIGNATURE_VALIDATION, monitor);
 
 ticker.startRecording();
 // ... perform signature validation ...
 ticker.stopAndRecord();
 
-Duration avgSignatureTime = monitor.getAverageDuration(MeasurementType.SIGNATURE_VALIDATION);
+// getValidationMetrics returns Optional<StripedRingBufferStatistics>
+Optional<StripedRingBufferStatistics> metrics = monitor.getValidationMetrics(MeasurementType.SIGNATURE_VALIDATION);
+metrics.ifPresent(stats -> {
+    Duration p50 = stats.p50();
+    Duration p99 = stats.p99();
+});
 ----
 
 === MeasurementType
@@ -104,10 +115,9 @@ Some operations (`TOKEN_FORMAT_CHECK`, `ISSUER_EXTRACTION`, `JWKS_OPERATIONS` wi
 Configure limits in `ParserConfig` to prevent attacks:
 
 * `maxTokenSize` - Limits entire JWT token (default 8KB)
-* `maxPayloadSize` - Limits decoded parts (default 2KB)
-* `maxStringSize` - Limits JSON strings (default 1KB)
-* `maxArraySize` - Limits array elements (default 64)
-* `maxDepth` - Limits JSON nesting (default 10)
+* `maxPayloadSize` - Limits decoded JWT parts (default 8KB)
+* `maxStringLength` - Limits JSON string buffer size (default 4KB)
+* `maxBufferSize` - Limits DSL-JSON buffer size (default 128KB)
 
 == Related Documentation
 

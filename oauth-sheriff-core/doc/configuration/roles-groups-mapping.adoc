@@ -77,16 +77,18 @@ The mapper trims whitespace, omits empty values, and only works with string valu
 
 === Nested Claims Mapping
 
+For nested claim structures (e.g., Keycloak's `realm_access.roles`), implement a custom `ClaimMapper`:
+
 [source,java]
 ----
-RolesGroupsConfig rolesConfig = RolesGroupsConfig.builder()
-    .rolesPath("realm_access/roles")       // Keycloak nested path
-    .groupsPath("resource_access/my-app/roles")
-    .build();
-
 IssuerConfig issuerConfig = IssuerConfig.builder()
-    .issuer("https://example.com")
-    .rolesGroupsConfig(rolesConfig)
+    .issuerIdentifier("https://example.com")
+    .jwksContent(jwksJsonString)
+    .claimMapper("roles", (mapRepresentation, claimName) -> {
+        // Custom logic to extract nested roles from realm_access/roles
+        // Return a ClaimValue with the extracted roles list
+        return mapRepresentation.getClaimValue(claimName);
+    })
     .build();
 ----
 
@@ -96,16 +98,15 @@ IssuerConfig issuerConfig = IssuerConfig.builder()
 ----
 public class CustomRoleMapper implements ClaimMapper {
     @Override
-    public List<String> mapClaim(Object claimValue) {
-        if (claimValue instanceof Map) {
-            // Handle complex nested structures
-        }
-        return Collections.emptyList();
+    public ClaimValue map(MapRepresentation mapRepresentation, String claimName) {
+        // Handle complex nested structures
+        return mapRepresentation.getClaimValue(claimName);
     }
 }
 
 IssuerConfig issuerConfig = IssuerConfig.builder()
     .issuerIdentifier("https://issuer.com")
+    .jwksContent(jwksJsonString)
     .claimMapper("roles", new CustomRoleMapper())
     .build();
 ----

@@ -502,4 +502,4 @@ The 14x JMH-to-integration gap (77µs → 1,087µs) is **understood but not opti
 * link:Analysis-01.2026-Integration.adoc[Integration Benchmark Analysis] - Throughput and latency measurements
 * link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition] - Ablation study results
 * link:Analysis-01.2026-Micro.adoc[Microbenchmark Analysis] - JMH component-level timings
-* link:../oauth-sheriff-quarkus-parent/doc/performance/jfr-profiling-guide.adoc[JFR Profiling Guide] - Setup instructions
+* link:../../oauth-sheriff-quarkus-parent/doc/performance/jfr-profiling-guide.adoc[JFR Profiling Guide] - Setup instructions

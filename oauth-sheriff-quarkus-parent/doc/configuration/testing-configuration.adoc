@@ -60,22 +60,30 @@ public class MultiIssuerTestProfile implements QuarkusTestProfile {
 
 == Test Token Generation
 
+The `TestTokenHolder` class generates signed JWT tokens for testing. It takes a `TokenType` and a `ClaimControlParameter` in its constructor, generates claims using built-in generators, and signs the token with an in-memory RSA key pair.
+
 === Basic Token Creation
 
 [source,java]
 ----
 @Test
 void shouldValidateBasicToken() {
-    String token = TestTokenHolder.builder()
-        .issuer("https://test.example.com/auth")
-        .audience("test-application")
-        .subject("test-user")
-        .addClaim("scope", "read write")
-        .build()
-        .getToken();
+    // Create a token holder with default (valid) claims for ACCESS_TOKEN
+    var claimControl = ClaimControlParameter.builder().build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    ValidationResult result = tokenValidator.validate(token);
-    assertTrue(result.isValid());
+    // Get a matching IssuerConfig with the correct public key material
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+
+    // Build a TokenValidator using the issuer config
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    // Validate the token — returns AccessTokenContent on success
+    AccessTokenContent result = tokenValidator.createAccessToken(
+        AccessTokenRequest.of(tokenHolder.getRawToken()));
+    assertNotNull(result);
 }
 ----
 
@@ -85,16 +93,21 @@ void shouldValidateBasicToken() {
 ----
 @Test
 void shouldRejectExpiredToken() {
-    String expiredToken = TestTokenHolder.builder()
-        .issuer("https://test.example.com/auth")
-        .audience("test-application")
-        .expirationTime(Instant.now().minusSeconds(3600))
-        .build()
-        .getToken();
+    // Create a token holder with an expired token
+    var claimControl = ClaimControlParameter.builder()
+        .expiredToken(true)
+        .build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    ValidationResult result = tokenValidator.validate(expiredToken);
-    assertFalse(result.isValid());
-    assertEquals("TOKEN_EXPIRED", result.getErrorCode());
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    // Validation throws TokenValidationException for expired tokens
+    assertThrows(TokenValidationException.class, () ->
+        tokenValidator.createAccessToken(
+            AccessTokenRequest.of(tokenHolder.getRawToken())));
 }
 ----
 
@@ -104,40 +117,47 @@ void shouldRejectExpiredToken() {
 ----
 @Test
 void shouldRejectInvalidSignature() {
-    String invalidToken = TestTokenHolder.builder()
-        .issuer("https://test.example.com/auth")
-        .audience("test-application")
-        .invalidSignature()
-        .build()
-        .getToken();
+    // Create a valid token
+    var claimControl = ClaimControlParameter.builder().build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    assertThrows(TokenValidationException.class, () -> {
-        tokenValidator.validate(invalidToken);
-    });
+    // Use a DIFFERENT key material for the issuer config (signature mismatch)
+    var differentTokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
+    IssuerConfig issuerConfig = differentTokenHolder.getIssuerConfig();
+
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    // Validation throws TokenValidationException for signature mismatch
+    assertThrows(TokenValidationException.class, () ->
+        tokenValidator.createAccessToken(
+            AccessTokenRequest.of(tokenHolder.getRawToken())));
 }
 ----
 
 == Testing Patterns
 
-=== Mock JWKS Endpoint Testing
+=== Token Claim Manipulation
 
 [source,java]
 ----
-@QuarkusTest
-@TestProfile(MockJwksTestProfile.class)
-class JwksIntegrationTest {
-    @Test
-    void shouldLoadJwksFromMockEndpoint() {
-        String token = TestTokenHolder.builder()
-            .issuer("https://mock-auth.example.com")
-            .audience("test-application")
-            .signWithMockKey()
-            .build()
-            .getToken();
+@Test
+void shouldValidateTokenWithCustomClaims() {
+    var claimControl = ClaimControlParameter.builder().build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-        ValidationResult result = tokenValidator.validate(token);
-        assertTrue(result.isValid());
-    }
+    // Mutate claims using the fluent API
+    tokenHolder.withClaim("custom_claim", ClaimValue.forPlainString("custom_value"));
+
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    AccessTokenContent result = tokenValidator.createAccessToken(
+        AccessTokenRequest.of(tokenHolder.getRawToken()));
+    assertNotNull(result);
 }
 ----
 
@@ -146,30 +166,40 @@ class JwksIntegrationTest {
 [source,java]
 ----
 @Test
-void shouldRejectTokenWithMissingClaims() {
-    String incompleteToken = TestTokenHolder.builder()
-        .issuer("https://test.example.com/auth")
-        .subject("test-user")
-        .build()
-        .getToken();
+void shouldRejectTokenWithMissingAudience() {
+    // Create a token with the audience claim missing
+    var claimControl = ClaimControlParameter.builder()
+        .missingAudience(true)
+        .build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    ValidationResult result = tokenValidator.validate(incompleteToken);
-    assertFalse(result.isValid());
-    assertTrue(result.getErrors().contains("MISSING_AUDIENCE"));
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    assertThrows(TokenValidationException.class, () ->
+        tokenValidator.createAccessToken(
+            AccessTokenRequest.of(tokenHolder.getRawToken())));
 }
 
 @Test
 void shouldRejectUnknownIssuer() {
-    String tokenFromUnknownIssuer = TestTokenHolder.builder()
-        .issuer("https://unknown-issuer.example.com")
-        .audience("test-application")
-        .subject("test-user")
-        .build()
-        .getToken();
+    // Create a token with a specific issuer
+    var claimControl = ClaimControlParameter.builder().build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    assertThrows(TokenValidationException.class, () -> {
-        tokenValidator.validate(tokenFromUnknownIssuer);
-    });
+    // Override the issuer claim to one not matching the IssuerConfig
+    tokenHolder.withClaim("iss", ClaimValue.forPlainString("https://unknown-issuer.example.com"));
+
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    assertThrows(TokenValidationException.class, () ->
+        tokenValidator.createAccessToken(
+            AccessTokenRequest.of(tokenHolder.getRawToken())));
 }
 ----
 

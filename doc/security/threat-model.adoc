@@ -51,7 +51,7 @@ _See Requirements xref:../Requirements.adoc#OAUTH-SHERIFF-8.1[OAUTH-SHERIFF-8.1]
 
 |S4
 |Tokens from untrusted issuers
-|Strict issuer allowlist in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/IssuerConfig.java[IssuerConfig]; issuer validated by link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenHeaderValidator.java[TokenHeaderValidator]
+|Strict issuer allowlist in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/IssuerConfig.java[IssuerConfig]; issuer resolved by link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/IssuerConfigResolver.java[IssuerConfigResolver]
 |link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenHeaderValidatorTest.java[TokenHeaderValidatorTest]
 
 |S5
@@ -88,7 +88,7 @@ _See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8.2[OAUTH-SHERIFF-8.2: 
 
 |T3
 |Parser manipulation
-|Size limits (token 8 KB, payload 8 KB, string 4 KB, array 128 KB) in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/NonValidatingJwtParser.java[NonValidatingJwtParser]; immutable token objects
+|Size limits (token 8 KB, payload 8 KB, string 4 KB, buffer 128 KB) in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/NonValidatingJwtParser.java[NonValidatingJwtParser]; immutable token objects
 |link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest]
 
 |T4
@@ -98,7 +98,7 @@ _See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8.2[OAUTH-SHERIFF-8.2: 
 
 |T5
 |Header manipulation
-|Header validated by link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenHeaderValidator.java[TokenHeaderValidator]; `jwk`/`jku`/`x5u` headers rejected
+|Header validated by link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenHeaderValidator.java[TokenHeaderValidator]; `jwk` header rejected; `jku`/`x5u` headers ignored (keys only from pre-loaded JWKS endpoints)
 |link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenHeaderValidatorTest.java[TokenHeaderValidatorTest]
 |===
 
@@ -216,7 +216,7 @@ _See Requirements xref:../Requirements.adoc#OAUTH-SHERIFF-8.1[OAUTH-SHERIFF-8.1:
 
 |D3
 |Complex token structures
-|Payload size limit 8 KB, string size 4 KB, array buffer 128 KB; safe JSON parsing
+|Payload size limit 8 KB, string size 4 KB, buffer 128 KB; safe JSON parsing
 |link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest]
 
 |D4
@@ -226,7 +226,7 @@ _See Requirements xref:../Requirements.adoc#OAUTH-SHERIFF-8.1[OAUTH-SHERIFF-8.1:
 
 |D5
 |Cache poisoning
-|JWKS from trusted HTTPS endpoints only; key rotation grace period with bounded retired key sets (default 10)
+|JWKS from trusted HTTPS endpoints only; key rotation grace period with bounded retired key sets (default 3)
 |link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/jwks/http/HttpJwksLoaderGracePeriodTest.java[HttpJwksLoaderGracePeriodTest]
 
 |D6
@@ -334,7 +334,7 @@ _See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8.7[OAUTH-SHERIFF-8.7: 
 
 |DP5
 |HTTP method/URI mismatch
-|DPoP proof `htm` and `htu` claims validated against actual request method and URI
+|DPoP proof `htm` and `htu` validation is not performed by the library; this is handled at the application/framework level (e.g., Quarkus integration)
 |link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/dpop/DpopPipelineIntegrationTest.java[DpopPipelineIntegrationTest]
 |===
 
@@ -352,11 +352,11 @@ _See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8.7[OAUTH-SHERIFF-8.7: 
 |Spoofing |5 |5 (100%) |5 (100%)
 |Tampering |5 |5 (100%) |5 (100%)
 |Repudiation |5 |4 (80%) |4 (80%)
-|Information Disclosure |6 |5 (83%) |4 (67%)
+|Information Disclosure |6 |5 (83%) |5 (83%)
 |Denial of Service |6 |6 (100%) |6 (100%)
 |Elevation of Privilege |9 |9 (100%) |9 (100%)
 |DPoP |5 |5 (100%) |5 (100%)
-|**Total** |**41** |**39 (95%)** |**38 (93%)**
+|**Total** |**41** |**39 (95%)** |**39 (95%)**
 |===
 
 Unmitigated: R5 (log tampering — application-level), I5 (side-channel — low risk for validation library).

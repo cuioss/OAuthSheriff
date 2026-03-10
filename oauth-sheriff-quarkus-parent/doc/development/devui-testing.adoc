@@ -25,11 +25,10 @@ npm run test:ci
 === Test Structure
 
 ----
-src/test/js/
+oauth-sheriff-quarkus-deployment/src/test/js/
 ├── setup/              # Jest configuration and setup
 ├── mocks/              # Mock implementations (Lit, DevUI, directives)
-├── components/         # Component-specific test files
-└── utils/              # Test utility functions
+└── components/         # Component-specific test files
 ----
 
 === Component Test Files

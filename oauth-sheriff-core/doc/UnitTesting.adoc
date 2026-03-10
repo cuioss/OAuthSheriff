@@ -127,7 +127,7 @@ void shouldValidateToken() {
             .createAccessToken(AccessTokenRequest.of(token));
 
     assertNotNull(result);
-    assertEquals(tokenHolder.getClaims().get("sub").getOriginalString(), result.getSubject());
+    assertEquals(tokenHolder.getClaims().get("sub").getOriginalString(), result.getSubject().orElseThrow());
 }
 ----
 
@@ -198,7 +198,7 @@ class MyServiceUsingWellKnownTest {
         HttpWellKnownResolver resolver = new HttpWellKnownResolver(wellKnownConfig);
 
         String baseUrl = uriBuilder.buildAsString();
-        assertEquals(baseUrl, resolver.getIssuer().getUrl().toString());
+        assertEquals(baseUrl, resolver.getIssuer().orElseThrow());
         wellKnownDispatcher.assertCallsAnswered(1);
     }
 
@@ -214,8 +214,11 @@ class MyServiceUsingWellKnownTest {
             .wellKnownUrl(wellKnownUrl.toString())
             .parserConfig(ParserConfig.builder().build())
             .build();
-        assertThrows(WellKnownDiscoveryException.class,
-            () -> new HttpWellKnownResolver(wellKnownConfig));
+        HttpWellKnownResolver resolver = new HttpWellKnownResolver(wellKnownConfig);
+
+        // getIssuer() returns empty Optional when discovery fails
+        assertTrue(resolver.getIssuer().isEmpty());
+        assertEquals(LoaderStatus.ERROR, resolver.getLoaderStatus());
     }
 }
 ----
