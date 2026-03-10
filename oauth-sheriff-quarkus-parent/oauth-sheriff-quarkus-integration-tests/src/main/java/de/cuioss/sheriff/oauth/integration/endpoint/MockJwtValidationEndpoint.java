@@ -16,6 +16,9 @@
 package de.cuioss.sheriff.oauth.integration.endpoint;
 
 import de.cuioss.sheriff.oauth.core.TokenValidator;
+import de.cuioss.sheriff.oauth.core.domain.context.AccessTokenRequest;
+import de.cuioss.sheriff.oauth.core.domain.token.AccessTokenContent;
+import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.integration.endpoint.JwtValidationEndpoint.ValidationResponse;
 import de.cuioss.sheriff.oauth.quarkus.annotation.ServletObjectsResolver;
 import de.cuioss.sheriff.oauth.quarkus.servlet.HttpServletRequestResolver;
@@ -143,12 +146,79 @@ public class MockJwtValidationEndpoint {
     }
 
     /**
+     * Ablation variant D: Direct JWT validation without CDI producer chain.
+     * <p>
+     * Extracts the Bearer token from the Authorization header (same as {@link #validateToken()})
+     * and calls {@code tokenValidator.createAccessToken()} directly — bypassing the CDI
+     * {@code Instance.get()} producer chain and {@code @Timed} interceptor used by
+     * {@link JwtValidationEndpoint#validateToken()}.
+     * <p>
+     * This isolates the measured cost of JWT validation under concurrency from the CDI overhead:
+     * <ul>
+     *   <li>Mock JWT → Direct Validation = {@code createAccessToken()} under concurrency</li>
+     *   <li>Direct Validation → JWT = CDI {@code Instance.get()} + {@code @Timed}</li>
+     * </ul>
+     *
+     * @return Validation result with real token claims, or 401 if validation fails
+     */
+    @POST
+    @Path("/direct-validation")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response directValidation() {
+        // Step 1: Resolve header map — same as BearerTokenProducer.extractBearerTokenFromHeaderMap()
+        Map<String, List<String>> headerMap = servletObjectsResolver.resolveHeaderMap();
+
+        // Step 2: Extract Authorization header (lowercase per RFC 9113/7230)
+        List<String> authHeaders = headerMap.get("authorization");
+        if (authHeaders == null || authHeaders.isEmpty()) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(new ValidationResponse(false, "Bearer token missing"))
+                    .build();
+        }
+
+        String authHeader = authHeaders.getFirst();
+        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(new ValidationResponse(false, "Not a Bearer token"))
+                    .build();
+        }
+
+        String bearerToken = authHeader.substring(BEARER_PREFIX.length());
+        if (bearerToken.trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ValidationResponse(false, "Bearer token is empty"))
+                    .build();
+        }
+
+        // Step 3: Call tokenValidator.createAccessToken() DIRECTLY — no Instance.get(), no CDI producer, no @Timed
+        try {
+            AccessTokenContent token = tokenValidator.createAccessToken(
+                    new AccessTokenRequest(bearerToken, headerMap));
+
+            // Step 4: Build same response structure as JwtValidationEndpoint.createTokenResponse()
+            var data = new HashMap<String, Object>();
+            data.put("subject", token.getSubject().orElse("not-present"));
+            data.put("scopes", token.getScopes());
+            data.put("roles", token.getRoles());
+            data.put("groups", token.getGroups());
+            data.put("email", token.getEmail().orElse("not-present"));
+
+            return Response.ok(new ValidationResponse(true, "Direct validation (no CDI producer)", data)).build();
+        } catch (TokenValidationException e) {
+            LOGGER.debug("Direct validation failed: %s", e.getMessage());
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(new ValidationResponse(false, "Token validation failed: " + e.getMessage()))
+                    .build();
+        }
+    }
+
+    /**
      * Ablation variant B: JAX-RS baseline with CDI-injected class.
      * <p>
      * Returns a pre-built response without any per-request processing.
      * No header access, no config access, no HashMap construction.
      * <p>
-     * Compared to variant A ({@link BareBaselineEndpoint}), this confirms that
+     * Compared to variant A (health endpoint baseline), this confirms that
      * {@code @ApplicationScoped} constructor injection has zero per-request cost.
      *
      * @return Pre-built validation response
