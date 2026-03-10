@@ -56,9 +56,8 @@ public class JwtTestProfile implements QuarkusTestProfile {
         // Global parser configuration
         config.put(JwtPropertyKeys.PARSER.MAX_TOKEN_SIZE, "8192");
         config.put(JwtPropertyKeys.PARSER.MAX_PAYLOAD_SIZE, "8192");
-        config.put(JwtPropertyKeys.PARSER.MAX_STRING_SIZE, "4096");
-        config.put(JwtPropertyKeys.PARSER.MAX_ARRAY_SIZE, "64");
-        config.put(JwtPropertyKeys.PARSER.MAX_DEPTH, "10");
+        config.put(JwtPropertyKeys.PARSER.MAX_STRING_LENGTH, "4096");
+        config.put(JwtPropertyKeys.PARSER.MAX_BUFFER_SIZE, "64");
 
         // Health check configuration
         config.put(JwtPropertyKeys.HEALTH.ENABLED, "true");

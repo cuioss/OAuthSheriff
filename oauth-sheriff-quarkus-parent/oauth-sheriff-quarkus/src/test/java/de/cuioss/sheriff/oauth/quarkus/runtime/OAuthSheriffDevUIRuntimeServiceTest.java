@@ -648,9 +648,8 @@ class OAuthSheriffDevUIRuntimeServiceTest {
                     .withParser()
                     .maxTokenSize(4096)
                     .maxPayloadSize(4096)
-                    .maxStringSize(2048)
-                    .maxArraySize(64)
-                    .maxDepth(10)
+                    .maxStringLength(2048)
+                    .maxBufferSize(64)
                     .build();
 
             assertEquals(true, customConfig.getOptionalValue(JwtPropertyKeys.ISSUERS.ENABLED.formatted("custom"), Boolean.class).orElse(false),

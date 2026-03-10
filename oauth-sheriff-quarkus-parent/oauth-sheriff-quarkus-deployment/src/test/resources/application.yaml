@@ -31,9 +31,8 @@ cui:
     parser:
       max-token-size: 8192
       max-payload-size: 8192
-      max-string-size: 4096
-      max-array-size: 64
-      max-depth: 10
+      max-string-length: 4096
+      max-buffer-size: 64
     health:
       enabled: true
       jwks:

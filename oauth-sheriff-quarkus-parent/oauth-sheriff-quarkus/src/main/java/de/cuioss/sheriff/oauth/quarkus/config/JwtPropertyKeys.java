@@ -61,19 +61,14 @@ public final class JwtPropertyKeys {
         public static final String MAX_PAYLOAD_SIZE = BASE + ".max-payload-size";
 
         /**
-         * Maximum string size for JSON parsing.
+         * Maximum string length for JSON parsing in bytes.
          */
-        public static final String MAX_STRING_SIZE = BASE + ".max-string-size";
+        public static final String MAX_STRING_LENGTH = BASE + ".max-string-length";
 
         /**
-         * Maximum array size for JSON parsing.
+         * Maximum buffer size for JSON parsing in bytes (DSL-JSON internal buffer).
          */
-        public static final String MAX_ARRAY_SIZE = BASE + ".max-array-size";
-
-        /**
-         * Maximum depth for JSON parsing.
-         */
-        public static final String MAX_DEPTH = BASE + ".max-depth";
+        public static final String MAX_BUFFER_SIZE = BASE + ".max-buffer-size";
     }
 
     /**
