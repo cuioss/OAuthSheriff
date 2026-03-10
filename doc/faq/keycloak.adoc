@@ -13,10 +13,9 @@ Common issues and solutions when integrating the OAuth Sheriff library with Keyc
 * xref:../../README.adoc[README] - Project overview and introduction
 * xref:../../oauth-sheriff-core/README.adoc[Usage Guide] - How to use the library with code examples
 * xref:../Requirements.adoc[Requirements] - Functional and non-functional requirements
-* xref:../Specification.adoc[Specification] - Technical specifications
+* xref:../architecture.adoc[Architecture] - Architecture reference
 * xref:../LogMessages.adoc[Log Messages] - Reference for all log messages
-* xref:../security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
-* xref:../Build.adoc[Building and Development] - Information for contributors
+* xref:../security/threat-model.adoc[Threat Model] - Security analysis and mitigations
 
 == Missing Mandatory Claims
 

@@ -7,86 +7,38 @@
 
 == Purpose
 
-This document defines the comprehensive native image configuration for the OAuth Sheriff Quarkus extension, including reflection settings, resource inclusion, and build parameters for GraalVM compilation.
-
-== Related Documentation
-
-* xref:../performance/native-optimization-guide.adoc[Native Optimization Guide] - Performance-focused build configuration
-* xref:../performance/jwt-validation-performance.adoc[JWT Validation Performance] - Performance impact of configuration
-* xref:maven-build-configuration.adoc[Maven Build Configuration] - Build system integration
+Native image configuration for the OAuth Sheriff Quarkus extension, including reflection settings, resource inclusion, and build parameters for GraalVM compilation.
 
 == Basic Native Image Configuration
 
 === Required Build Settings
 
-**Essential Configuration Properties**:
-
 [source,properties]
 ----
 # application.properties
-# Basic native image support
 quarkus.native.container-build=true
-
-# Security services for JWT validation
 quarkus.native.additional-build-args=--enable-all-security-services
-
-# Protocol support for JWKS endpoints
 quarkus.native.additional-build-args=--enable-url-protocols=https,http
-
-# Resource inclusion for certificates
 quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key
 ----
 
 === Reflection Configuration
 
-**Automatic Reflection Registration**:
-
 The OAuth Sheriff Quarkus deployment automatically registers the following classes for reflection:
 
-**JWT Validation Pipeline Classes**:
-
-* `NonValidatingJwtParser` - JWT token parsing
-* `TokenSignatureValidator` - Signature verification
-* `TokenHeaderValidator` - Header validation
-* `TokenClaimValidator` - Claims validation
-* `TokenBuilder` - Token object construction
-* `DecodedJwt` - Decoded token representation
-
-**JWKS Loading Classes**:
-
-* `HttpJwksLoader` - HTTP-based JWKS loading
-* `JWKSKeyLoader` - Key material processing
-* `KeyInfo` - Key information management
-* `JwksParser` - JWKS parsing logic
-
-**Token Content Classes**:
-
-* `AccessTokenContent` - Access token representation
-* `IdTokenContent` - ID token representation
-* `RefreshTokenContent` - Refresh token representation
-* `ClaimValue` - Claim value handling
-
-**Security and Algorithm Classes**:
-
-* `SignatureAlgorithmPreferences` - Algorithm configuration
-* `JwkAlgorithmPreferences` - JWK algorithm settings
-* `SecurityEventCounter` - Security event tracking
+* **JWT Validation Pipeline**: `NonValidatingJwtParser`, `TokenSignatureValidator`, `TokenHeaderValidator`, `TokenClaimValidator`, `TokenBuilder`, `DecodedJwt`
+* **JWKS Loading**: `HttpJwksLoader`, `JWKSKeyLoader`, `KeyInfo`, `JwksParser`
+* **Token Content**: `AccessTokenContent`, `IdTokenContent`, `RefreshTokenContent`, `ClaimValue`
+* **Security/Algorithm**: `SignatureAlgorithmPreferences`, `JwkAlgorithmPreferences`, `SecurityEventCounter`
 
 **Total Reflection Classes**: 4,734+ types registered automatically.
 
 === Resource Configuration
 
-**Certificate and Key Material**:
-
 [source,properties]
 ----
-# Include TLS certificates and keys
 quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key,**/*.pem
-
-# Include configuration files
 quarkus.native.resources.includes=**/*.json,**/*.yaml,**/*.yml
-
-# Include JWT-specific resources
 quarkus.native.resources.includes=**/jwks.json,**/openid-configuration
 ----
 
@@ -94,49 +46,27 @@ quarkus.native.resources.includes=**/jwks.json,**/openid-configuration
 
 === Compilation Settings
 
-**Compiler Optimization**:
-
 [source,properties]
 ----
-# O2 optimization level for performance
 quarkus.native.additional-build-args=-O2
-
-# Garbage collection configuration
 quarkus.native.additional-build-args=--gc=serial
-
-# Build memory allocation
 quarkus.native.native-image-xmx=8g
 ----
 
 === Container Build Configuration
 
-**Docker Container Settings**:
-
 [source,properties]
 ----
-# Enable container-based native build
 quarkus.native.container-build=true
-
-# Container runtime options
 quarkus.native.container-runtime-options=-m=4g
-
-# Container image for building
 quarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-25
 ----
 
 === Security Configuration
 
-**Security Services**:
-
 [source,properties]
 ----
-# Enable all security services for JWT validation
 quarkus.native.additional-build-args=--enable-all-security-services
-
-# Alternative: Specific security services
-quarkus.native.additional-build-args=--enable-security-services=crypto,random
-
-# Additional security protocols
 quarkus.native.additional-build-args=--enable-url-protocols=https,http,file
 ----
 
@@ -144,180 +74,74 @@ quarkus.native.additional-build-args=--enable-url-protocols=https,http,file
 
 === Memory Management
 
-**Heap Configuration**:
-
 [source,properties]
 ----
-# Initial and maximum heap size
 quarkus.native.additional-build-args=-J-Xms64m,-J-Xmx512m
-
-# Garbage collection tuning
 quarkus.native.additional-build-args=--gc=serial
-----
-
-=== Network Configuration
-
-**HTTP Client Settings**:
-
-[source,properties]
-----
-# HTTP/HTTPS support for JWKS endpoints
-quarkus.native.additional-build-args=--enable-url-protocols=https,http
-
-# HTTP client configuration
-quarkus.http.ssl.native=true
 ----
 
 === TLS Performance Configuration
 
-**TLS Optimization for Production**:
-
-Based on comprehensive TLS performance analysis, the following configuration provides optimal HTTPS performance for JWT validation endpoints:
-
 [source,properties]
 ----
-# TLS Protocol Optimization
-# Enable TLS 1.3 with 1.2 fallback for improved handshake performance
 quarkus.tls.protocols=TLSv1.3,TLSv1.2
-
-# Optimized Cipher Suites
-# Prioritize high-performance ciphers for TLS 1.3 and 1.2
 quarkus.tls.cipher-suites=TLS_AES_256_GCM_SHA384,TLS_CHACHA20_POLY1305_SHA256,TLS_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
-
-# ALPN Support for HTTP/2
 quarkus.tls.alpn=true
-
-# Certificate resources for native image
 quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key
-----
-
-**Container Runtime TLS Optimization**:
-
-[source,yaml]
-----
-# Docker compose environment variables
-environment:
-  - JAVA_OPTS_APPEND=-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Djdk.tls.rejectClientInitiatedRenegotiation=true -Djavax.net.ssl.sessionCacheSize=20480 -Djavax.net.ssl.sessionTimeout=300 -Djsse.enableSNIExtension=true
 ----
 
 **TLS Performance Characteristics**:
 
-* **First Connection (Cold TLS)**: ~186ms (includes full TLS handshake)
+* **First Connection (Cold TLS)**: ~186ms (full TLS handshake)
 * **Subsequent Connections (Session Reuse)**: ~26ms (85% improvement)
-* **Concurrent Load P95**: ~52ms (acceptable for production HTTPS)
-* **TLS 1.3 Benefits**: 20-30% handshake performance improvement over TLS 1.2
+* **Concurrent Load P95**: ~52ms
+* **TLS 1.3 Benefits**: 20-30% handshake improvement over TLS 1.2
 
 **TLS Session Cache Configuration**:
 
 [source,properties]
 ----
-# JVM SSL session cache optimization
 -Djavax.net.ssl.sessionCacheSize=20480
 -Djavax.net.ssl.sessionTimeout=300
 -Djdk.tls.rejectClientInitiatedRenegotiation=true
 -Djsse.enableSNIExtension=true
 ----
 
-**Performance Considerations**:
-
-* TLS handshake overhead is inherent and cannot be eliminated
-* Session reuse provides significant performance benefits (85% improvement)
-* For sub-10ms health checks, consider HTTP-only internal endpoints
-* P95 latency of 52ms is acceptable for production HTTPS health checks
-
 === Monitoring and Debugging
 
-**JFR and Monitoring Support**:
-
 [source,properties]
 ----
-# Enable Java Flight Recorder
 quarkus.native.additional-build-args=--enable-monitoring=jfr
-
-# Debug information in native image
 quarkus.native.debug.enabled=false
-
-# Enable reports for build analysis
 quarkus.native.enable-reports=true
-----
-
-== Development Configuration
-
-=== Development Build Settings
-
-**Fast Development Builds**:
-
-[source,properties]
-----
-# Development profile configuration
-%dev.quarkus.native.additional-build-args=-O1
-
-# Reuse existing native image for faster builds
-%dev.quarkus.native.reuse-existing=true
-
-# Reduced optimization for faster compilation
-%dev.quarkus.native.native-image-xmx=4g
-----
-
-=== Testing Configuration
-
-**Test Profile Settings**:
-
-[source,properties]
-----
-# Test-specific native configuration
-%test.quarkus.native.additional-build-args=--enable-monitoring=jfr,heapdump
-
-# Test resource inclusion
-%test.quarkus.native.resources.includes=**/test-certificates/**,**/test-jwks/**
 ----
 
 == Production Configuration Examples
 
 === Complete Production Configuration
 
-**Full production application.properties**:
-
 [source,properties]
 ----
-# Production Native Image Configuration
 quarkus.native.container-build=true
 quarkus.native.additional-build-args=-O2,--gc=serial,--enable-all-security-services,--enable-url-protocols=https,--enable-monitoring=jfr
 quarkus.native.native-image-xmx=8g
 quarkus.native.container-runtime-options=-m=4g
-
-# Resource inclusion
 quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key,**/*.json
-
-# Build reports and monitoring
 quarkus.native.enable-reports=true
-
-# Builder image
 quarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-25
 ----
 
 === Microservice Configuration
 
-**Optimized for microservice deployment**:
-
 [source,properties]
 ----
-# Microservice-optimized settings
 quarkus.native.additional-build-args=-O2,--gc=serial,--enable-security-services=crypto
 quarkus.native.native-image-xmx=4g
-
-# Minimal resource inclusion
 quarkus.native.resources.includes=**/certificates/**
-
-# Container optimization
 quarkus.native.container-runtime-options=-m=64m
 ----
 
 == Build Commands
-
-=== Standard Build Process
-
-**Required Build Sequence**:
 
 [source,bash]
 ----
@@ -326,26 +150,12 @@ quarkus.native.container-runtime-options=-m=64m
 
 # Build native image
 ./mvnw clean package -Pnative
-----
 
-=== Container Build
-
-**Container-based native image build**:
-
-[source,bash]
-----
 # Container build with all optimizations
 ./mvnw clean package -Pnative \
   -Dquarkus.native.container-build=true \
   -Dquarkus.native.additional-build-args="-O2,--gc=serial"
-----
 
-=== CI/CD Build
-
-**Automated build configuration**:
-
-[source,bash]
-----
 # CI/CD optimized build
 ./mvnw clean package -Pnative \
   -Dquarkus.native.container-build=true \
@@ -353,87 +163,27 @@ quarkus.native.container-runtime-options=-m=64m
   -Dquarkus.native.container-runtime-options="-m=4g"
 ----
 
-== Verification and Validation
+== Verification
 
-=== Build Verification
-
-**Native Image Validation Checklist**:
+**Validation Checklist**:
 
 * Native image size: ~65MB (expected for JWT validation)
 * Startup time: <1 second
 * Reflection classes: 4,734+ registered
 * Security services: All enabled for JWT support
 
-**Validation Commands**:
-
 [source,bash]
 ----
-# Check native image properties
-./application --version
-
 # Verify reflection configuration
 strings application | grep -i "TokenValidator\|JwksLoader"
-
-# Test startup time
-time ./application --help
-----
-
-=== Runtime Verification
-
-**Application Health Check**:
-
-[source,bash]
-----
-# Start application and verify health
-./application &
-sleep 2
 
 # Check health endpoints
 curl http://localhost:8080/q/health/live
 curl http://localhost:8080/q/health/ready
-
-# Verify JWT validation functionality
-curl -H "Authorization: Bearer <test-token>" http://localhost:8080/api/test
 ----
 
 == Troubleshooting
 
-=== Common Configuration Issues
-
-**Missing Reflection Configuration**:
-
-* Ensure oauth-sheriff-core module is built before native image
-* Verify automatic reflection registration is working
-* Check that all JWT validation classes are included
-
-**Build Memory Issues**:
-
-* Increase `native-image-xmx` to 8g or higher
-* Use container build with adequate memory allocation
-* Monitor build process memory usage
-
-**Runtime Issues**:
-
-* Verify security services are enabled
-* Check resource inclusion for certificates
-* Validate HTTP/HTTPS protocol support
-
-=== Performance Issues
-
-**Build Performance**:
-
-* Use container build for consistent environment
-* Enable build caching with `reuse-existing=true`
-* Optimize build memory allocation
-
-**Runtime Performance**:
-
-* Verify O2 optimization is enabled
-* Check garbage collection configuration
-* Monitor memory and CPU usage patterns
-
-== See Also
-
-* xref:../performance/native-optimization-guide.adoc[Native Optimization Guide] - Performance-focused configuration
-* xref:../performance/jwt-validation-performance.adoc[JWT Validation Performance] - Performance impact analysis
-* xref:maven-build-configuration.adoc[Maven Build Configuration] - Build system integration
+* **Missing Reflection**: Ensure oauth-sheriff-core module is built before native image
+* **Build Memory Issues**: Increase `native-image-xmx` to 8g or higher
+* **Runtime Issues**: Verify security services are enabled; check resource inclusion for certificates

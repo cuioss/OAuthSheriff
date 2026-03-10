@@ -9,21 +9,15 @@
 :toc-title: Table of Contents
 
 
-== Overview
-
-This document describes the test utilities provided by the `oauth-sheriff-core` project for testing JWT validation functionality in your applications.
-
 == Generators Artifact
 
-The project provides a test artifact with the classifier `generators` that contains utility classes for testing JWT validation. This artifact is published alongside the main artifact and can be included in your project's test dependencies.
+The project provides a test artifact with the classifier `generators` containing utility classes for testing JWT validation.
 
 === Maven Dependency
 
-For Maven dependency information, see xref:../README.adoc#test-artifact[Test Artifact Dependencies] in the main module documentation.
+See xref:../README.adoc#test-artifact[Test Artifact Dependencies] in the main module documentation.
 
 === Contents
-
-The test artifact includes the following packages:
 
 * `de.cuioss.sheriff.oauth.core.test` - Core test utilities
 * `de.cuioss.sheriff.oauth.core.test.generator` - Token and claim generators
@@ -32,127 +26,67 @@ The test artifact includes the following packages:
 
 === TestTokenHolder
 
-The `TestTokenHolder` class is a comprehensive implementation of `TokenContent` for testing purposes that allows for dynamic token generation.
+Comprehensive `TokenContent` implementation for testing with dynamic token generation.
 
 ==== JWT Semantic Constants
 
-The `TestTokenHolder` class provides semantically correct constants for OAuth2/OIDC testing:
-
 [source,java]
 ----
-// Audience - identifies resource servers that should accept the token
 public static final String TEST_AUDIENCE = "test-audience";
-
-// Client ID - identifies the OAuth2 client application that requested the token
 public static final String TEST_CLIENT_ID = "test-client-app";
-
-// Issuer - identifies the token issuer/authorization server
 public static final String TEST_ISSUER = "Token-Test-testIssuer";
 ----
 
-These constants properly model the semantic distinctions required by RFC 7519, RFC 9068, and OpenID Connect Core specifications, where audience and client ID serve different purposes and should typically have different values.
+These constants model the semantic distinctions required by RFC 7519, RFC 9068, and OpenID Connect Core.
 
 ==== Usage Examples
 
 [source,java]
 ----
-// Create a token holder with default parameters
 TestTokenHolder tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN,
     ClaimControlParameter.defaultForTokenType(TokenType.ACCESS_TOKEN));
 
-// Get the raw JWT token
 String token = tokenHolder.getRawToken();
-
-// Modify claims
 tokenHolder.withClaim("custom-claim", ClaimValue.forPlainString("custom-value"));
-
-// Remove claims
 tokenHolder.withoutClaim("sub");
-
-// Get an IssuerConfig configured for this token
 IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
-
-// Initialize security event counter if needed
-SecurityEventCounter securityEventCounter = new SecurityEventCounter();
-issuerConfig.initSecurityEventCounter(securityEventCounter);
-
-// Access and modify audience claim
-List<String> audience = tokenHolder.getAudience();
-tokenHolder.withAudience(List.of("new-audience"));
-
-// Access and modify authorized party claim (azp)
-String authorizedParty = tokenHolder.getAuthorizedParty();
-tokenHolder.withAuthorizedParty("new-client-id");
 ----
 
 ==== Key Features
 
 * *Dynamic Token Generation*: Creates JWT tokens on demand with configurable claims
 * *Claim Manipulation*: Add, remove, or modify claims
-* *Token Type Support*: Supports ACCESS_TOKEN, ID_TOKEN, and REFRESH_TOKEN types
-* *IssuerConfig Generation*: Creates an IssuerConfig configured for the token
+* *Token Type Support*: ACCESS_TOKEN, ID_TOKEN, REFRESH_TOKEN
+* *IssuerConfig Generation*: Creates matching IssuerConfig for the token
 * *Key Material Integration*: Uses InMemoryKeyMaterialHandler for signing and verification
-* *Audience and Authorized Party Support*: Direct access to get and set audience and authorized party (azp) claims
 
 === ClaimControlParameter
 
-The `ClaimControlParameter` class is a parameter object for controlling which claims should be included or excluded when generating token content:
+Controls which claims are included or excluded when generating tokens:
 
 [source,java]
 ----
-// Create parameters for a token with missing issuer and subject
 ClaimControlParameter params = ClaimControlParameter.builder()
     .missingIssuer(true)
     .missingSubject(true)
     .build();
 
-// Create a token holder with these parameters
 TestTokenHolder tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, params);
-
-// Get default parameters for a specific token type
 ClaimControlParameter defaultParams = ClaimControlParameter.defaultForTokenType(TokenType.ID_TOKEN);
 ----
 
-==== Key Features
-
-* *Claim Control*: Control which standard claims are included or excluded
-* *Token Type Defaults*: Get default parameters for specific token types
-* *Builder Pattern*: Use the builder pattern for easy configuration
-
 === TestTokenGenerators
 
-The `TestTokenGenerators` class provides factory methods for creating TypedGenerator instances that produce TestTokenHolder objects. These generators are built using the https://github.com/cuioss/cui-test-generator[cui-test-generator] framework, which provides a robust foundation for creating test data generators:
+Factory methods for creating `TypedGenerator` instances producing `TestTokenHolder` objects, built on the https://github.com/cuioss/cui-test-generator[cui-test-generator] framework:
 
 [source,java]
 ----
-// Get a generator for access tokens
 TypedGenerator<TestTokenHolder> accessTokenGenerator = TestTokenGenerators.accessTokens();
-
-// Generate an access token
 TestTokenHolder accessToken = accessTokenGenerator.next();
-String accessTokenString = accessToken.getRawToken();
 
-// Get a generator for ID tokens
 TypedGenerator<TestTokenHolder> idTokenGenerator = TestTokenGenerators.idTokens();
-
-// Generate an ID token
-TestTokenHolder idToken = idTokenGenerator.next();
-String idTokenString = idToken.getRawToken();
-
-// Get a generator for refresh tokens
 TypedGenerator<TestTokenHolder> refreshTokenGenerator = TestTokenGenerators.refreshTokens();
-
-// Generate a refresh token
-TestTokenHolder refreshToken = refreshTokenGenerator.next();
-String refreshTokenString = refreshToken.getRawToken();
 ----
-
-==== Key Features
-
-* *Token Type Generators*: Provides generators for ACCESS_TOKEN, ID_TOKEN, and REFRESH_TOKEN types
-* *TypedGenerator Interface*: Implements the TypedGenerator interface from cui-test-generator for easy integration with testing frameworks
-* *Default Parameters*: Uses default parameters for each token type
-* *Built on cui-test-generator*: Leverages the powerful generator framework from https://github.com/cuioss/cui-test-generator
 
 === TestTokenSource (Preferred Approach)
 
@@ -164,50 +98,15 @@ The `@TestTokenSource` annotation is the preferred way to inject test tokens int
 @TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 5)
 @DisplayName("Test with access token")
 void shouldTestWithAccessToken(TestTokenHolder tokenHolder) {
-    // Given
     String token = tokenHolder.getRawToken();
 
-    // When
     AccessTokenContent result = TokenValidator.builder()
             .issuerConfig(tokenHolder.getIssuerConfig())
             .build()
             .createAccessToken(AccessTokenRequest.of(token));
 
-    // Then
-    assertNotNull(result, "Token should be parsed successfully");
-    assertEquals(TestTokenHolder.TEST_ISSUER, result.getIssuer(), "Issuer claim should match the expected value");
-}
-----
-
-==== Key Features
-
-* *JUnit 5 Integration*: Seamlessly integrates with JUnit 5 parameterized tests
-* *Token Type Selection*: Specify which token type to generate (ACCESS_TOKEN, ID_TOKEN, REFRESH_TOKEN)
-* *Multiple Tokens*: Generate multiple test tokens with the `count` parameter (default value of 5 is recommended for thorough testing)
-* *Simplified Testing*: Eliminates boilerplate code for token generation
-* *Consistent Approach*: Provides a standardized way to test with JWT tokens
-
-==== Example with Multiple Tokens
-
-[source,java]
-----
-@ParameterizedTest
-@TestTokenSource(value = TokenType.ACCESS_TOKEN, count = 5)
-@DisplayName("Test with multiple access tokens")
-void shouldTestWithMultipleAccessTokens(TestTokenHolder tokenHolder) {
-    // This test will run 5 times with different token holders
-
-    // Given
-    String token = tokenHolder.getRawToken();
-
-    // When
-    AccessTokenContent result = TokenValidator.builder()
-            .issuerConfig(tokenHolder.getIssuerConfig())
-            .build()
-            .createAccessToken(AccessTokenRequest.of(token));
-
-    // Then
-    assertNotNull(result, "Token should be parsed successfully");
+    assertNotNull(result);
+    assertEquals(TestTokenHolder.TEST_ISSUER, result.getIssuer());
 }
 ----
 
@@ -219,17 +118,14 @@ void shouldTestWithMultipleAccessTokens(TestTokenHolder tokenHolder) {
 ----
 @Test
 void shouldValidateToken() {
-    // Arrange
     TestTokenHolder tokenHolder = TestTokenGenerators.accessTokens().next();
     String token = tokenHolder.getRawToken();
 
-    // Act - Using the simplified approach with the new TokenValidator constructor
     AccessTokenContent result = TokenValidator.builder()
             .issuerConfig(tokenHolder.getIssuerConfig())
             .build()
             .createAccessToken(AccessTokenRequest.of(token));
 
-    // Assert
     assertNotNull(result);
     assertEquals(tokenHolder.getClaims().get("sub").getOriginalString(), result.getSubject());
 }
@@ -241,68 +137,37 @@ void shouldValidateToken() {
 ----
 @Test
 void shouldRejectTokenWithMissingClaims() {
-    // Arrange
     ClaimControlParameter params = ClaimControlParameter.builder()
         .missingIssuer(true)
         .build();
 
     TestTokenHolder tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, params);
-    String token = tokenHolder.getRawToken();
-
-    // Create an IssuerConfig for validation
     IssuerConfig issuerConfig = IssuerConfig.builder()
         .issuerIdentifier(TestTokenHolder.TEST_ISSUER)
         .expectedAudience(TestTokenHolder.TEST_AUDIENCE)
         .expectedClientId(TestTokenHolder.TEST_CLIENT_ID)
         .jwksContent(InMemoryJWKSFactory.createDefaultJwks())
-        .build(); // Validation happens automatically
+        .build();
 
     TokenValidator validator = TokenValidator.builder()
             .issuerConfig(issuerConfig)
             .build();
 
-    // Act/Assert
     TokenValidationException exception = assertThrows(TokenValidationException.class,
-        () -> validator.createAccessToken(AccessTokenRequest.of(token)));
+        () -> validator.createAccessToken(AccessTokenRequest.of(tokenHolder.getRawToken())));
 
     assertEquals(SecurityEventCounter.EventType.MISSING_CLAIM, exception.getEventType());
 }
 ----
 
 == Testing Code Using OIDC Discovery (`HttpWellKnownResolver`)
-_See xref:../../doc/specification/well-known.adoc[OIDC Discovery Specification Details]_
 
-When your application uses the `HttpWellKnownResolver` to discover OIDC provider details, you'll want to test this integration without making actual network calls. The `de.cuioss.sheriff.oauth.core.test.dispatcher.WellKnownDispatcher` utility class is provided for this purpose.
-
-=== Introducing `WellKnownDispatcher`
-
-`WellKnownDispatcher` implements the `ModuleDispatcherElement` interface from the `cui-test-mockwebserver-junit5` framework to simulate an OpenID Provider's `/.well-known/openid-configuration` endpoint and its associated JWKS (JSON Web Key Set) endpoint. This allows you to control the responses that `HttpWellKnownResolver` receives during tests, enabling you to simulate various scenarios including:
-
-* Successful discovery of OIDC configuration.
-* Missing or malformed OIDC configuration documents.
-* Network errors during discovery.
-* Missing required fields like issuer or jwks_uri.
-* Invalid issuer values.
-
-By using `WellKnownDispatcher`, your tests for components relying on `HttpWellKnownResolver` become isolated, reliable, and fast.
+The `WellKnownDispatcher` utility simulates an OpenID Provider's `/.well-known/openid-configuration` and JWKS endpoints for testing without network calls. It implements `ModuleDispatcherElement` from `cui-test-mockwebserver-junit5`.
 
 === Using `WellKnownDispatcher` with JUnit 5 Tests
 
-Here's a typical setup for using `WellKnownDispatcher` in a JUnit 5 test class:
-
 [source,java]
 ----
-import de.cuioss.sheriff.oauth.core.ParserConfig;
-import de.cuioss.sheriff.oauth.core.well_known.HttpWellKnownResolver;
-import de.cuioss.sheriff.oauth.core.test.dispatcher.WellKnownDispatcher;
-import de.cuioss.sheriff.oauth.core.jwks.http.HttpJwksLoaderConfig;
-import de.cuioss.test.mockwebserver.EnableMockWebServer;
-import de.cuioss.test.mockwebserver.URIBuilder;
-import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcher;
-import de.cuioss.test.mockwebserver.dispatcher.ModuleDispatcherElement;
-import lombok.Getter;
-import org.junit.jupiter.api.*;
-
 @EnableMockWebServer
 @ModuleDispatcher
 class MyServiceUsingWellKnownTest {
@@ -310,139 +175,58 @@ class MyServiceUsingWellKnownTest {
     @Getter
     private static final WellKnownDispatcher wellKnownDispatcher = new WellKnownDispatcher();
 
-    /**
-     * Returns the WellKnownDispatcher for the ModuleDispatcher annotation.
-     * This method is called by the ModuleDispatcher framework.
-     *
-     * @return the WellKnownDispatcher
-     */
     public ModuleDispatcherElement getModuleDispatcher() {
         return wellKnownDispatcher;
     }
 
     @BeforeEach
     void setUp(URIBuilder uriBuilder) {
-        // Reset the dispatcher to its default state
         wellKnownDispatcher.returnDefault();
-
-        // Reset the call counter
         wellKnownDispatcher.setCallCounter(0);
     }
 
     @Test
-    void testSuccessfulOidcDiscoveryAndUsage(URIBuilder uriBuilder) throws Exception {
-        // Build the URL for the well-known endpoint
+    void testSuccessfulOidcDiscovery(URIBuilder uriBuilder) throws Exception {
         URL wellKnownUrl = URI.create(uriBuilder
                 .addPathSegment("/.well-known/openid-configuration")
                 .buildAsString()).toURL();
 
-        // Create HttpWellKnownResolver instance using the mock server's URL
-        ParserConfig parserConfig = ParserConfig.builder().build();
         WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
             .wellKnownUrl(wellKnownUrl.toString())
-            .parserConfig(parserConfig)
+            .parserConfig(ParserConfig.builder().build())
             .build();
         HttpWellKnownResolver resolver = new HttpWellKnownResolver(wellKnownConfig);
 
-        // Assertions for the resolver
         String baseUrl = uriBuilder.buildAsString();
         assertEquals(baseUrl, resolver.getIssuer().getUrl().toString());
-        assertEquals(baseUrl + "/oidc/jwks.json", resolver.getJwksUri().getUrl().toString());
-
-        // Verify the dispatcher was called
         wellKnownDispatcher.assertCallsAnswered(1);
-
-        // Example: Configure HttpJwksLoaderConfig using the well-known URL directly
-        HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
-            .wellKnownUrl(wellKnownUrl.toString())
-            .build();
-
-        // Note: The JWKS URI will be discovered automatically from the well-known endpoint
-
-        // ... your further test logic using the resolver or jwksConfig ...
     }
 
     @Test
     void testOidcDiscoveryError(URIBuilder uriBuilder) throws Exception {
-        // Configure the dispatcher to return an error
         wellKnownDispatcher.returnError();
 
-        // Build the URL for the well-known endpoint
         URL wellKnownUrl = URI.create(uriBuilder
                 .addPathSegment("/.well-known/openid-configuration")
                 .buildAsString()).toURL();
 
-        // Verify that HttpWellKnownResolver throws an exception
-        ParserConfig parserConfig = ParserConfig.builder().build();
         WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
             .wellKnownUrl(wellKnownUrl.toString())
-            .parserConfig(parserConfig)
+            .parserConfig(ParserConfig.builder().build())
             .build();
-        assertThrows(WellKnownDiscoveryException.class, 
+        assertThrows(WellKnownDiscoveryException.class,
             () -> new HttpWellKnownResolver(wellKnownConfig));
-
-        // Verify the dispatcher was called
-        wellKnownDispatcher.assertCallsAnswered(1);
-    }
-
-    @Test
-    void testMissingJwksUri(URIBuilder uriBuilder) throws Exception {
-        // Configure the dispatcher to return a response without jwks_uri
-        wellKnownDispatcher.returnMissingJwksUri();
-
-        // Build the URL for the well-known endpoint
-        URL wellKnownUrl = URI.create(uriBuilder
-                .addPathSegment("/.well-known/openid-configuration")
-                .buildAsString()).toURL();
-
-        // Verify that HttpWellKnownResolver throws an exception
-        ParserConfig parserConfig = ParserConfig.builder().build();
-        WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
-            .wellKnownUrl(wellKnownUrl.toString())
-            .parserConfig(parserConfig)
-            .build();
-        WellKnownDiscoveryException exception = assertThrows(
-                WellKnownDiscoveryException.class, 
-                () -> new HttpWellKnownResolver(wellKnownConfig));
-
-        // Verify exception message
-        assertTrue(exception.getMessage().contains("Required URL field 'jwks_uri' is missing"));
-
-        // Verify the dispatcher was called
-        wellKnownDispatcher.assertCallsAnswered(1);
     }
 }
 ----
 
-=== Key `WellKnownDispatcher` Features
+=== Key `WellKnownDispatcher` Methods
 
-The `WellKnownDispatcher` provides several methods to control its behavior:
+* **Configuration**: `returnDefault()`, `returnError()`, `returnInvalidJson()`, `returnMissingIssuer()`, `returnMissingJwksUri()`, `returnInvalidIssuer()`, `returnOnlyRequiredFields()`
+* **Verification**: `assertCallsAnswered(int)`, `getCallCounter()`, `setCallCounter(int)`
 
-* **Configuration Methods**:
-  * `returnDefault()`: Resets to the default response behavior (valid OpenID Connect discovery document)
-  * `returnError()`: Configures the dispatcher to return an HTTP 500 error
-  * `returnInvalidJson()`: Configures the dispatcher to return invalid JSON content
-  * `returnMissingIssuer()`: Configures the dispatcher to return a response with missing issuer field
-  * `returnMissingJwksUri()`: Configures the dispatcher to return a response with missing jwks_uri field
-  * `returnInvalidIssuer()`: Configures the dispatcher to return a response with an invalid issuer value
-  * `returnOnlyRequiredFields()`: Configures the dispatcher to return a response with only the required fields (issuer and jwks_uri)
-
-* **Utility Methods**:
-  * `assertCallsAnswered(int expected)`: Verifies that the dispatcher was called the expected number of times
-  * `getCallCounter()`: Returns the current call count
-  * `setCallCounter(int callCounter)`: Sets the call counter to a specific value
-
-The `WellKnownDispatcher` dynamically generates appropriate URLs based on the incoming request, ensuring that the `issuer` and `jwks_uri` values in the response are consistent with the server's base URL. This makes it easier to work with the mock server in various test environments without hardcoding URLs.
+The dispatcher dynamically generates URLs based on incoming requests, ensuring `issuer` and `jwks_uri` values match the server's base URL.
 
 === Integration with `cui-test-mockwebserver-junit5`
 
-The `WellKnownDispatcher` is designed to work seamlessly with the `cui-test-mockwebserver-junit5` framework. It implements the `ModuleDispatcherElement` interface, which allows it to be used with the `@ModuleDispatcher` annotation.
-
-Key benefits of this integration:
-
-1. **Automatic Server Management**: The framework handles starting and stopping the mock server
-2. **Dynamic Port Assignment**: The server uses a random available port to avoid conflicts
-3. **Parameter Injection**: Test methods can receive useful parameters like `URIBuilder` configured with the server's details
-4. **HTTPS Support**: The framework provides HTTPS capability with automatic certificate handling
-
-For more information about the `cui-test-mockwebserver-junit5` framework, see the https://github.com/cuioss/cui-test-mockwebserver-junit5[cui-test-mockwebserver-junit5 repository documentation].
+The framework provides automatic server management, dynamic port assignment, `URIBuilder` parameter injection, and HTTPS support. See the https://github.com/cuioss/cui-test-mockwebserver-junit5[cui-test-mockwebserver-junit5 repository] for details.

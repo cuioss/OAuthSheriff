@@ -1,0 +1,132 @@
+= Security Reference
+:toc: left
+:toclevels: 3
+:sectnums:
+:source-highlighter: highlight.js
+
+== Overview
+
+_See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8[OAUTH-SHERIFF-8: Security]_
+
+This document consolidates JWT attack mitigations, security controls, and best practices for the OAuth-Sheriff library.
+
+[[security-controls]]
+== Security Controls
+
+=== Signature Validation
+
+_See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-1.3[OAUTH-SHERIFF-1.3: Signature Validation]_
+
+Supported algorithms (preference order: ECDSA > EdDSA > RSA-PSS > RSA PKCS#1 v1.5):
+
+* ES256, ES384, ES512 (ECDSA)
+* EdDSA (Ed25519/Ed448)
+* PS256, PS384, PS512 (RSA-PSS)
+* RS256, RS384, RS512 (RSA PKCS#1 v1.5)
+
+**Rejected**: HS256/384/512 (HMAC), "none" - per RFC 8725.
+
+=== Claims Validation
+
+* **iss** (issuer) - validated by `TokenHeaderValidator` against configured issuers
+* **sub** (subject) - mandatory, validated by `TokenClaimValidator`
+* **exp** (expiration) - mandatory, with configurable clock skew
+* **iat** (issued at) - validated by `TokenClaimValidator`
+* **nbf** (not before) - validated if present
+* **aud** (audience) - validated when `expectedAudience` is configured
+* **azp** (authorized party) - validated when `expectedClientId` is configured
+
+=== Secure Communication
+
+TLS 1.2+ enforced for all JWKS and well-known endpoint communication via `SecureSSLContextProvider`. Configurable minimum TLS version.
+
+=== Safe Parsing
+
+`NonValidatingJwtParser` enforces: token size (8 KB), payload size (8 KB), string size (4 KB), array size (64), nesting depth (10). Protects against memory exhaustion, stack overflow, and malformed input attacks.
+
+=== Cryptographic Agility
+
+Algorithm upgrades without breaking changes via `SignatureAlgorithmPreferences`. Per-issuer algorithm configuration supported.
+
+== JWT Attack Mitigations
+
+[cols="1,2,2,1", options="header"]
+|===
+|Attack |Description |Mitigation |Test Class
+|Signature Not Verified |Skipping signature check |Mandatory `TokenSignatureValidator` in pipeline; no public decode-without-verify API |`TokenSignatureValidatorTest`
+|None Algorithm |`alg: none` bypass |Explicit rejection in `SignatureAlgorithmPreferences` |`TokenSignatureValidatorAlgorithmTest`
+|Weak HMAC Keys |Brute-forceable shared secrets |HMAC algorithms rejected; asymmetric-only |`KeyDisclosureVulnerabilityTest`
+|Algorithm Confusion |RSA-to-HMAC downgrade |HMAC rejected; algorithm-key type matching enforced |`TokenSignatureValidatorTest`
+|KID Injection |Path traversal / SQL injection via `kid` |Pre-loaded keys; no dynamic file/DB lookup; `kid` validation |`KeyInjectionAttackTest`
+|Embedded JWK (CVE-2018-0114) |Attacker key in token header |`jwk` header rejected; keys only from trusted sources |`EmbeddedJwkAttackTest`
+|JKU/X5U Abuse |Attacker-controlled key URLs |`jku`/`x5u` headers ignored; URLs configured at init only |`JkuX5uAttackTest`
+|Psychic Signature (CVE-2022-21449) |Zero-value ECDSA bypass |Java 21 JDK providers with fix; ECDSA parameter validation |`PsychicSignatureAttackTest`
+|===
+
+== OAuth Attack Mitigations
+
+[cols="1,2,2,1", options="header"]
+|===
+|Attack |Description |Mitigation |Test Class
+|Client Confusion |Token from client A used at client B |`aud` + `azp` validation; mandatory when configured |`ClientConfusionAttackTest`
+|Scope Upgrade |Extra scopes in token exchange |Scope accessible via `AccessTokenContent` for application-level validation |—
+|Mutable Claims |Using `email` as identity |`sub` claim mandatory and validated |`TokenClaimValidatorTest`
+|CSRF / Redirect Attacks |OAuth flow attacks |Out of scope (authorization server responsibility) |—
+|===
+
+== Best Practices for Integrators
+
+=== Token Handling
+
+* **Always use `TokenValidator`** - never decode tokens without validation
+* **Configure audience validation** - set `expectedAudience` to your resource server identifier
+* **Configure issuer validation** - only trust known identity providers
+* **Use short token lifetimes** - 5-15 minutes for access tokens
+
+=== Algorithm Configuration
+
+* Prefer ECDSA (ES256) or EdDSA for new deployments
+* Explicitly specify allowed algorithms per issuer
+* The library rejects HMAC and "none" by default
+
+=== Key Management
+
+* Store private keys in secure key management services (KMS, Vault)
+* Plan for key rotation; the library supports grace periods (default 5 min)
+* Use HTTPS-only JWKS endpoints
+
+=== Monitoring
+
+* Monitor `SecurityEventCounter` metrics for anomalies
+* Log validation failures (the library sanitizes sensitive data from logs)
+* Set up alerts for high rates of signature/claims failures
+
+=== Common Pitfalls
+
+[source,java]
+----
+// NEVER: Decode tokens manually without verification
+String[] parts = token.split("\\.");
+String payload = new String(Base64.getDecoder().decode(parts[1]));
+
+// ALWAYS: Use the validation pipeline
+AccessTokenContent token = validator.createAccessToken(AccessTokenRequest.of(tokenString));
+----
+
+== Security Events Monitoring
+
+The `SecurityEventCounter` tracks events matching `JWTValidationLogMessages` categories:
+
+* **InvalidStructure** - Malformed tokens, size violations (HTTP 401)
+* **InvalidSignature** - Signature verification failures (HTTP 401)
+* **SemanticIssues** - Expired, wrong audience, missing claims (HTTP 401)
+
+In Quarkus, these are exposed as Micrometer counters for Prometheus/Grafana alerting.
+
+== References
+
+* https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html[OWASP JWT Security Cheat Sheet for Java]
+* https://pentesterlab.com/blog/jwt-vulnerabilities-attacks-guide[PentesterLab JWT Vulnerabilities Guide]
+* https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JWT Best Current Practices]
+* https://datatracker.ietf.org/doc/html/rfc7519[RFC 7519 - JSON Web Token]
+* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities (Doyensec, 2025)]

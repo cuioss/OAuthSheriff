@@ -6,36 +6,23 @@
 :sectnums:
 
 
-The JWT validation library supports validating tokens from multiple identity providers simultaneously, with automatic issuer detection and per-issuer configuration.
+The library supports validating tokens from multiple identity providers simultaneously, with automatic issuer detection and per-issuer configuration.
 
 == Basic Multi-Issuer Setup
-
-Configure multiple issuers in a single `TokenValidator`:
 
 [source,java]
 ----
 TokenValidator tokenValidator = TokenValidator.builder()
-    // Keycloak issuer
     .issuerConfig(IssuerConfig.builder()
         .issuer("https://keycloak.example.com/auth/realms/main")
         .jwksUri("https://keycloak.example.com/auth/realms/main/protocol/openid-connect/certs")
         .expectedAudience("my-app")
         .build())
-
-    // Auth0 issuer
     .issuerConfig(IssuerConfig.builder()
         .issuer("https://auth0.example.com/")
         .jwksUri("https://auth0.example.com/.well-known/jwks.json")
         .expectedAudience("my-app-auth0")
         .build())
-
-    // Azure AD issuer
-    .issuerConfig(IssuerConfig.builder()
-        .issuer("https://login.microsoftonline.com/tenant-id/v2.0")
-        .jwksUri("https://login.microsoftonline.com/tenant-id/discovery/v2.0/keys")
-        .expectedAudience("api://my-app-azure")
-        .build())
-
     .build();
 
 // Validator automatically selects correct issuer based on token's "iss" claim
@@ -44,63 +31,27 @@ AccessTokenContent token = tokenValidator.createAccessToken(AccessTokenRequest.o
 
 == Issuer Detection
 
-The library automatically detects the issuer from the token's `iss` claim:
-
-1. Token is parsed to extract the `iss` claim
-2. The corresponding `IssuerConfig` is selected
-3. Token is validated using that issuer's configuration
-4. If no matching issuer is found, validation fails
+The library automatically detects the issuer from the token's `iss` claim, selects the corresponding `IssuerConfig`, and validates using that issuer's configuration. If no matching issuer is found, validation fails.
 
 == Per-Issuer Configuration
-
-Each issuer can have its own configuration:
 
 === Different Key Management
 
 [source,java]
 ----
 TokenValidator tokenValidator = TokenValidator.builder()
-    // Issuer with static key
     .issuerConfig(IssuerConfig.builder()
         .issuer("https://internal.example.com")
         .signatureKey("static-secret-key")
         .build())
-
-    // Issuer with JWKS endpoint
     .issuerConfig(IssuerConfig.builder()
         .issuer("https://external.example.com")
         .jwksUri("https://external.example.com/.well-known/jwks.json")
         .build())
-
-    // Issuer with embedded JWKS
     .issuerConfig(IssuerConfig.builder()
         .issuer("https://partner.example.com")
         .jwksContent(jwksJsonString)
         .build())
-
-    .build();
-----
-
-=== Different Validation Rules
-
-[source,java]
-----
-TokenValidator tokenValidator = TokenValidator.builder()
-    // Strict validation for internal issuer
-    .issuerConfig(IssuerConfig.builder()
-        .issuer("https://internal.example.com")
-        .expectedAudience("internal-app")
-        .expectedClientId("internal-client")
-        .clockSkew(Duration.ofSeconds(10))
-        .build())
-
-    // Relaxed validation for partner issuer
-    .issuerConfig(IssuerConfig.builder()
-        .issuer("https://partner.example.com")
-        .expectedAudience("partner-app", "legacy-app")
-        .clockSkew(Duration.ofMinutes(5))
-        .build())
-
     .build();
 ----
 
@@ -120,54 +71,23 @@ RolesGroupsConfig auth0Config = RolesGroupsConfig.builder()
     .groupsPath("groups")
     .build();
 
-// Azure AD uses different claim names
-ClaimMapper azureRoleMapper = new StringSplitterMapper(',');
-
 TokenValidator tokenValidator = TokenValidator.builder()
     .issuerConfig(IssuerConfig.builder()
         .issuer("https://keycloak.example.com/auth/realms/main")
         .rolesGroupsConfig(keycloakConfig)
         .build())
-
     .issuerConfig(IssuerConfig.builder()
         .issuer("https://auth0.example.com/")
         .rolesGroupsConfig(auth0Config)
         .build())
-
     .issuerConfig(IssuerConfig.builder()
         .issuer("https://login.microsoftonline.com/tenant-id/v2.0")
-        .claimMapper("wids", azureRoleMapper)  // Azure workspace IDs
+        .claimMapper("wids", new StringSplitterMapper(','))
         .build())
-
     .build();
 ----
-
-== Fallback Configuration
-
-Configure a fallback issuer for unknown or development tokens:
-
-[source,java]
-----
-TokenValidator tokenValidator = TokenValidator.builder()
-    // Production issuers
-    .issuerConfig(productionIssuer1)
-    .issuerConfig(productionIssuer2)
-
-    // Fallback for development/testing
-    .issuerConfig(IssuerConfig.builder()
-        .issuer("*")  // Matches any issuer not already configured
-        .signatureKey("dev-secret")
-        .expectedAudience("dev-app")
-        .build())
-
-    .build();
-----
-
-WARNING: Use fallback configurations only in development environments. Production systems should explicitly configure all allowed issuers.
 
 == Dynamic Issuer Loading
-
-For environments with changing issuers, implement dynamic loading:
 
 [source,java]
 ----
@@ -176,14 +96,10 @@ public class DynamicTokenValidator {
 
     public void reloadIssuers() {
         TokenValidator.Builder builder = TokenValidator.builder();
-
-        // Load issuer configurations from database or config service
         List<IssuerConfig> issuers = loadIssuersFromDatabase();
-
         for (IssuerConfig issuer : issuers) {
             builder.issuerConfig(issuer);
         }
-
         this.validator = builder.build();
     }
 
@@ -195,62 +111,23 @@ public class DynamicTokenValidator {
 
 == Best Practices
 
-=== Issuer Naming
-
-Use consistent, unique issuer identifiers:
-
-* Include the full URL with protocol: `https://issuer.example.com`
-* Include realm/tenant for multi-tenant providers: `/auth/realms/main`
-* Avoid trailing slashes unless required by the provider
-
-=== Configuration Management
-
-* Store issuer configurations in external configuration files
-* Use environment-specific configurations
-* Implement configuration validation on startup
-* Log configured issuers at startup for debugging
-
-=== Security Considerations
-
+* Use full URLs with protocol as issuer identifiers (`https://issuer.example.com`)
+* Include realm/tenant for multi-tenant providers (`/auth/realms/main`)
 * Never use wildcard or fallback issuers in production
-* Regularly rotate static keys
-* Monitor JWKS endpoint availability
-* Implement issuer allowlisting, not denylisting
 * Validate audience claims for each issuer
-
-=== Performance Optimization
-
-* Share `HttpClient` instances across issuers
 * Configure appropriate JWKS refresh intervals
 * Use access token caching for high-traffic applications
-* Monitor issuer-specific validation metrics
 
 == Troubleshooting
 
-Common issues with multi-issuer setups:
-
 === Issuer Mismatch
 
-If tokens are rejected with "unknown issuer" errors:
-
-1. Check the exact `iss` claim value in the token
-2. Ensure the configured issuer matches exactly (including trailing slashes)
-3. Verify the issuer is added to the `TokenValidator`
+If tokens are rejected with "unknown issuer": check the exact `iss` claim value (including trailing slashes) and verify the issuer is added to `TokenValidator`.
 
 === Key Resolution Failures
 
-If signature validation fails for specific issuers:
-
-1. Verify the JWKS endpoint is accessible
-2. Check for key rotation timing issues
-3. Ensure the correct algorithm is used
-4. Validate the JWKS format
+If signature validation fails: verify JWKS endpoint accessibility, check for key rotation timing issues, and validate the JWKS format.
 
 === Claim Mapping Issues
 
-If roles/groups are not properly extracted:
-
-1. Inspect the actual token claims structure
-2. Verify the claim paths match the token structure
-3. Check if custom mappers are needed
-4. Test with different issuer configurations
+If roles/groups are not extracted: inspect the actual token claims structure, verify claim paths match, and check if custom mappers are needed.

@@ -5,26 +5,19 @@
 :toc-title: Table of Contents
 :sectnums:
 
-
-This document explains the HTTPS certificate handling approach for JWT Quarkus integration tests.
-
 == Overview
 
-The integration tests use a hybrid certificate approach optimized for GraalVM native images:
+Integration tests use a hybrid certificate approach optimized for GraalVM native images:
 
 * **PEM certificates** for server-side HTTPS (Quarkus application)
 * **PKCS12 truststore** for client-side HTTPS calls (JWT JWKS endpoint access)
 
 == Technical Reasoning
 
-=== Why Hybrid Approach?
-
-Based on comprehensive research of GraalVM and Quarkus documentation:
-
-1. **Server Configuration**: PEM certificates work reliably for Quarkus HTTPS server configuration
-2. **Client Configuration**: PKCS12 truststore with system properties is the GraalVM recommended pattern for native image HTTPS client calls
-3. **Pure PEM Approach**: Failed with 401 Unauthorized errors when accessing external JWKS endpoints
-4. **Pure TLS Registry**: Configuration keys not recognized in current Quarkus version
+* **Server**: PEM certificates work reliably for Quarkus HTTPS server configuration
+* **Client**: PKCS12 truststore with system properties is the GraalVM recommended pattern for native image HTTPS client calls
+* **Pure PEM**: Failed with 401 errors when accessing external JWKS endpoints
+* **Pure TLS Registry**: Configuration keys not recognized in current Quarkus version
 
 === Certificate Files
 
@@ -37,7 +30,7 @@ src/main/docker/certificates/
 └── generate-truststore.sh     # Truststore generation script
 ----
 
-=== Configuration
+== Configuration
 
 ==== Server HTTPS (application.properties)
 [source,properties]
@@ -51,7 +44,6 @@ quarkus.http.insecure-requests=redirect
 ==== Client HTTPS (Docker Containers)
 [source,dockerfile]
 ----
-# Both Dockerfile.native.distroless and Dockerfile.native.jfr use:
 ENTRYPOINT ["/app/application",
   "-Djavax.net.ssl.trustStore=/app/certificates/localhost-truststore.p12",
   "-Djavax.net.ssl.trustStorePassword=localhost-trust",
@@ -68,23 +60,12 @@ quarkus.tls.default.trust-store.p12.password=localhost-trust
 
 == Test Execution
 
-Integration tests access the application via external HTTPS port (10443) with relaxed validation:
-
 [source,java]
 ----
 RestAssured.baseURI = "https://localhost";
 RestAssured.port = 10443;
 RestAssured.useRelaxedHTTPSValidation();
 ----
-
-The application internally uses the configured truststore for JWKS endpoint validation.
-
-== Verification
-
-Both verification builds pass with 100% success rate:
-
-* Pre-commit build: Code quality and static analysis
-* Integration build: Full test suite (37/37 tests passing)
 
 == Maintenance
 

@@ -45,7 +45,7 @@
  * </ul>
  * <p>
  * For more detailed specifications, see the
- * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#_jwksloader">Technical Components Specification - JwksLoader</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/architecture.adoc#_jwksloader">Technical Components Specification - JwksLoader</a>
  * 
  * @see de.cuioss.sheriff.oauth.core.jwks.JwksLoader
  * @see de.cuioss.sheriff.oauth.core.pipeline.validator.TokenSignatureValidator

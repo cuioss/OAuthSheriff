@@ -200,15 +200,15 @@ AccessTokenContent accessToken = validator.createAccessToken(AccessTokenRequest.
 
 For detailed architectural information, see:
 
-* xref:doc/specification/technical-components.adoc[Technical Components] - Complete architecture documentation
+* xref:doc/architecture.adoc[Architecture Reference] - Validation pipeline, components, and design
 * xref:doc/plantuml/component-overview.png[Component Diagram] - Visual architecture overview
 
 == Documentation
 
-* xref:doc/navigation.adoc[📚 Documentation Navigation] - Complete guide to all documentation
+* xref:doc/README.adoc[Documentation Hub] - Complete guide to all documentation
 * xref:oauth-sheriff-core/README.adoc[Usage Guide] - Detailed usage examples
 * xref:doc/Requirements.adoc[Requirements] - Functional and non-functional requirements
-* xref:doc/security/Threat-Model.adoc[Threat Model] - Security analysis
+* xref:doc/security/threat-model.adoc[Threat Model] - Security analysis
 
 For configuration details including runtime dependencies and test support, see the xref:oauth-sheriff-core/README.adoc[JWT Validation Module documentation].
 
