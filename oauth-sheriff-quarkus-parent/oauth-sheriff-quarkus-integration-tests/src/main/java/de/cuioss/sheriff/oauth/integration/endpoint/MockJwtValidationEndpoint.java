@@ -106,35 +106,15 @@ public class MockJwtValidationEndpoint {
     @Path("/validate")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response validateToken() {
-        // Step 1: Resolve header map — same as BearerTokenProducer.extractBearerTokenFromHeaderMap()
         Map<String, List<String>> headerMap = servletObjectsResolver.resolveHeaderMap();
 
-        // Step 2: Extract Authorization header (lowercase per RFC 9113/7230)
-        List<String> authHeaders = headerMap.get("authorization");
-        if (authHeaders == null || authHeaders.isEmpty()) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(new ValidationResponse(false, "Bearer token missing"))
-                    .build();
+        var extraction = extractBearerToken(headerMap);
+        if (extraction.isError()) {
+            return extraction.errorResponse();
         }
 
-        String authHeader = authHeaders.getFirst();
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(new ValidationResponse(false, "Not a Bearer token"))
-                    .build();
-        }
+        // SKIP tokenValidator.createAccessToken() — token extracted but not validated
 
-        String bearerToken = authHeader.substring(BEARER_PREFIX.length());
-        if (bearerToken.trim().isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ValidationResponse(false, "Bearer token is empty"))
-                    .build();
-        }
-
-        // Step 3: SKIP tokenValidator.createAccessToken(bearerToken)
-        // The token string has been extracted but is not validated
-
-        // Step 4: Build same response structure as JwtValidationEndpoint.createTokenResponse()
         var data = new HashMap<String, Object>();
         data.put("subject", MOCK_SUBJECT);
         data.put("scopes", MOCK_SCOPES);
@@ -165,37 +145,18 @@ public class MockJwtValidationEndpoint {
     @Path("/direct-validation")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response directValidation() {
-        // Step 1: Resolve header map — same as BearerTokenProducer.extractBearerTokenFromHeaderMap()
         Map<String, List<String>> headerMap = servletObjectsResolver.resolveHeaderMap();
 
-        // Step 2: Extract Authorization header (lowercase per RFC 9113/7230)
-        List<String> authHeaders = headerMap.get("authorization");
-        if (authHeaders == null || authHeaders.isEmpty()) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(new ValidationResponse(false, "Bearer token missing"))
-                    .build();
+        var extraction = extractBearerToken(headerMap);
+        if (extraction.isError()) {
+            return extraction.errorResponse();
         }
 
-        String authHeader = authHeaders.getFirst();
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(new ValidationResponse(false, "Not a Bearer token"))
-                    .build();
-        }
-
-        String bearerToken = authHeader.substring(BEARER_PREFIX.length());
-        if (bearerToken.trim().isEmpty()) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(new ValidationResponse(false, "Bearer token is empty"))
-                    .build();
-        }
-
-        // Step 3: Call tokenValidator.createAccessToken() DIRECTLY — no Instance.get(), no CDI producer, no @Timed
+        // Call tokenValidator.createAccessToken() DIRECTLY — no Instance.get(), no CDI producer, no @Timed
         try {
             AccessTokenContent token = tokenValidator.createAccessToken(
-                    new AccessTokenRequest(bearerToken, headerMap));
+                    new AccessTokenRequest(extraction.token(), headerMap));
 
-            // Step 4: Build same response structure as JwtValidationEndpoint.createTokenResponse()
             var data = new HashMap<String, Object>();
             data.put("subject", token.getSubject().orElse("not-present"));
             data.put("scopes", token.getScopes());
@@ -254,5 +215,50 @@ public class MockJwtValidationEndpoint {
         // Authorization parsing — not called
         // HashMap construction — not called (pre-built response)
         return Response.ok(PREBUILT_RESPONSE).build();
+    }
+
+    /**
+     * Extracts the Bearer token from the Authorization header in the given header map.
+     *
+     * @param headerMap resolved HTTP headers
+     * @return extraction result containing either the token string or an error response
+     */
+    private static TokenExtractionResult extractBearerToken(Map<String, List<String>> headerMap) {
+        List<String> authHeaders = headerMap.get("authorization");
+        if (authHeaders == null || authHeaders.isEmpty()) {
+            return TokenExtractionResult.error(Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(new ValidationResponse(false, "Bearer token missing")).build());
+        }
+
+        String authHeader = authHeaders.getFirst();
+        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+            return TokenExtractionResult.error(Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(new ValidationResponse(false, "Not a Bearer token")).build());
+        }
+
+        String bearerToken = authHeader.substring(BEARER_PREFIX.length());
+        if (bearerToken.trim().isEmpty()) {
+            return TokenExtractionResult.error(Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ValidationResponse(false, "Bearer token is empty")).build());
+        }
+
+        return TokenExtractionResult.success(bearerToken);
+    }
+
+    /**
+     * Result of bearer token extraction — either a token string or an error response.
+     */
+    private record TokenExtractionResult(String token, Response errorResponse) {
+        static TokenExtractionResult success(String token) {
+            return new TokenExtractionResult(token, null);
+        }
+
+        static TokenExtractionResult error(Response errorResponse) {
+            return new TokenExtractionResult(null, errorResponse);
+        }
+
+        boolean isError() {
+            return errorResponse != null;
+        }
     }
 }
