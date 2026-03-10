@@ -111,7 +111,9 @@ IssuerConfig issuerConfig = IssuerConfig.builder()
     .build();
 ----
 
-== CDI-based Custom Mapper Registration (Quarkus)
+== CDI-based Custom Mapper Registration (Quarkus Only)
+
+NOTE: This section describes Quarkus-specific functionality. The `DiscoverableClaimMapper` interface is part of the `oauth-sheriff-quarkus` module, not `oauth-sheriff-core`. For standalone core library usage, use the `ClaimMapper` interface directly via `IssuerConfig.builder().claimMapper()`.
 
 Custom claim mappers can be registered as CDI beans and are automatically discovered and applied to all configured issuers.
 

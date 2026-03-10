@@ -1,4 +1,4 @@
-= JWT Token Handling Token Decryption
+= JWT Token Decryption
 :toc: left
 :toclevels: 3
 :toc-title: Table of Contents
@@ -15,9 +15,8 @@ _See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-1.4[OAUTH-SHERIFF-1.4: 
 * xref:../../README.adoc[README] - Project overview and introduction
 * xref:../../oauth-sheriff-core/README.adoc[Usage Guide] - How to use the library with code examples
 * xref:../Requirements.adoc[Requirements] - Functional and non-functional requirements
-* xref:../architecture.adoc[Architecture] - Architecture reference
+* xref:../architecture.adoc[Architecture] - Architecture reference and implementation details
 * xref:../LogMessages.adoc[Log Messages] - Reference for all log messages
-* xref:../architecture.adoc[Architecture] - Implementation details
 * xref:../security/security-reference.adoc[Security Reference] - Security measures
 
 ==== Status: NOT IMPLEMENTED

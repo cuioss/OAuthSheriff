@@ -45,11 +45,13 @@ OAuthSheriff already satisfies the OAuth 2.1 resource server requirements:
 * **Scope enforcement** - `scope` is mandatory for ACCESS_TOKEN type
 * **Audience validation** - Supported via `expected-audience` configuration; mandatory for ID tokens
 * **Token expiration check** - `exp` mandatory, with configurable clock skew tolerance
-* **Algorithm security** - Whitelisted RS/ES/PS families only; HMAC and "none" rejected per https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725]
+* **Algorithm security** - Whitelisted RS/ES/PS/EdDSA families only; HMAC and "none" rejected per https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725]
 * **Issuer validation** - `iss` mandatory, matched against configured issuers
 * **Signature verification** - Full cryptographic validation pipeline
 * **RFC 9068 token type validation** - Optional per-issuer `typ: at+jwt` header validation (see xref:#OAUTH-SHERIFF-8.6[OAUTH-SHERIFF-8.6])
 * **RFC 9449 DPoP sender-constrained tokens** - Optional per-issuer DPoP proof validation binding access tokens to client public keys (see xref:#OAUTH-SHERIFF-8.7[OAUTH-SHERIFF-8.7])
+
+NOTE: Requirement IDs are stable identifiers referenced across documentation and are not sequential. Functional requirements use IDs 1-8 and 12; non-functional requirements use IDs 9-10.
 
 == Functional Requirements
 
@@ -498,7 +500,7 @@ _See analysis: xref:../benchmarking/doc/Analysis-01.2026-Micro.adoc[Micro-Benchm
 * JWT validation throughput: > 100,000 ops/s (100 concurrent threads)
 * Average validation latency: < 0.7ms
 * P99 validation latency: < 0.2ms
-* Cache lookup latency: < 0.2µs
+* Cache lookup latency (P50): < 0.2µs
 
 **Measured Performance (JMH on Apple M4, 100 threads):**
 

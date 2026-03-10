@@ -16,9 +16,11 @@ A weighted performance score combining throughput, latency, and error resilience
 ----
 Performance Score = (Throughput_Score × 0.5) + (Latency_Score × 0.5)
 
-Where:
+Step 1: Calculate intermediate scores
 - Throughput_Score = Throughput ÷ 100        // 10000 ops/s = score 100 (uncapped)
 - Latency_Score = 100 ÷ Latency_ms          // 1 ms = score 100 (uncapped)
+
+Step 2: Apply weights and sum
 - Throughput = Average operations/second from benchmarks
 - Latency_ms = Average latency in milliseconds
 

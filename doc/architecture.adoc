@@ -17,12 +17,13 @@ _See Requirement xref:Requirements.adoc#OAUTH-SHERIFF-1[OAUTH-SHERIFF-1: Token P
 
 The `TokenValidator` is the primary entry point. It processes tokens through an ordered pipeline:
 
-1. **NonValidatingJwtParser** - Decodes token structure without validation (size limits enforced)
+0. **TokenStringValidator** - Pre-pipeline validation (null/blank checks, size limits)
+1. **NonValidatingJwtParser** - Decodes token structure without cryptographic validation
 2. **TokenHeaderValidator** - Validates algorithm, key ID, embedded JWK protection, optional token type per RFC 9068
 3. **TokenSignatureValidator** - Verifies cryptographic signature using JWKS
 4. **TokenBuilder** - Creates typed token content objects
 5. **TokenClaimValidator** - Validates claims (expiration, audience, issuer, etc.)
-6. **DpopProofValidator** - Optional per-issuer DPoP proof validation per RFC 9449
+6. **DpopProofValidator** - Optional per-issuer DPoP proof validation per RFC 9449 (access tokens only)
 
 This pipeline provides separation of concerns, clear error signaling through `TokenValidationException`, and comprehensive security coverage.
 
@@ -106,7 +107,7 @@ Thread-safe counter for security events during token processing. Created by `Tok
 
 === TokenValidatorMonitor
 
-High-performance, lock-free monitoring of validation pipeline metrics with microsecond precision. Measures: `COMPLETE_VALIDATION`, `TOKEN_PARSING`, `HEADER_VALIDATION`, `SIGNATURE_VALIDATION`, `CLAIMS_VALIDATION`, `JWKS_OPERATIONS`. Exposed as Micrometer timers in Quarkus (`sheriff.oauth.validation.duration`).
+High-performance, lock-free monitoring of validation pipeline metrics with microsecond precision. Measures 15 types including: `COMPLETE_VALIDATION`, `TOKEN_FORMAT_CHECK`, `TOKEN_PARSING`, `ISSUER_EXTRACTION`, `CACHE_LOOKUP`, `ISSUER_CONFIG_RESOLUTION`, `HEADER_VALIDATION`, `SIGNATURE_VALIDATION`, `TOKEN_BUILDING`, `CLAIMS_VALIDATION`, `CACHE_STORE`, `JWKS_OPERATIONS`, `RETRY_ATTEMPT`, `RETRY_COMPLETE`, `RETRY_DELAY`. Exposed as Micrometer timers in Quarkus (`sheriff.oauth.validation.duration`).
 
 == Size Limits
 

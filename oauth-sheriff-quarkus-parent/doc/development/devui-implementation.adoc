@@ -53,7 +53,7 @@ CardPageBuildItem createJwtDevUICard() {
 }
 ----
 
-JSON-RPC service provided by `OAuthSheriffDevUIRuntimeService.java` (`@ApplicationScoped`, injects `TokenValidator`, `List<IssuerConfig>`, and `ParserConfig`).
+The JSON-RPC service is registered via `createJwtDevUIJsonRPCService()` in `OAuthSheriffProcessor.java` and provided at runtime by `OAuthSheriffDevUIRuntimeService.java` (`@ApplicationScoped`, injects `TokenValidator`, `List<IssuerConfig>`, and `ParserConfig`).
 
 == JSON-RPC Methods
 

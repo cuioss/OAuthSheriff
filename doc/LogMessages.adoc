@@ -1,4 +1,4 @@
-= Log Messages for JWT Token Module
+= Log Messages for OAuth Sheriff
 :toc: left
 :toclevels: 3
 :toc-title: Table of Contents
@@ -197,7 +197,7 @@ This section documents log messages specific to the Quarkus integration module (
 |OAUTH_SHERIFF_QUARKUS-052 |JWT_METRICS_CLEARED |"JWT metrics cleared successfully" |Confirms successful clearing of JWT metrics
 |===
 
-==== JWKS Startup Messages (061-070)
+==== JWKS Startup Messages (060-070)
 
 [cols="1,2,3,4", options="header"]
 |===

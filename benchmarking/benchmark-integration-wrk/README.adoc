@@ -202,7 +202,7 @@ The `skip.container.lifecycle` property optimizes benchmark iteration:
 
 === JWT Validation Benchmark
 
-* **Endpoint**: `/api/v1/jwt/extract`
+* **Endpoint**: `/jwt/validate`
 * **Script**: `jwt_benchmark.lua`
 * **Purpose**: Real JWT processing performance with cache
 * **Expected** (150 connections, stress profile): 20,000+ req/s, P50 <10ms latency

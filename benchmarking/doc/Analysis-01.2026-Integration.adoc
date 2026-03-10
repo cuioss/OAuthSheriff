@@ -137,7 +137,7 @@ A systematic investigation was conducted to identify the optimal connection coun
 
 === Health Endpoint as Control Experiment
 
-The health endpoint (`/q/health/live`) and JWT endpoint (`/api/v1/jwt/extract`) share the entire infrastructure stack: Docker bridge networking, TLS termination, HTTP/2, Quarkus routing, and CDI container. The health endpoint therefore serves as a **control experiment** — any performance difference between the two endpoints must be caused by endpoint-specific processing, not shared infrastructure.
+The health endpoint (`/q/health/live`) and JWT endpoint (`/jwt/validate`) share the entire infrastructure stack: Docker bridge networking, TLS termination, HTTP/2, Quarkus routing, and CDI container. The health endpoint therefore serves as a **control experiment** — any performance difference between the two endpoints must be caused by endpoint-specific processing, not shared infrastructure.
 
 ==== Constant Latency Ratio
 

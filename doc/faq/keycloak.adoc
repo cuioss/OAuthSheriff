@@ -227,6 +227,6 @@ Benefits:
 == References
 
 - https://datatracker.ietf.org/doc/html/rfc7519[RFC 7519: JSON Web Token (JWT)]
-- https://datatracker.ietf.org/doc/html/rfc7540#section-8.1.2[RFC 7540: HTTP/2 Header Compression]
-- https://datatracker.ietf.org/doc/html/rfc7230#section-3.2[RFC 7230: HTTP/1.1 Message Syntax]
+- https://datatracker.ietf.org/doc/html/rfc7517[RFC 7517: JSON Web Key (JWK)]
+- https://datatracker.ietf.org/doc/html/rfc7518[RFC 7518: JSON Web Algorithms (JWA)]
 - https://www.keycloak.org/docs/latest/server_admin/index.html#_protocol-mappers[Keycloak Protocol Mappers Documentation]

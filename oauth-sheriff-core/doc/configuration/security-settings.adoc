@@ -44,6 +44,11 @@ TokenValidator validator = TokenValidator.builder()
 |DSL-JSON enforced limit on maximum string buffer size
 |4KB
 |During JSON parsing
+
+|`maxBufferSize`
+|DSL-JSON enforced limit on buffer size for parsing
+|128KB
+|During JSON parsing
 |===
 
 Base64 encoding increases size by ~33%: an 8KB token yields ~6KB decoded content. The 8KB per-part limit accommodates header + payload; the 4KB string limit prevents individual field attacks.
