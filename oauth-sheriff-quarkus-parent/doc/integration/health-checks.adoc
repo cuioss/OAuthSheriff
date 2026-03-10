@@ -5,21 +5,16 @@
 :toc-title: Table of Contents
 :sectnums:
 
-
 == Overview
 
-The oauth-sheriff-quarkus extension provides MicroProfile Health checks for JWT validation components using SmallRye Health (MicroProfile Health 4.0). These health checks are essential for containerized environments and Kubernetes deployments.
+The oauth-sheriff-quarkus extension provides MicroProfile Health checks for JWT validation components using SmallRye Health (MicroProfile Health 4.0).
 
 == Available Health Checks
 
 === JWKS Endpoint Health Check
 
-* **Type:** Readiness (`@Readiness`)
-* **Name:** `jwks-endpoints`
-* **Endpoint:** `/q/health/ready`
-* **Purpose:** Checks connectivity status of all configured JWKS endpoints
+* **Type:** Readiness (`@Readiness`) | **Name:** `jwks-endpoints` | **Endpoint:** `/q/health/ready`
 
-==== Response Example (UP)
 [source,json]
 ----
 {
@@ -27,41 +22,29 @@ The oauth-sheriff-quarkus extension provides MicroProfile Health checks for JWT 
   "name": "jwks-endpoints",
   "data": {
     "checkedEndpoints": 3,
-    "issuer.keycloak.url": "https://keycloak.example.com/auth/realms/master",
-    "issuer.keycloak.jwksType": "HTTP",
-    "issuer.keycloak.status": "UP"
+    "issuer.0.url": "https://keycloak.example.com/auth/realms/master",
+    "issuer.0.jwksType": "HTTP",
+    "issuer.0.status": "UP"
   }
 }
 ----
 
 === Token Validator Health Check
 
-* **Type:** Liveness (`@Liveness`)
-* **Name:** `jwt-validator`
-* **Endpoint:** `/q/health/live`
-* **Purpose:** Validates TokenValidator configuration and availability
+* **Type:** Liveness (`@Liveness`) | **Name:** `jwt-validator` | **Endpoint:** `/q/health/live`
 
-==== Response Example (UP)
 [source,json]
 ----
 {
   "status": "UP",
   "name": "jwt-validator",
-  "data": {
-    "issuerCount": 3
-  }
+  "data": { "issuerCount": 3 }
 }
 ----
 
 == Configuration
 
-=== Health Check Configuration
-
-For health check configuration options, see the xref:../../oauth-sheriff-quarkus/src/main/resources/META-INF/quarkus-config-doc.adoc#health-check-configuration[Health Check Configuration] section in the main configuration reference.
-
-=== Required Dependency
-
-Add the SmallRye Health extension to enable health checks:
+See xref:../../oauth-sheriff-quarkus/src/main/resources/META-INF/quarkus-config-doc.adoc#_health_checks[Health Check Configuration] for options.
 
 [source,xml]
 ----
@@ -73,74 +56,32 @@ Add the SmallRye Health extension to enable health checks:
 
 == Kubernetes Integration
 
-=== Basic Probe Configuration
-
 [source,yaml]
 ----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: jwt-application
-spec:
-  template:
-    spec:
-      containers:
-        - name: app
-          image: jwt-application:latest
-          livenessProbe:
-            httpGet:
-              path: /q/health/live
-              port: 8080
-            periodSeconds: 30
-            timeoutSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: /q/health/ready
-              port: 8080
-            periodSeconds: 20
-            timeoutSeconds: 5
+livenessProbe:
+  httpGet:
+    path: /q/health/live
+    port: 8080
+  periodSeconds: 30
+  timeoutSeconds: 5
+readinessProbe:
+  httpGet:
+    path: /q/health/ready
+    port: 8080
+  periodSeconds: 20
+  timeoutSeconds: 5
 ----
-
-=== Recommended Settings
-
-* **Liveness Probe:** 30-second intervals for validator availability
-* **Readiness Probe:** 20-second intervals for JWKS connectivity
-* **Timeout:** 5 seconds for both probes
 
 == Health Check Behavior
 
 === JWKS Endpoint Health Check
 
-* **Caches results** for 30 seconds to prevent excessive network calls
-* **Reports per-issuer status** including URL, JWKS type, and connectivity
-* **Returns DOWN** if any configured JWKS endpoint is unreachable
-* **Includes endpoint count** in response data
+* Caches results for 30 seconds to prevent excessive network calls
+* Reports per-issuer status including URL, JWKS type, and connectivity
+* Returns DOWN if any configured JWKS endpoint has a non-OK loader status (unreachable, still initializing, or in error state)
 
 === Token Validator Health Check
 
-* **Validates configuration** without performing token validation
-* **Checks issuer count** to ensure proper setup
-* **Returns DOWN** if TokenValidator is not available or has no issuers
-* **Lightweight check** focused on component availability
-
-== Design Principles
-
-=== Health Checks vs. Metrics
-
-**Health Checks:**
-* Binary UP/DOWN status for operational decisions
-* Used by Kubernetes probes and load balancers
-* Minimal data focused on health status
-* Cached to prevent performance impact
-
-**Metrics (separate concern):**
-* Detailed numerical monitoring data
-* Performance counters, timers, histograms
-* For dashboards and alerting systems
-
-=== Implementation Approach
-
-* **Simple and reliable:** Focus on essential health indicators
-* **Performance conscious:** Caching and minimal network calls
-* **Kubernetes ready:** Appropriate probe types and timeouts
-* **Clear separation:** Health status vs. detailed metrics
+* Injects `List<IssuerConfig>` and checks whether the list is non-empty
+* Returns DOWN if no issuer configurations are found
+* Lightweight check focused on configuration availability (does not inject `TokenValidator`)

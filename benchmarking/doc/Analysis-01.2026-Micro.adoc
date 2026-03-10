@@ -85,7 +85,7 @@ JMH micro-benchmark testing of the core JWT validation library shows:
 
 === Validation Pipeline Breakdown
 
-Based on `jwt-validation-metrics.json` (1,024 samples):
+Based on a dedicated JMH benchmark run (1,024 samples). Note: the test resource file `jwt-validation-metrics.json` contains data from an earlier run with different values (e.g., Complete Validation P50=71µs, P99=2,251µs, Signature Validation P50=60µs). The numbers below reflect the most recent benchmark run used for this analysis:
 
 [cols="2,2,2,2", options="header"]
 |===
@@ -189,7 +189,7 @@ Based on `jwt-validation-metrics.json` (1,024 samples):
 **Primary Bottleneck: Cryptographic Signature Validation**
 
 * **Signature validation**: 68µs P50 (88% of validation time)
-* **Algorithm**: RSA-256 signature verification (asymmetric cryptography)
+* **Algorithm**: RS256 signature verification (asymmetric cryptography)
 * **Not optimizable**: Cryptographic operations are computationally intensive by design
 
 **Secondary Costs:**
@@ -204,7 +204,7 @@ Based on `jwt-validation-metrics.json` (1,024 samples):
 **Fast-Fail Optimization:**
 
 * **50% invalid tokens**: 222k ops/s (+39% throughput)
-* **Early rejection**: Invalid tokens fail at signature validation without full parsing
+* **Early rejection**: Invalid tokens fail at signature validation without full claims validation and token building
 * **Production benefit**: Real-world scenarios with invalid tokens see improved throughput
 
 **Error Distribution:**

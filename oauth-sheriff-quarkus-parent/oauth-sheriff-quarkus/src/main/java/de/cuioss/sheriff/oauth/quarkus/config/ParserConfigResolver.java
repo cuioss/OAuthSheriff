@@ -87,19 +87,17 @@ public class ParserConfigResolver {
                     LOGGER.debug("Set maxPayloadSize from configuration: %s", value);
                 });
 
-        config.getOptionalValue(JwtPropertyKeys.PARSER.MAX_STRING_SIZE, Integer.class)
+        config.getOptionalValue(JwtPropertyKeys.PARSER.MAX_STRING_LENGTH, Integer.class)
                 .ifPresent(value -> {
                     builder.maxStringLength(value);
                     LOGGER.debug("Set maxStringLength from configuration: %s", value);
                 });
 
-        config.getOptionalValue(JwtPropertyKeys.PARSER.MAX_ARRAY_SIZE, Integer.class)
+        config.getOptionalValue(JwtPropertyKeys.PARSER.MAX_BUFFER_SIZE, Integer.class)
                 .ifPresent(value -> {
                     builder.maxBufferSize(value);
                     LOGGER.debug("Set maxBufferSize from configuration: %s", value);
                 });
-
-        // MAX_DEPTH is not supported in the current ParserConfig - remove this configuration option
 
         // Let the builder validate and create the instance
         ParserConfig result = builder.build();

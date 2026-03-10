@@ -7,160 +7,65 @@
 
 == Purpose
 
-This guide provides technical configuration for optimizing Quarkus native images for JWT validation workloads. It defines compiler settings, runtime parameters, and build optimizations for production deployment.
-
-== Related Documentation
-
-* xref:jwt-validation-performance.adoc[JWT Validation Performance] - Performance baselines and metrics
-* xref:jfr-profiling-guide.adoc[JFR Profiling Guide] - Performance analysis tools
-* xref:../configuration/native-image-configuration.adoc[Native Image Configuration] - Basic configuration setup
+Technical configuration for optimizing Quarkus native images for JWT validation workloads -- compiler settings, runtime parameters, and build optimizations for production deployment.
 
 == Build Configuration
 
 === Compiler Optimization Settings
 
-**Standard Optimization Level**:
-
 [source,properties]
 ----
 # application.properties
-# JFR and JCMD support (2024-2026 best practices)
 quarkus.native.monitoring=jfr
-
-# O2 optimization level (verified improvement)
-quarkus.native.additional-build-args=-O2
-
-# Security services for JWT validation
-quarkus.native.additional-build-args=--enable-all-security-services
-
-# Protocol support for JWKS endpoints
-quarkus.native.additional-build-args=--enable-url-protocols=https,http
-----
-
-**Build Memory Configuration**:
-
-[source,properties]
-----
-# Increase build memory for complex applications
-quarkus.native.native-image-xmx=8g
-
-# Container build memory limits
-quarkus.native.container-runtime-options=-m=4g
+quarkus.native.additional-build-args=--enable-url-protocols=https,--enable-http,--enable-https,-O2
 ----
 
 === GraalVM/Mandrel 25 Features
 
-**New in Mandrel jdk-25**:
-
 * **JCMD Support**: Native images support `jcmd` for runtime diagnostics
-* **WP-SCCP**: Whole-Program Sparse Conditional Constant Propagation (enabled by default)
+* **WP-SCCP**: Whole-Program Sparse Conditional Constant Propagation (default)
 * **ML Profile Inference**: 1-3% performance boost via GraalNN
 * **New JFR Events**: `jdk.ObjectAllocationSample` for memory profiling
 
-**Enable JCMD support**:
-
 [source,properties]
 ----
-# Enable JCMD, JFR, and heap dump support
 quarkus.native.monitoring=jcmd,jfr,heapdump
 ----
 
 === Reflection Configuration
 
-**Enhanced Reflection for JWT Validation**:
+The OAuth Sheriff Quarkus deployment automatically registers types for reflection across several build steps, covering JWT validation pipeline, JWKS loading, token content, claim mappers, and security/algorithm classes. The total number of registered types (including transitive Quarkus framework types) varies by build.
 
-The OAuth Sheriff Quarkus deployment automatically registers performance-critical classes for reflection:
+=== Garbage Collection
 
-* JWT validation pipeline classes (NonValidatingJwtParser, TokenSignatureValidator, etc.)
-* JWKS loading classes (HttpJwksLoader, JWKSKeyLoader, KeyInfo, etc.)
-* Token content and claim processing classes
-* Security and algorithm preference classes
-
-**Total Reflection Classes**: 4,734+ types registered automatically.
-
-=== Garbage Collection Configuration
-
-**Production GC Settings**:
-
-[source,properties]
+[source,bash]
 ----
-# Serial GC (default, optimal for JWT validation workloads)
-quarkus.native.additional-build-args=--gc=serial
+# Serial GC is the default for native images and optimal for JWT validation workloads.
+# No additional build args needed.
 
-# Alternative: G1GC for high-throughput scenarios (Oracle GraalVM only)
-# quarkus.native.additional-build-args=--gc=G1
-----
-
-**Memory Management**:
-
-[source,properties]
-----
-# Runtime memory configuration
-quarkus.native.additional-build-args=-J-Xms64m,-J-Xmx512m
+# G1GC: Oracle GraalVM only, Linux only
+native-image --gc=G1 YourApp
 ----
 
 == Runtime Configuration
 
-=== Virtual Thread Configuration
+=== Virtual Threads
 
-**Virtual Thread Settings** (verified 24-30% improvement):
+Verified 24-30% improvement:
 
 [source,properties]
 ----
-# Enable virtual threads for JWT validation
 quarkus.virtual-threads.name-prefix=jwt-validation
 quarkus.virtual-threads.shutdown-timeout=10s
 ----
 
-**Application Annotation**:
-
 [source,java]
 ----
 @RunOnVirtualThread
-public class JwtValidationResource {
-    // JWT validation endpoints
-}
+public class JwtValidationEndpoint { }
 ----
 
-=== Container Resource Configuration
-
-**Memory Limits**:
-
-[source,properties]
-----
-# Container memory limit for optimal utilization
-quarkus.native.container-runtime-options=-m=512m
-----
-
-**Container Runtime Options**:
-
-[source,bash]
-----
-# Docker container configuration (optimized resources)
-docker run -m 512m --cpus="2.0" jwt-application:native
-
-# Docker Compose configuration
-resources:
-  limits:
-    memory: 512M
-    cpus: '2.0'
-  reservations:
-    memory: 256M
-    cpus: '1.0'
-----
-
-=== JFR Monitoring Configuration
-
-**JFR Native Image Implementation** (Dual-Image Maven Profiles):
-
-[source,properties]
-----
-# application.properties
-# Enable JFR and JCMD monitoring (2024-2026 best practices)
-quarkus.native.monitoring=jcmd,jfr,heapdump
-----
-
-**Maven Profile Configuration**:
+=== JFR Monitoring (Dual-Image Maven Profiles)
 
 [source,xml]
 ----
@@ -168,7 +73,6 @@ quarkus.native.monitoring=jcmd,jfr,heapdump
 <profile>
     <id>integration-tests</id>
     <properties>
-        <skipITs>false</skipITs>
         <quarkus.native.container-build>true</quarkus.native.container-build>
         <quarkus.native.enabled>true</quarkus.native.enabled>
     </properties>
@@ -178,7 +82,6 @@ quarkus.native.monitoring=jcmd,jfr,heapdump
 <profile>
     <id>jfr</id>
     <properties>
-        <skipITs>false</skipITs>
         <quarkus.native.enabled>true</quarkus.native.enabled>
         <quarkus.native.monitoring>jfr</quarkus.native.monitoring>
         <quarkus.jfr.enabled>true</quarkus.jfr.enabled>
@@ -186,240 +89,63 @@ quarkus.native.monitoring=jcmd,jfr,heapdump
 </profile>
 ----
 
-**Build and Run Commands**:
+== Complete Configuration Examples
 
-[source,bash]
-----
-# Production build (104MB distroless image)
-cd oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
-../../mvnw clean verify -Pintegration-tests
+=== Production (Example)
 
-# JFR profiling build (187MB UBI-based image)
-cd oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
-../../mvnw clean verify -Pjfr -Dquarkus.native.container-build=true
-
-# Run with JFR and volume mount for output
-docker compose -f docker-compose.yml -f docker-compose.jfr.yml up -d
-----
-
-== Network and Security Configuration
-
-=== HTTPS Configuration
-
-**TLS Protocol Support**:
+NOTE: These are example configurations for reference. The actual project configuration is in `application.properties`.
 
 [source,properties]
 ----
-# Enable HTTPS for JWKS endpoints
-quarkus.native.additional-build-args=--enable-url-protocols=https
-
-# TLS certificate handling
-quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key
-----
-
-=== Security Service Configuration
-
-**JWT Validation Security Services**:
-
-[source,properties]
-----
-# Enable all security services for comprehensive JWT support
-quarkus.native.additional-build-args=--enable-all-security-services
-
-# Alternative: Specific security services only
-quarkus.native.additional-build-args=--enable-security-services=crypto,random
-----
-
-== Build Performance Optimization
-
-=== Parallel Build Configuration
-
-**Multi-threaded Compilation**:
-
-[source,properties]
-----
-# Use available CPU cores for compilation
-quarkus.native.additional-build-args=-H:NumberOfAnalysisThreads=8
-
-# Memory configuration for parallel builds
-quarkus.native.additional-build-args=-J-Xmx8g
-----
-
-=== Build Caching
-
-**Native Image Build Cache**:
-
-[source,bash]
-----
-# Enable build cache directory
-export QUARKUS_NATIVE_CACHE_DIR=/tmp/quarkus-native-cache
-
-# Maven build with caching
-./mvnw clean package -Pnative -Dquarkus.native.reuse-existing=true
-----
-
-=== Incremental Build Configuration
-
-**Development Build Optimization**:
-
-[source,properties]
-----
-# Enable build reports for optimization analysis
-quarkus.native.enable-reports=true
-
-# Development monitoring
-quarkus.native.additional-build-args=--enable-monitoring=heapdump
-----
-
-== Complete Configuration Example
-
-=== Production Configuration
-
-**Complete application.properties for production**:
-
-[source,properties]
-----
-# JFR and JCMD support (2024-2026 best practices)
-quarkus.native.monitoring=jcmd,jfr,heapdump
-
-# Native Image Optimization
-quarkus.native.additional-build-args=-O2,--gc=serial,--enable-all-security-services,--enable-url-protocols=https
-quarkus.native.native-image-xmx=8g
-quarkus.native.container-runtime-options=-m=512m,--cpus=2.0
-
-# Virtual Threads
+quarkus.native.monitoring=jfr
+quarkus.native.additional-build-args=--enable-url-protocols=https,--enable-http,--enable-https,-O2
 quarkus.virtual-threads.name-prefix=jwt-validation
-quarkus.virtual-threads.shutdown-timeout=10s
-
-# Resource Inclusion
 quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key
-
-# Build Reports
-quarkus.native.enable-reports=true
 ----
 
-=== Development Configuration
-
-**Development environment settings**:
+=== Development (Example)
 
 [source,properties]
 ----
-# Development Native Image Settings
 quarkus.native.additional-build-args=-O2,--enable-monitoring=jfr,heapdump
-quarkus.native.native-image-xmx=4g
-
-# Faster development builds
-quarkus.native.reuse-existing=true
 ----
 
 == Build Commands
 
-=== Standard Build Process
-
-**Required Build Sequence**:
-
 [source,bash]
 ----
-# Build oauth-sheriff-core module first
+# Build oauth-sheriff-core first (run from repository root)
 ./mvnw clean install -pl oauth-sheriff-core
 
-# Build native integration
+# Production build
 ./mvnw clean install -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests -Pintegration-tests
-----
 
-=== Performance Testing Build
+# JFR profiling build
+cd oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
+../../mvnw clean verify -Pjfr -Dquarkus.native.container-build=true
 
-**Benchmark-Ready Build**:
-
-[source,bash]
-----
-# Clean build with performance optimization
-./mvnw clean package -Pnative \
-  -Dquarkus.native.additional-build-args="-O2,--gc=serial,--enable-all-security-services"
-
-# Container build for testing
-./mvnw clean package -Pnative \
-  -Dquarkus.native.container-build=true \
-  -Dquarkus.native.container-runtime-options="-m=512m"
+# Run with JFR
+docker compose -f docker-compose.yml -f docker-compose.jfr.yml up -d
 ----
 
 == Runtime Verification
 
-=== Performance Validation
+**Key Performance Indicators** (January 2026):
 
-**Key Performance Indicators** (January 2026 - dual-image variants):
-
-* **Distroless Production Image**:
-  * Native image size: ~104MB
-  * Startup time: 0.172s
-  * JFR support: Limited (filesystem restrictions)
-
-* **UBI-based Profiling Image**:
-  * Native image size: ~187MB
-  * Startup time: ~0.2s
-  * JFR support: Full (with volume mount)
-
-* Memory usage: ~50-128MB RSS (both variants)
-* CPU utilization: 90%+ under load
-* Build time: ~4m 30s (both variants)
-* JFR overhead: Minimal (<1% performance impact)
-
-**Validation Command**:
+* **Distroless Production Image**: ~104MB, 0.172s startup
+* **UBI-based Profiling Image**: ~187MB, ~0.2s startup
+* Memory: ~50-128MB RSS | CPU utilization: 90%+ under load | Build time: ~4m 30s
 
 [source,bash]
 ----
-# Run performance benchmark
-./scripts/benchmark-with-monitoring.sh
-----
-
-=== Health Check Validation
-
-**Native Image Health Verification**:
-
-[source,bash]
-----
-# Check application health
 curl -k https://localhost:10443/q/health/live
 curl -k https://localhost:10443/q/health/ready
 ----
 
 == Troubleshooting
 
-=== Common Build Issues
+* **Missing Reflection**: Ensure oauth-sheriff-core is built before native image
+* **Memory Issues**: Increase native-image-xmx to 8g or higher
+* **Performance Issues**: Verify virtual threads enabled; check GC configuration; validate container resource limits
 
-**Missing Reflection Configuration**:
-
-* Ensure oauth-sheriff-core module is built before native image
-* Verify reflection configuration is applied automatically by deployment
-
-**Memory Issues During Build**:
-
-* Increase native-image-xmx to 8g or higher
-* Use container build with adequate memory allocation
-
-**Runtime Performance Issues**:
-
-* Verify virtual threads are enabled
-* Check garbage collection configuration
-* Validate container resource limits
-
-=== Performance Regression Detection
-
-**Benchmark Comparison** (Current Performance - January 2026):
-
-* JWT Validation: 22,700+ ops/s throughput, 1.91ms P50 latency
-* Health Check: 64,900+ ops/s throughput, 0.510ms P50 latency
-* Memory: ~50-128MB RSS runtime usage
-* Startup: 0.172s (native image)
-
-**Regression Thresholds**:
-
-* Throughput regression: >10% loss requires investigation
-* Latency regression: >20% increase requires investigation
-* Memory regression: >50% increase requires investigation
-
-== See Also
-
-* xref:jwt-validation-performance.adoc[JWT Validation Performance] - Performance baselines and analysis
-* xref:jfr-profiling-guide.adoc[JFR Profiling Guide] - Performance monitoring setup
-* xref:../configuration/native-image-configuration.adoc[Native Image Configuration] - Basic configuration reference
+**Regression Thresholds**: >10% throughput loss, >20% latency increase, >50% memory increase.

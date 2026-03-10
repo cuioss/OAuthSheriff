@@ -7,7 +7,7 @@
 
 == Overview
 
-Complete documentation for the OAuth Sheriff Quarkus extension - a comprehensive JWT validation library integrated with the Quarkus framework. The extension provides automatic configuration, health checks, metrics integration, and development UI components.
+Documentation for the OAuth Sheriff Quarkus extension -- a JWT validation library integrated with Quarkus. The extension provides automatic configuration, health checks, metrics integration, and development UI components.
 
 == Quick Links
 
@@ -16,16 +16,7 @@ Complete documentation for the OAuth Sheriff Quarkus extension - a comprehensive
 
 == Architecture & Implementation
 
-=== Core Extension Architecture
-
-The OAuth Sheriff Quarkus extension provides comprehensive JWT validation capabilities through a modular architecture:
-
-* **Extension Architecture**: Build-time vs runtime components
-* **CDI Integration**: Automatic bean discovery and configuration
-* **Native Image Support**: GraalVM native compilation optimization
-* **DevUI Components**: Development interface with JSON-RPC services
-
-=== Integration Components
+The OAuth Sheriff Quarkus extension provides JWT validation through a modular architecture:
 
 * **xref:integration/quarkus-integration.adoc[Quarkus Framework Integration]** - Core extension architecture
 * **xref:integration/health-checks.adoc[Health Checks]** - MicroProfile Health readiness and liveness probes
@@ -34,65 +25,23 @@ The OAuth Sheriff Quarkus extension provides comprehensive JWT validation capabi
 
 == Configuration & Usage
 
-=== Configuration Management
+* **xref:../oauth-sheriff-quarkus/src/main/resources/META-INF/quarkus-config-doc.adoc[Configuration Reference]** - All `sheriff.oauth.*` properties and defaults
 
 * **xref:configuration/testing-configuration.adoc[Testing Configuration]** - Test profile setup and token utilities
-* **xref:configuration/maven-build-configuration.adoc[Maven Build Configuration]** - Project build setup
 * **xref:configuration/native-image-configuration.adoc[Native Image Configuration]** - GraalVM compilation settings
-
-=== Development Tools
-
 * **xref:development/devui-implementation.adoc[DevUI Implementation]** - Web components and JSON-RPC services
 * **xref:development/devui-testing.adoc[DevUI Testing]** - Development interface validation
 * **xref:development/quarkus-test-setup.adoc[Quarkus Test Framework Setup]** - Test framework configuration
 
 == Performance & Optimization
 
-=== Performance Analysis
-
 * **xref:performance/jwt-validation-performance.adoc[JWT Validation Performance]** - Performance baselines and metrics
 * **xref:performance/native-optimization-guide.adoc[Native Optimization Guide]** - GraalVM build configuration
 * **xref:performance/jfr-profiling-guide.adoc[JFR Profiling Guide]** - Performance analysis tools
 
-== Integration Testing
+== BearerToken CDI Injection
 
-=== Comprehensive Testing
-
-The extension includes comprehensive integration testing in containerized environments:
-
-* **Native Container Testing**: Production-like validation
-* **HTTPS Configuration**: TLS certificate management
-* **Health & Metrics Validation**: End-to-end monitoring verification
-* **DevUI Testing**: Development interface validation
-* **Performance Benchmarking**: Native vs JVM comparisons
-
-For detailed examples, see xref:../oauth-sheriff-quarkus-integration-tests/README.adoc[Integration Tests].
-
-== Standards Compliance
-
-This extension follows the **link:https://github.com/cuioss/cui-llm-rules/tree/main/standards/cdi-quarkus/[CDI Quarkus Standards]** for:
-
-* **Container Security**: OWASP-compliant Docker configurations
-* **Native Image Optimization**: Single-execution Maven builds
-* **Testing Patterns**: Structured test organization
-* **Documentation Standards**: Consistent structure and cross-referencing
-
-== Getting Started
-
-Basic setup steps:
-
-1. **Add the extension** to your Quarkus project
-2. **Configure JWT validation** with issuer and JWKS settings
-3. **Enable health checks** with `quarkus-smallrye-health`
-4. **Add metrics monitoring** with `quarkus-micrometer`
-5. **Use BearerToken CDI injection** for simplified token handling
-6. **Test your setup** using the provided test utilities
-
-For detailed configuration examples, see the xref:../oauth-sheriff-quarkus-integration-tests/README.adoc[Integration Tests] documentation.
-
-=== BearerToken CDI Injection
-
-The extension provides convenient CDI injection for validated bearer tokens with two approaches:
+The extension provides CDI injection for validated bearer tokens:
 
 ==== BearerTokenResult Injection (Recommended)
 
@@ -113,11 +62,6 @@ private BearerTokenResult tokenWithScopes;
 @BearerToken(requiredRoles = {"user"})
 private BearerTokenResult tokenWithRoles;
 
-// With required groups
-@Inject
-@BearerToken(requiredGroups = {"test-group"})
-private BearerTokenResult tokenWithGroups;
-
 // With multiple requirements
 @Inject
 @BearerToken(
@@ -128,15 +72,12 @@ private BearerTokenResult tokenWithGroups;
 private BearerTokenResult tokenWithAllRequirements;
 ----
 
-
 ==== Usage in JAX-RS Endpoints
-
-===== BearerTokenResult Usage with ApplicationScoped
 
 [source,java]
 ----
 @Path("/api")
-@ApplicationScoped
+@RequestScoped
 public class MyEndpoint {
 
     @Inject
@@ -150,44 +91,10 @@ public class MyEndpoint {
             var tokenOpt = tokenResult.getAccessTokenContent();
             if (tokenOpt.isPresent()) {
                 AccessTokenContent token = tokenOpt.get();
-                // Token is valid and has "read" scope
                 return Response.ok("Data for user: " + token.getSubject().orElse("none")).build();
             }
         }
-        // Token missing, invalid, or lacks required scope
         return Response.status(401).entity("Unauthorized").build();
-    }
-}
-----
-
-===== Direct Service Usage
-
-[source,java]
-----
-@Path("/api")
-@ApplicationScoped
-public class MyEndpoint {
-
-    @Inject
-    private BearerTokenProducer tokenProducer;
-
-    @GET
-    @Path("/data")
-    public Response getData() {
-        BearerTokenResult result = tokenProducer.getBearerTokenResult(
-            List.of("read"),
-            List.of("user"),
-            List.of("employees")
-        );
-
-        if (result.isSuccessful()) {
-            AccessTokenContent token = result.getAccessTokenContent().get();
-            return Response.ok("Data for user: " + token.getSubject()).build();
-        } else {
-            return Response.status(401)
-                .entity("Token validation failed: " + result.getStatus())
-                .build();
-        }
     }
 }
 ----
@@ -197,18 +104,11 @@ The `@BearerToken` annotation automatically:
 * Extracts tokens from the `Authorization` header
 * Validates JWT signatures and claims
 * Checks scope, role, and group requirements
-* Returns `null` for invalid or missing tokens (CDI producer)
 * Provides detailed validation information via `BearerTokenResult`
 * Provides request-scoped token instances
 
 == Additional Resources
 
-=== Log Messages
-
-* **xref:../../doc/LogMessages.adoc[Log Messages Reference]** - Complete logging reference for the extension
-
-=== Support
-
+* **xref:../../doc/LogMessages.adoc[Log Messages Reference]** - Complete logging reference
 * **Issues**: Report problems via project issue tracker
 * **Standards**: Follow link:https://github.com/cuioss/cui-llm-rules/tree/main/standards/cdi-quarkus/[CDI Quarkus Standards]
-* **Testing**: Use xref:../oauth-sheriff-quarkus-integration-tests/README.adoc[Integration Tests] as examples

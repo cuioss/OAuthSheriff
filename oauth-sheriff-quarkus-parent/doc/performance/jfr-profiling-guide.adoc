@@ -7,150 +7,83 @@
 
 == Purpose
 
-This guide provides technical instructions for configuring and analyzing Java Flight Recorder (JFR) profiling for Quarkus JWT validation applications. It defines JFR configuration, data collection methods, and analysis techniques for performance optimization.
-
-== Related Documentation
-
-* xref:jwt-validation-performance.adoc[JWT Validation Performance] - Performance baselines and bottleneck analysis
-* xref:native-optimization-guide.adoc[Native Optimization Guide] - GraalVM build configuration with JFR support
-* link:../../../benchmarking/doc/Analysis-01.2026-JFR-Profiling.adoc[JFR Profiling Analysis] - Detailed CPU hotspot data
+Technical instructions for configuring and analyzing Java Flight Recorder (JFR) profiling for Quarkus JWT validation applications.
 
 == JFR Configuration
 
 === Native Image JFR Support
 
-**Build Configuration for JFR**:
-
 [source,properties]
 ----
 # application.properties
-# Enable JFR and JCMD monitoring in native image (2024-2026 best practices)
-quarkus.native.monitoring=jcmd,jfr,heapdump
+quarkus.native.monitoring=jfr
 ----
 
 **Separate Dockerfile Approach**:
 
-Two optimized Dockerfiles provide purpose-built containers:
-
 [source,dockerfile]
 ----
-# Dockerfile.native.distroless (Production)
-FROM quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25 AS build
-# Build without JFR for minimal size
-
+# Dockerfile.native.distroless (Production) - single-stage, copies pre-built native executable
 FROM quay.io/quarkus/quarkus-distroless-image:2.0
-COPY --from=build /build/target/*-runner /app/application
+COPY --chmod=0755 oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/*-runner /app/application
 ----
 
 [source,dockerfile]
 ----
-# Dockerfile.native.jfr (Profiling)
+# Dockerfile.native.jfr (Profiling) - single-stage, copies pre-built native executable
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
-
-# JFR output directory (owned by Quarkus non-root user)
-RUN mkdir -p /tmp/jfr-output && chown 1001:0 /tmp/jfr-output && chmod 775 /tmp/jfr-output
-
-# JFR-enabled entrypoint with profiling
+COPY --chmod=0755 oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/*-runner /app/application
+RUN mkdir -p /tmp/jfr-output && chmod 777 /tmp/jfr-output
 ENTRYPOINT ["/app/application", "-XX:+FlightRecorder", \
   "-XX:StartFlightRecording=filename=/tmp/jfr-output/jwt-profile.jfr,dumponexit=true,duration=240s,settings=profile"]
 ----
 
-**Native Image Build Requirements**:
-
-* Mandrel jdk-25 with JFR support
-* JFR monitoring enabled during native image compilation
-* Build time: ~4m 30s with JFR support
-* Performance impact: Minimal overhead (0.172s startup time)
-
 === JCMD Support (GraalVM 25)
-
-**New in Mandrel/GraalVM 25**: Native images now support `jcmd` for runtime diagnostics.
-
-**Build with JCMD support**:
 
 [source,bash]
 ----
 native-image --enable-monitoring=jcmd,jfr,heapdump YourApp
-----
 
-**Runtime JFR Control via JCMD**:
-
-[source,bash]
-----
-# Start JFR recording on running native image
+# Runtime JFR Control
 jcmd <pid> JFR.start duration=60s filename=profile.jfr
-
-# Check recording status
 jcmd <pid> JFR.check
-
-# Dump recording
 jcmd <pid> JFR.dump filename=profile.jfr
-
-# Stop recording
 jcmd <pid> JFR.stop
 ----
 
 === Runtime JFR Configuration
 
-**Standard JFR Recording Parameters**:
-
 [source,bash]
 ----
-# Fixed duration recording (recommended for analysis)
+# Fixed duration recording
 ./application -XX:StartFlightRecording=duration=60s,filename=jwt-profile.jfr,settings=profile
 
 # Continuous recording with rotation
 ./application -XX:StartFlightRecording=duration=0,filename=jwt-profile-%t.jfr,maxsize=100M,maxage=1h
-
-# High-detail recording for bottleneck analysis
-./application -XX:StartFlightRecording=duration=120s,filename=jwt-detailed.jfr,settings=default
 ----
 
-**Container JFR Configuration (Maven Integration)**:
+=== Container JFR Configuration
 
 [source,bash]
 ----
-# Build and run JFR-enabled containers using Maven
+# Build JFR-enabled containers
 cd oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
 ../../mvnw clean verify -Pjfr -Dquarkus.native.container-build=true
 
-# Run with docker-compose JFR override (includes volume mount)
+# Run with docker-compose JFR override
 docker compose -f docker-compose.yml -f docker-compose.jfr.yml up -d
-
-# JFR recording saves to target/jfr-output/jwt-profile.jfr
 ----
 
-== Container Configuration for JFR
-
-=== Read-Only Filesystem Considerations
-
-Production containers use `read_only: true` security setting. JFR requires a volume mount for output:
+Volume mount required for read-only containers:
 
 [source,yaml]
 ----
 # docker-compose.jfr.yml
 services:
   oauth-sheriff-integration-tests:
-    image: "oauth-sheriff-integration-tests:jfr"
     volumes:
       - ./target/jfr-output:/tmp/jfr-output:rw
 ----
-
-=== Security Settings
-
-[source,yaml]
-----
-# Production security hardening with JFR support
-security_opt:
-  - no-new-privileges:true
-cap_drop:
-  - ALL
-read_only: true
-tmpfs:
-  - /tmp:rw,noexec,nosuid,size=100m
-----
-
-JFR output must use a volume mount, not tmpfs, to persist recordings.
 
 == JFR Analysis
 
@@ -158,213 +91,67 @@ JFR output must use a volume mount, not tmpfs, to persist recordings.
 
 [source,bash]
 ----
-# Summary of recording
 jfr summary jwt-profile.jfr
-
-# Print execution samples
 jfr print --events ExecutionSample jwt-profile.jfr | head -200
-
-# Count samples by category
 jfr print --events ExecutionSample jwt-profile.jfr | grep -i BigInteger | wc -l
 ----
 
-=== CPU Hotspot Analysis
+=== CPU Hotspot Analysis (January 2026)
 
-**January 2026 JFR Findings** (48,027 execution samples, top-of-stack):
+48,027 execution samples (top-of-stack):
 
 [cols="2,1,1", options="header"]
 |===
 | Component | Samples | Percentage
 
-| TLS Encryption (GHASH, AES, CounterMode)
-| 8,970
-| **18.7%**
-
-| Network I/O (Socket read/write)
-| 4,369
-| 9.1%
-
-| JVM/GC Overhead
-| ~3,000
-| 6.3%
-
-| Vert.x/Netty Buffer Operations
-| 1,656
-| 3.5%
-
-| CUI Sheriff OAuth Library
-| ~150
-| **0.3%**
-
-| BigInteger (RSA)
-| 46
-| **0.1%**
+| TLS Encryption (GHASH, AES, CounterMode) | 8,970 | **18.7%**
+| Network I/O (Socket read/write) | 4,369 | 9.1%
+| JVM/GC Overhead | ~3,000 | 6.3%
+| Vert.x/Netty Buffer Operations | 1,656 | 3.5%
+| CUI Sheriff OAuth Library | ~150 | **0.3%**
+| BigInteger (RSA) | 46 | **0.1%**
 |===
 
-NOTE: These are "hot" methods at the top of the call stack during execution sampling.
-
-=== Key Findings
-
-**TLS encryption is the largest CPU consumer**:
-
-* HTTPS encryption/decryption accounts for 18.7% of top-of-stack samples
-* This is transport security cost, present in any HTTPS application
-
-**RSA/BigInteger operations are minimal**:
-
-* Only 0.1% of CPU samples (46 of 48,027) involve BigInteger operations
-* RSA signature verification takes 68µs (JMH verified)
-
-**CUI Sheriff OAuth library overhead is minimal**:
-
-* Only 0.3% of CPU samples in CUI library code
-* Token validation overhead is dominated by I/O and TLS, not application logic
+Key findings: TLS encryption is the largest CPU consumer (18.7%). RSA/BigInteger is minimal (0.1%). OAuth library overhead is 0.3%.
 
 == JFR Events Reference
-
-=== Key Events for JWT Profiling
 
 [cols="2,3", options="header"]
 |===
 | Event | Purpose
 
-| `jdk.ExecutionSample`
-| CPU profiling - identify hotspots
-
-| `jdk.ObjectAllocationSample`
-| Memory allocation profiling (new in GraalVM 25)
-
-| `jdk.ThreadPark`
-| Thread blocking analysis
-
-| `jdk.GarbageCollection`
-| GC pause analysis
-
-| `jdk.SocketRead` / `jdk.SocketWrite`
-| Network I/O profiling
+| `jdk.ExecutionSample` | CPU profiling hotspots
+| `jdk.ObjectAllocationSample` | Memory allocation (new in GraalVM 25)
+| `jdk.ThreadPark` | Thread blocking analysis
+| `jdk.GarbageCollection` | GC pause analysis
+| `jdk.SocketRead` / `jdk.SocketWrite` | Network I/O profiling
 |===
-
-=== Filtering Events
-
-[source,bash]
-----
-# Execution samples only
-jfr print --events ExecutionSample jwt-profile.jfr
-
-# Memory allocation samples
-jfr print --events ObjectAllocationSample jwt-profile.jfr
-
-# GC events
-jfr print --events GarbageCollection jwt-profile.jfr
-----
 
 == Workflow: Performance Investigation
 
-=== Step 1: Collect JFR Data
-
 [source,bash]
 ----
-# Start containers with JFR
+# 1. Start containers with JFR
 docker compose -f docker-compose.yml -f docker-compose.jfr.yml up -d
 
-# Wait for startup
-sleep 10
+# 2. Run load test
+wrk -t4 -c50 -d60s --latency -s benchmarking/benchmark-integration-wrk/src/main/resources/wrk-scripts/jwt_benchmark.lua https://localhost:10443/jwt/validate
 
-# Run load test
-wrk -t4 -c50 -d60s --latency -s benchmark.lua https://localhost:10443/jwt/validate
-
-# Stop containers (triggers JFR dump)
+# 3. Stop containers (triggers JFR dump)
 docker compose down
-----
 
-=== Step 2: Analyze Recording
-
-[source,bash]
-----
-# Summary
+# 4. Analyze
 jfr summary target/jfr-output/jwt-profile.jfr
-
-# Count samples by component
-echo "BigInteger: $(jfr print --events ExecutionSample target/jfr-output/jwt-profile.jfr | grep -i BigInteger | wc -l)"
-echo "TLS: $(jfr print --events ExecutionSample target/jfr-output/jwt-profile.jfr | grep -iE 'SHA|AES|GCM' | wc -l)"
-echo "CDI: $(jfr print --events ExecutionSample target/jfr-output/jwt-profile.jfr | grep -iE 'Arc|Instance|Context' | wc -l)"
 ----
-
-=== Step 3: Visualize with JDK Mission Control
-
-For detailed flame graph analysis:
-
-1. Download JDK Mission Control
-2. Open `.jfr` file
-3. Navigate to "Method Profiling" view
-4. Generate flame graph
 
 == Troubleshooting
 
-=== JFR File Not Created
-
-**Symptoms**: `/tmp/jfr-output/jwt-profile.jfr` doesn't exist
-
-**Causes**:
-* Read-only filesystem without volume mount
-* Container stopped before JFR dump completed
-* Permission issues
-
-**Solution**:
-[source,yaml]
-----
-# Add volume mount in docker-compose.jfr.yml
-volumes:
-  - ./target/jfr-output:/tmp/jfr-output:rw
-----
-
-=== JFR Recording Too Small
-
-**Symptoms**: Few samples collected
-
-**Causes**:
-* Recording duration too short
-* No load during recording
-* Wrong sampling settings
-
-**Solution**:
-[source,bash]
-----
-# Use profile settings for better sampling
--XX:StartFlightRecording=settings=profile,duration=240s
-----
-
-=== Container Fails to Start with JFR
-
-**Symptoms**: `DCmdException: Could not start recording`
-
-**Cause**: JFR output directory not writable
-
-**Solution**: Ensure volume mount exists before container start:
-[source,bash]
-----
-mkdir -p target/jfr-output
-docker compose -f docker-compose.yml -f docker-compose.jfr.yml up -d
-----
+* **JFR file not created**: Ensure volume mount exists; check permissions; container may have stopped before dump
+* **Recording too small**: Use `settings=profile` and duration >= 60s; ensure load during recording
+* **Container fails to start**: Ensure JFR output directory exists: `mkdir -p target/jfr-output`
 
 == Performance Impact
 
-=== JFR Overhead
-
 * CPU overhead: <2% with profile settings
 * Memory overhead: ~10-50MB for recording buffer
-* Startup impact: Negligible
-
-=== Production Use
-
-JFR is safe for production:
-* Minimal overhead
-* Can be enabled/disabled via JCMD at runtime
-* Recording can be triggered on-demand
-
-== See Also
-
-* xref:jwt-validation-performance.adoc[JWT Validation Performance] - Performance baselines
-* xref:native-optimization-guide.adoc[Native Optimization Guide] - Build configuration
-* xref:graalvm-rsa-optimization-analysis.adoc[GraalVM RSA Analysis] - Cryptographic performance
-* link:../../../benchmarking/doc/Analysis-01.2026-JFR-Profiling.adoc[JFR Profiling Analysis] - Full analysis report
+* Safe for production; can be enabled/disabled via JCMD at runtime

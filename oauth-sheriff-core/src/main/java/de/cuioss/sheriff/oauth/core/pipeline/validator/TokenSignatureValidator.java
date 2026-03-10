@@ -51,8 +51,8 @@ import java.security.*;
  * ensuring excellent compatibility with GraalVM native image compilation and optimal performance.
  * <p>
  * For more details on signature validation, see the
- * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/technical-components.adoc#token-validation-pipeline">Token Validation Pipeline</a>
- * and <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/architecture.adoc#token-validation-pipeline">Token Validation Pipeline</a>
+ * and <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/security/security-reference.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  */

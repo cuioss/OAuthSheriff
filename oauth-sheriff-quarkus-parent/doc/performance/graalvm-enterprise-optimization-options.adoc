@@ -7,101 +7,49 @@
 
 == Overview
 
-This document outlines GraalVM Enterprise Edition (Oracle GraalVM) specific optimization options. These features require Oracle GraalVM or commercial licensing.
+GraalVM Enterprise Edition (Oracle GraalVM) specific optimization options. These features require Oracle GraalVM or commercial licensing.
 
 **Context**: OAuth Sheriff targets GraalVM Community Edition (Mandrel) as primary runtime +
-**Purpose**: Reference for organizations with Oracle GraalVM access +
 **Current Performance**: Community Edition achieves 22,700+ ops/s JWT validation
 
 == Enterprise Edition Features
 
 === Profile-Guided Optimization (PGO)
 
-**Description**: Collect profiling data during representative workload execution, then use that data to optimize native image compilation.
-
-**Implementation**:
-
 [source,bash]
 ----
 # Step 1: Build instrumented executable
 native-image --pgo-instrument YourApp
 
-# Step 2: Run application with representative workload
-./your-app-instrumented
-# Generate traffic to collect profile data
+# Step 2: Run with representative workload to collect profile data
 
-# Step 3: Build optimized executable using collected profile
+# Step 3: Build optimized executable
 native-image --pgo=default.iprof -O3 YourApp
 ----
 
-**Expected Benefits**:
-
 * 15-20% performance improvement (Oracle estimates)
 * 10-15% smaller binary size
-* Better branch prediction optimization
-
-**Note**: With current performance at 22,700 ops/s, PGO would provide incremental improvement (potentially 25,000-27,000 ops/s) rather than transformational gains.
 
 === G1 Garbage Collector
-
-**Description**: Advanced garbage collector optimized for low latency.
-
-**Implementation**:
 
 [source,bash]
 ----
 native-image --gc=G1 YourApp
 ----
 
-**Availability**: Linux only with Oracle GraalVM
-
-**Benefits**:
-
-* Improved latency consistency
-* Better performance for memory-intensive workloads
-* Concurrent garbage collection
-
-**Assessment**: Serial GC (default) performs well for JWT validation workloads. G1 may help with extreme concurrency scenarios.
+* Linux only with Oracle GraalVM
+* Improved latency consistency for memory-intensive workloads
+* Serial GC (default) performs well for JWT validation workloads
 
 === Jipher JCE Provider
 
-**Description**: Oracle-developed JCA provider with OpenSSL 3.0 backend for FIPS validation.
+WARNING: Jipher is **no longer bundled** with Oracle GraalVM 25. Must be downloaded separately.
 
-**Status Update (GraalVM 25)**:
-
-[WARNING]
-====
-Jipher is **no longer bundled** with Oracle GraalVM 25. It must be downloaded separately from Oracle's Java Tools and Resources portal.
-====
-
-**Use Cases**:
-
-* FIPS 140-2 compliance requirements
-* Regulated environments (financial, healthcare, government)
-* OpenSSL-optimized cryptographic operations
-
-**Assessment**: With RSA at 68µs using default JDK provider, Jipher is only relevant for FIPS compliance, not performance optimization.
+Relevant only for FIPS 140-2 compliance, not performance optimization (RSA already at 68us).
 
 === ML-Powered Optimization (GraalVM 25)
 
-**Description**: GraalNN neural network for profile inference, available in both Community and Enterprise editions.
-
-**Implementation**:
-
-[source,bash]
-----
-# Automatically enabled with -O2 and -O3
-native-image -O3 YourApp
-----
-
-**Features**:
-
-* XGBoost-based static profiler for call-count inference
-* Classifies methods as "regular/hot" or "cold"
-* Guides optimization decisions
-* 1-3% performance boost
-
-**Note**: This feature is now available in Community Edition (Mandrel) as well.
+Automatically enabled with `-O2` and `-O3`. XGBoost-based static profiler providing 1-3% boost. Now available in Community Edition (Mandrel) as well.
 
 == Cost-Benefit Analysis
 
@@ -111,21 +59,10 @@ native-image -O3 YourApp
 |===
 | Metric | Community Edition | Notes
 
-| JWT Throughput
-| 22,700+ ops/s
-| Exceeds targets by 2.3x
-
-| P50 Latency
-| 1.91ms
-| Exceeds target by 2.6x
-
-| RSA Verification
-| 68µs
-| Excellent, no bottleneck
-
-| Startup Time
-| 0.172s
-| Exceeds target by 5.8x
+| JWT Throughput | 22,700+ ops/s | Exceeds targets by 2.3x
+| P50 Latency | 1.91ms | Exceeds target by 2.6x
+| RSA Verification | 68us | No bottleneck
+| Startup Time | 0.172s | Exceeds target by 5.8x
 |===
 
 === Enterprise Edition Expected Gains
@@ -134,40 +71,19 @@ native-image -O3 YourApp
 |===
 | Feature | Expected Improvement | Cumulative Ops/s
 
-| Baseline (Community)
-| -
-| 22,700
-
-| PGO
-| +15-20%
-| 26,000-27,200
-
-| G1 GC (if applicable)
-| +5-10%
-| 27,300-29,900
-
-| Combined Maximum
-| +25-30%
-| ~29,500
+| Baseline (Community) | - | 22,700
+| PGO | +15-20% | 26,000-27,200
+| G1 GC (if applicable) | +5-10% | 27,300-29,900
+| Combined Maximum | +25-30% | ~29,500
 |===
 
-**Assessment**: Enterprise Edition could potentially achieve ~30,000 ops/s, but 22,700 ops/s already exceeds requirements. The incremental gain may not justify licensing costs for most deployments.
+22,700 ops/s already exceeds requirements. Incremental gain may not justify licensing costs.
 
 === When Enterprise Edition Matters
 
-**Consider Enterprise Edition if**:
-
-1. **FIPS Compliance Required**: Jipher provides certified FIPS 140-2 cryptography
-2. **Already Using Oracle Infrastructure**: Existing Oracle GraalVM deployments
-3. **Extreme Performance Requirements**: Need every percentage point of throughput
-4. **Enterprise Support Required**: Oracle support contracts
-
-**Community Edition is Sufficient if**:
-
-1. **Standard JWT Validation**: 22,700+ ops/s meets requirements
-2. **No FIPS Requirement**: Default JDK provider is adequate
-3. **Cost Sensitivity**: Licensing costs exceed performance value
-4. **Mandrel Ecosystem**: Red Hat/Quarkus alignment preferred
+* FIPS 140-2 compliance via Jipher
+* Existing Oracle GraalVM deployments
+* Extreme performance requirements
 
 == Build Configuration Reference
 
@@ -175,46 +91,25 @@ native-image -O3 YourApp
 
 [source,bash]
 ----
-# Standard optimized build
 native-image -O2 \
   --enable-monitoring=jcmd,jfr,heapdump \
-  --enable-all-security-services \
-  --enable-url-protocols=https,http \
+  --enable-url-protocols=https \
+  --enable-http --enable-https \
   YourApp
 ----
+
+NOTE: `--enable-all-security-services` was deprecated in GraalVM 24 and removed in GraalVM 25 -- all security services are now enabled by default. This project does not use the flag; no backward compatibility configuration is needed.
 
 === Enterprise Edition (Oracle GraalVM)
 
 [source,bash]
 ----
-# Maximum optimization with PGO and G1
 native-image -O3 \
   --pgo=production.iprof \
   --gc=G1 \
   --enable-monitoring=jcmd,jfr,heapdump \
-  --enable-all-security-services \
-  --enable-url-protocols=https,http \
+  --enable-url-protocols=https \
+  --enable-http --enable-https \
   -march=native \
   YourApp
 ----
-
-== Conclusion
-
-**Primary Recommendation**: Use Mandrel (Community Edition) for OAuth Sheriff deployments.
-
-* Current performance (22,700+ ops/s) exceeds targets significantly
-* RSA at 68µs is not a bottleneck requiring enterprise optimization
-* Enterprise Edition provides incremental, not transformational, gains
-* Community Edition receives GraalVM 25 improvements (ML profile inference, JCMD support)
-
-**Consider Enterprise Edition only for**:
-
-* FIPS 140-2 compliance via Jipher
-* Organizations already invested in Oracle GraalVM
-* Extreme micro-optimization scenarios
-
-== Related Documents
-
-* xref:jwt-validation-performance.adoc[JWT Validation Performance] - Current performance baselines
-* xref:graalvm-rsa-optimization-analysis.adoc[GraalVM RSA Analysis] - Cryptographic performance details
-* xref:native-optimization-guide.adoc[Native Optimization Guide] - Community Edition configuration

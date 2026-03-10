@@ -7,16 +7,7 @@
 
 == Purpose
 
-This document defines the current JWT validation performance characteristics, baselines, and analysis for the CUI OAuth Sheriff Quarkus integration. It provides technical specifications for performance metrics, latency decomposition, and optimization guidance.
-
-== Related Documentation
-
-* xref:native-optimization-guide.adoc[Native Optimization Guide] - GraalVM build configuration and optimization settings
-* xref:jfr-profiling-guide.adoc[JFR Profiling Guide] - Performance analysis tools and methods
-* xref:graalvm-rsa-optimization-analysis.adoc[GraalVM RSA Analysis] - Cryptographic performance analysis
-* link:../../../benchmarking/doc/Analysis-01.2026-Integration.adoc[Integration Benchmark Analysis] - Full benchmark data tables
-* link:../../../benchmarking/doc/Analysis-01.2026-JFR-Profiling.adoc[JFR Profiling Analysis] - CPU hotspot analysis
-* link:../../../benchmarking/doc/Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition] - Five-layer latency breakdown
+JWT validation performance characteristics, baselines, and analysis for the CUI OAuth Sheriff Quarkus integration.
 
 == Performance Baselines (January 2026)
 
@@ -24,7 +15,7 @@ This document defines the current JWT validation performance characteristics, ba
 
 * **Platform**: Apple M4, 10 CPU cores, 32 GB RAM
 * **Runtime**: Mandrel jdk-25 native image
-* **Framework**: Quarkus 3.27.2 (LTS)
+* **Framework**: Quarkus 3.32.1
 * **Container**: Docker with Keycloak for token issuance
 
 === Current Performance Summary
@@ -33,252 +24,102 @@ This document defines the current JWT validation performance characteristics, ba
 |===
 | Endpoint | Throughput | P50 Latency | P99 Latency
 
-| **JWT Validation**
-| 22,700-24,300 ops/s
-| 1.91ms
-| 4.78ms
-
-| **Health Check**
-| 64,900-89,900 ops/s
-| 0.426-0.510ms
-| 1.37ms
-
-| **JWT Library (JMH)**
-| 159,100 ops/s
-| 77µs
-| N/A
+| **JWT Validation** | 22,700-24,300 ops/s | 1.91ms | 4.78ms
+| **Health Check** | 64,900-89,900 ops/s | 0.426-0.510ms | 1.37ms
+| **JWT Library (JMH)** | 159,100 ops/s | 77us | N/A
 |===
 
-NOTE: JWT validation is 4.55x slower than health check baseline due to CDI producer chain, JWT parsing, and signature verification overhead. Health P50 varies between benchmark runs (0.426-0.510ms) due to normal benchmark variance (±20%).
-
-=== Connection Scaling Performance
-
-JWT validation throughput remains stable at **22.7-24.3K ops/s** across 50-300 concurrent connections, with a constant JWT/Health P50 latency ratio of **4.55x** (SD 0.09). This demonstrates excellent scalability — JWT-specific overhead is a fixed multiplier, not a load-dependent bottleneck.
-
-See link:../../../benchmarking/doc/Analysis-01.2026-Integration.adoc[Integration Benchmark Analysis] for full connection sweep data.
+JWT validation throughput remains stable at 22.7-24.3K ops/s across 50-300 concurrent connections with a constant JWT/Health P50 ratio of 4.55x (SD 0.09).
 
 == Latency Decomposition
-
-=== Summary
 
 [cols="2,2,2", options="header"]
 |===
 | Component | Latency (P50) | Percentage
 
-| Shared Infrastructure (Docker, TLS, HTTP/2, Quarkus routing)
-| 0.510ms
-| 27%
-
-| Framework Overhead (POST, JAX-RS, Jackson)
-| 0.313ms
-| 16%
-
-| **Token Validation** (CDI producer + JWT validation)
-| **1.087ms**
-| **57%**
+| Shared Infrastructure (Docker, TLS, HTTP/2, Quarkus routing) | 0.510ms | 27%
+| Framework Overhead (POST, JAX-RS, Jackson) | 0.313ms | 16%
+| **Token Validation** (CDI producer + JWT validation) | **1.087ms** | **57%**
 |===
 
 **Total**: 0.510 + 0.313 + 1.087 = **1.91ms** (JWT P50 at 50 connections)
 
-=== Key Insight
-
-A **mock JWT endpoint** (`/mock-jwt/validate`) performs all HTTP processing but skips `tokenValidator.createAccessToken()`. This isolates the token validation cost at **1.087ms** — the dominant contributor (57%) to request latency.
-
-The application context (1.087ms) is **14x slower** than the isolated library (77µs JMH). This gap includes CDI `Instance.get()` resolution, InjectionPoint introspection, `@Timed` instrumentation, and object allocation under 50 concurrent connections. JFR analysis shows this is primarily non-CPU overhead (memory allocation, CDI context creation) rather than lock contention.
-
-See link:../../../benchmarking/doc/Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition — Ablation Study] for five-layer methodology and link:../../../benchmarking/doc/Analysis-01.2026-JFR-Profiling.adoc[JFR Profiling Analysis] for non-CPU overhead analysis.
-
-=== CDI Overhead: Inherent by Design
-
-**Investigation Status**: Complete — root cause understood, optimization not feasible.
-
-The 14x JMH-to-integration gap is caused by CDI `Instance.get()` overhead, which is **inherent to the security design**:
-
-* Each `Instance.get()` call creates a `CreationalContext`, constructs `InjectionPointImpl`, and extracts `@BearerToken` annotation parameters
-* The `JwtValidationEndpoint` uses multiple injection points with different authorization requirements (scopes, roles, groups)
-* Quarkus `@WithCaching` cannot be applied because it would cache the first result and return it for all injection points → **security bypass**
-
-**Why this matters**: The overhead is the cost of per-request authorization validation with different requirements per injection point. This is correct behavior, not a bug.
-
-**Performance impact**: Despite the overhead, performance targets are exceeded (23K ops/s vs 10K target, 1.9ms P50 vs 5ms target).
-
-See link:../../../benchmarking/doc/Analysis-01.2026-JFR-Profiling.adoc#_cdi_instanceget_research_findings[CDI Instance.get() Research Findings] for full analysis.
+A mock JWT endpoint isolates the token validation cost at 1.087ms. The 14x gap between library (77us JMH) and integration (1.087ms) is caused by CDI `Instance.get()` resolution, InjectionPoint introspection, `@Timed` instrumentation, and object allocation. This overhead is **inherent to the security design** -- per-request authorization with different requirements per injection point. `@WithCaching` would cause a security bypass.
 
 == JWT Library Performance (JMH Analysis)
-
-=== Component-Level Timing
 
 [cols="2,2,2", options="header"]
 |===
 | Component | Time | Share of JWT Processing
 
-| RSA Signature Verification
-| 68µs
-| **88%**
-
-| Token Parsing
-| 4.3µs
-| 6%
-
-| Cache Operations
-| 0.1µs
-| <1%
-
-| Other
-| ~4.6µs
-| 6%
+| RSA Signature Verification | 68us | **88%**
+| Token Parsing | 4.3us | 6%
+| Cache Operations | 0.1us | <1%
+| Other | ~4.6us | 6%
 |===
 
-=== RSA Performance Verdict
-
-**RSA signature verification at 68µs is excellent** and NOT a performance bottleneck. Historical claims of 230ms RSA overhead were based on incorrect benchmark methodology.
-
-JFR profiling confirms BigInteger.modPow() accounts for only **1% of CPU samples** during load testing. The dominant CPU consumer is **TLS encryption at 89%** (HTTPS overhead, not JWT-specific).
-
-See link:../../../benchmarking/doc/Analysis-01.2026-JFR-Profiling.adoc[JFR Profiling Analysis] for full CPU hotspot data.
+RSA at 68us is NOT a bottleneck. JFR confirms BigInteger.modPow() accounts for only 0.1% of CPU samples.
 
 == Algorithm Performance Characteristics
-
-=== Signature Algorithm Comparison
 
 [cols="2,2,2,3", options="header"]
 |===
 | Algorithm | Type | Security Level | Performance Notes
 
-| RS256/384/512
-| RSA
-| 2048-bit
-| 68µs - Current default, excellent performance
-
-| ES256/384/512
-| ECDSA
-| 256-384-bit curves
-| Expected faster, marginal benefit over current RSA
-
-| Ed25519/Ed448
-| EdDSA
-| Curve25519/448
-| Fastest, smaller signatures
+| RS256/384/512 | RSA | 2048-bit | 68us - Current default, excellent
+| ES256/384/512 | ECDSA | 256-384-bit curves | Expected faster, marginal benefit
+| Ed25519/Ed448 | EdDSA | Curve25519/448 | Fastest, smaller signatures
 |===
 
-=== Algorithm Migration Guidance
-
-**No urgent algorithm migration required.** With RSA at 68µs (88% of 77µs total library processing), algorithm choice should be driven by:
-
-1. **Standards compliance** - What do your identity providers support?
-2. **Token size** - EdDSA provides smaller signatures for bandwidth-constrained scenarios
-3. **Key management** - RSA key rotation workflows may differ from ECDSA/EdDSA
-
-Migration to ECDSA/EdDSA would provide marginal improvement (~50µs savings) representing only 2.5% of total request latency.
+No urgent algorithm migration required. Algorithm choice should be driven by standards compliance, token size, and key management.
 
 == Native Image Performance
-
-=== Build Metrics
 
 [cols="2,2,3", options="header"]
 |===
 | Metric | Value | Notes
 
-| Startup Time
-| 0.172s
-| Excellent for serverless/container workloads
-
-| Image Size (Distroless)
-| ~104MB
-| Production deployment target
-
-| Image Size (JFR-enabled)
-| ~187MB
-| Includes UBI runtime for profiling
-
-| Memory (RSS)
-| ~50-128MB peak
-| Efficient for 512MB container limit
-
-| Build Time
-| ~4m 30s
-| With Mandrel jdk-25 container build
+| Startup Time | 0.172s | Excellent for serverless/container workloads
+| Image Size (Distroless) | ~104MB | Production deployment
+| Image Size (JFR-enabled) | ~187MB | Includes UBI runtime for profiling
+| Memory (RSS) | ~50-128MB peak | Efficient for 512MB container limit
+| Build Time | ~4m 30s | With Mandrel jdk-25 container build
 |===
 
 === GraalVM/Mandrel 25 Features
 
-* **WP-SCCP**: Whole-Program Sparse Conditional Constant Propagation (enabled by default)
-* **ML Profile Inference**: 1-3% performance boost via GraalNN
-* **JCMD Support**: Native images now support `jcmd` for runtime diagnostics
+* **WP-SCCP**: Whole-Program Sparse Conditional Constant Propagation (default)
+* **ML Profile Inference**: 1-3% boost via GraalNN
+* **JCMD Support**: Runtime diagnostics for native images
 * **JFR Improvements**: New `jdk.ObjectAllocationSample` event
 
 == Performance Targets
-
-=== Current Achievement Status
 
 [cols="2,2,2,2", options="header"]
 |===
 | Metric | Target | Actual | Status
 
-| JWT Throughput
-| >10,000 ops/s
-| 22,700+ ops/s
-| ✅ Exceeds 2.3x
-
-| JWT P50 Latency
-| <5ms
-| 1.91ms
-| ✅ Exceeds by 2.6x
-
-| Health Baseline
-| >50,000 ops/s
-| 64,900+ ops/s
-| ✅ Exceeds 1.3x
-
-| Memory Usage
-| <90% of 512MB
-| ~128MB peak
-| ✅ 25% utilization
-
-| Startup Time
-| <1s
-| 0.172s
-| ✅ Exceeds 5.8x
+| JWT Throughput | >10,000 ops/s | 22,700+ ops/s | Exceeds 2.3x
+| JWT P50 Latency | <5ms | 1.91ms | Exceeds 2.6x
+| Health Baseline | >50,000 ops/s | 64,900+ ops/s | Exceeds 1.3x
+| Memory Usage | <90% of 512MB | ~128MB peak | 25% utilization
+| Startup Time | <1s | 0.172s | Exceeds 5.8x
 |===
-
-=== Performance Optimization Priorities
-
-If further optimization is needed:
-
-1. **CDI Producer Chain** — ❌ **Not optimizable** (see <<CDI Overhead: Inherent by Design>>). `@RequestScoped` caching and `@WithCaching` are blocked by security requirements — different injection points require different authorization parameters.
-2. **TLS Session Resumption** - Verify session cache effectiveness
-3. **Connection Pooling** - Monitor Netty buffer allocation under extreme load
-
-NOTE: The dominant cost (CDI Instance.get() overhead at 57% of latency) cannot be reduced without API changes. Current performance (23K ops/s, 1.9ms P50) exceeds all targets.
 
 == Benchmark Execution
 
-=== Standard Benchmark Commands
-
 [source,bash]
 ----
-# Build and run integration benchmarks
+# Integration benchmarks
 cd oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
 ../../mvnw clean verify -Pintegration-tests
 
-# Run JMH microbenchmarks
+# JMH microbenchmarks (run from repository root)
 cd benchmarking/benchmark-core
 ../../mvnw clean verify -Pbenchmark
 
-# JFR profiling with volume mount
+# JFR profiling
 docker compose -f docker-compose.yml -f docker-compose.jfr.yml up -d
 ----
 
-=== Performance Regression Detection
-
-* **Regression threshold**: >10% throughput loss
-* **Improvement threshold**: >5% throughput gain
-* **Memory threshold**: <90% container limit
-* **CPU utilization target**: ≥90% under load
-
-== See Also
-
-* xref:native-optimization-guide.adoc[Native Optimization Guide]
-* xref:jfr-profiling-guide.adoc[JFR Profiling Guide]
-* xref:graalvm-rsa-optimization-analysis.adoc[GraalVM RSA Analysis]
-* xref:graalvm-enterprise-optimization-options.adoc[Enterprise Optimization Options]
+**Regression Thresholds**: >10% throughput loss, >20% latency increase, >50% memory increase.

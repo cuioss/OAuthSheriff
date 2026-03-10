@@ -8,32 +8,20 @@
 
 The library supports automatic configuration through OpenID Connect Discovery, allowing dynamic retrieval of issuer metadata and JWKS endpoints.
 
-== Overview
-
-OpenID Connect Discovery enables automatic configuration by fetching metadata from the well-known endpoint:
-
-* Automatic JWKS endpoint discovery
-* Issuer validation
-* Supported algorithms detection
-* Token endpoint discovery
-
 == Basic Discovery Setup
 
 [source,java]
 ----
-// 1. Configure JWKS loader with well-known discovery URL
 HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
     .wellKnownUrl("https://accounts.google.com/.well-known/openid-configuration")
     .build();
 
-// 2. Build issuer configuration with expected audience
-// The issuer identifier will be automatically discovered from the well-known endpoint
+// Issuer identifier is automatically discovered from the well-known endpoint
 IssuerConfig issuerConfig = IssuerConfig.builder()
     .expectedAudience("your-client-id")
     .httpJwksLoaderConfig(jwksConfig)
     .build();
 
-// 3. Create the token validator
 TokenValidator validator = TokenValidator.builder()
     .issuerConfig(issuerConfig)
     .build();
@@ -50,7 +38,6 @@ The well-known endpoint returns a JSON document with issuer metadata:
   "jwks_uri": "https://www.googleapis.com/oauth2/v3/certs",
   "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
   "token_endpoint": "https://oauth2.googleapis.com/token",
-  "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo",
   "id_token_signing_alg_values_supported": ["RS256"],
   "subject_types_supported": ["public"],
   "response_types_supported": ["code", "token", "id_token"]
@@ -59,48 +46,31 @@ The well-known endpoint returns a JSON document with issuer metadata:
 
 == Using HttpWellKnownResolver
 
-The `HttpWellKnownResolver` handles the discovery process:
-
 [source,java]
 ----
-try {
-    // Configure parser for large discovery documents
-    ParserConfig parserConfig = ParserConfig.builder()
-        .maxPayloadSize(4096)  // Adjust for large discovery documents
-        .build();
+WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
+    .wellKnownUrl(wellKnownUrl.toString())
+    .parserConfig(ParserConfig.builder()
+        .maxPayloadSize(4096)  // Limits parsed JSON payload size
+        .build())
+    .build();
 
-    // Create well-known configuration with custom parser
-    WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
-        .wellKnownUrl(wellKnownUrl.toString())
-        .parserConfig(parserConfig)
-        .build();
+HttpWellKnownResolver wellKnownResolver = new HttpWellKnownResolver(wellKnownConfig);
 
-    // Create resolver with the configuration
-    HttpWellKnownResolver wellKnownResolver = new HttpWellKnownResolver(wellKnownConfig);
-
-    // The resolver validates issuer consistency automatically
-    // Access discovered endpoints if needed
-    Optional<HttpHandler> jwksHandler = wellKnownResolver.getJwksUri();
-    Optional<HttpHandler> issuerHandler = wellKnownResolver.getIssuer();
-
-} catch (IOException e) {
-    // Handle discovery failures
-    LOGGER.error("OIDC Discovery failed: %s", e.getMessage());
-}
+Optional<String> jwksUri = wellKnownResolver.getJwksUri();
+Optional<String> issuer = wellKnownResolver.getIssuer();
 ----
 
 == Configuring HttpJwksLoaderConfig
-
-Once discovery is complete, configure the JWKS loader:
 
 [source,java]
 ----
 HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
     .wellKnownUrl("https://your-issuer.com/.well-known/openid-configuration")
     .refreshIntervalSeconds(300)    // Refresh keys every 5 minutes
-    .connectTimeoutSeconds(30)      // Connection timeout
-    .readTimeoutSeconds(60)         // Read timeout
-    .sslContext(customSslContext)  // Optional custom SSL context
+    .connectTimeoutSeconds(30)
+    .readTimeoutSeconds(60)
+    .sslContext(customSslContext)    // Optional custom SSL context
     .build();
 ----
 
@@ -111,20 +81,17 @@ HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
 public class OpenIDConnectValidator {
 
     public static TokenValidator createFromDiscovery(String issuerUrl, String clientId) {
-        // Configure JWKS loading with well-known discovery
         HttpJwksLoaderConfig jwksConfig = HttpJwksLoaderConfig.builder()
             .wellKnownUrl(issuerUrl + "/.well-known/openid-configuration")
             .refreshIntervalSeconds(300)
             .build();
 
-        // Build issuer configuration
         IssuerConfig issuerConfig = IssuerConfig.builder()
             .expectedAudience(clientId)
             .expectedClientId(clientId)
             .httpJwksLoaderConfig(jwksConfig)
             .build();
 
-        // Create validator
         return TokenValidator.builder()
             .issuerConfig(issuerConfig)
             .build();
@@ -134,8 +101,6 @@ public class OpenIDConnectValidator {
 
 == Multiple Providers with Discovery
 
-Configure multiple providers using discovery:
-
 [source,java]
 ----
 public class MultiProviderDiscovery {
@@ -143,116 +108,27 @@ public class MultiProviderDiscovery {
     public static TokenValidator createMultiProvider() {
         TokenValidator.Builder builder = TokenValidator.builder();
 
-        // Google
-        addProviderFromDiscovery(builder,
-            "https://accounts.google.com",
-            "google-client-id");
-
-        // Microsoft
-        addProviderFromDiscovery(builder,
-            "https://login.microsoftonline.com/common/v2.0",
-            "microsoft-client-id");
-
-        // Okta
-        addProviderFromDiscovery(builder,
-            "https://dev-123456.okta.com",
-            "okta-client-id");
+        addProviderFromDiscovery(builder, "https://accounts.google.com", "google-client-id");
+        addProviderFromDiscovery(builder, "https://login.microsoftonline.com/common/v2.0", "microsoft-client-id");
+        addProviderFromDiscovery(builder, "https://dev-123456.okta.com", "okta-client-id");
 
         return builder.build();
     }
 
     private static void addProviderFromDiscovery(
-            TokenValidator.Builder builder,
-            String issuerUrl,
-            String clientId) {
+            TokenValidator.Builder builder, String issuerUrl, String clientId) {
         try {
-            // Simple configuration with well-known URL as string
             IssuerConfig issuerConfig = IssuerConfig.builder()
                 .expectedAudience(clientId)
                 .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
                     .wellKnownUrl(issuerUrl + "/.well-known/openid-configuration")
                     .build())
                 .build();
-
             builder.issuerConfig(issuerConfig);
-
         } catch (Exception e) {
             LOGGER.warn("Failed to configure provider %s: %s", issuerUrl, e.getMessage());
         }
     }
-}
-----
-
-== Caching Discovery Results
-
-For production environments, cache discovery results:
-
-[source,java]
-----
-public class CachedDiscoveryResolver {
-    private final Map<String, HttpWellKnownResolver> cache = new ConcurrentHashMap<>();
-    private final Duration cacheExpiry = Duration.ofHours(24);
-    private final Map<String, Instant> cacheTimestamps = new ConcurrentHashMap<>();
-
-    public HttpWellKnownResolver getResolver(String issuerUrl)
-            throws IOException {
-
-        // Check cache
-        HttpWellKnownResolver cached = cache.get(issuerUrl);
-        Instant cachedAt = cacheTimestamps.get(issuerUrl);
-
-        if (cached != null && cachedAt != null &&
-            Duration.between(cachedAt, Instant.now()).compareTo(cacheExpiry) < 0) {
-            return cached;
-        }
-
-        // Perform discovery
-        URL wellKnownUrl = new URL(issuerUrl + "/.well-known/openid-configuration");
-        
-        WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
-            .wellKnownUrl(wellKnownUrl.toString())
-            .build();
-            
-        HttpWellKnownResolver resolver = new HttpWellKnownResolver(wellKnownConfig);
-
-        // Update cache
-        cache.put(issuerUrl, resolver);
-        cacheTimestamps.put(issuerUrl, Instant.now());
-
-        return resolver;
-    }
-}
-----
-
-== Error Handling
-
-Handle discovery failures gracefully:
-
-[source,java]
-----
-try {
-    WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
-        .wellKnownUrl(wellKnownUrl.toString())
-        .build();
-        
-    HttpWellKnownResolver resolver = new HttpWellKnownResolver(wellKnownConfig);
-    // Use resolver
-
-} catch (IOException e) {
-    // Specific discovery failures
-    if (e.getCause() instanceof IOException) {
-        // Network issue - maybe retry
-        LOGGER.error("Network error during discovery: %s", e.getMessage());
-    } else if (e.getMessage().contains("issuer")) {
-        // Issuer mismatch - configuration issue
-        LOGGER.error("Issuer validation failed: %s", e.getMessage());
-    } else {
-        // Other discovery issues
-        LOGGER.error("Discovery failed: %s", e.getMessage());
-    }
-
-    // Fall back to manual configuration
-    useManualConfiguration();
 }
 ----
 
@@ -264,36 +140,9 @@ try {
 * Consider async initialization for non-critical paths
 * Cache discovery results when possible
 
-=== SSL/TLS Configuration
-
-Ensure proper SSL configuration:
-
-[source,java]
-----
-// Custom SSL context for discovery
-SSLContext sslContext = SSLContext.getInstance("TLS");
-sslContext.init(null, trustManagers, null);
-
-HttpClient httpClient = HttpClient.newBuilder()
-    .sslContext(sslContext)
-    .build();
-
-// Use custom client for discovery
-// Note: HttpWellKnownResolver currently uses URL.openConnection()
-// Consider wrapping in a service that uses the custom HttpClient
-----
-
-=== Network Reliability
-
-* Implement retry logic for transient failures
-* Set appropriate timeouts
-* Monitor discovery endpoint availability
-* Have fallback configuration ready
-
 === Security Best Practices
 
 * Always use HTTPS for discovery endpoints
 * Validate the discovery document structure
 * Verify issuer consistency (automatic in library)
 * Pin certificates for known providers if possible
-* Monitor for unexpected configuration changes

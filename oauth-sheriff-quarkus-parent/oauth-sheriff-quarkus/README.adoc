@@ -11,7 +11,7 @@ Runtime module for Quarkus integration providing JWT token validation with CDI i
 
 == Maven Coordinates
 
-For Maven dependency information, see xref:../README.adoc#maven-coordinates[Maven Coordinates] in the parent module documentation.
+For Maven dependency information, see xref:../README.adoc#_maven_coordinates[Maven Coordinates] in the parent module documentation.
 
 == Core Concepts
 
@@ -50,15 +50,17 @@ For Maven dependency information, see xref:../README.adoc#maven-coordinates[Mave
 ==== Configuration Resolvers
 Configuration resolution is handled by dedicated resolver classes:
 
-* link:src/main/java/de/cuioss/jwt/quarkus/config/IssuerConfigResolver.java[IssuerConfigResolver] - Resolves issuer configurations from properties
-* link:src/main/java/de/cuioss/jwt/quarkus/config/ParserConfigResolver.java[ParserConfigResolver] - Handles parser configuration
-* link:src/main/java/de/cuioss/jwt/quarkus/config/AccessTokenCacheConfigResolver.java[AccessTokenCacheConfigResolver] - Manages cache configuration
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/IssuerConfigResolver.java[IssuerConfigResolver] - Resolves issuer configurations from properties
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/ParserConfigResolver.java[ParserConfigResolver] - Handles parser configuration
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/AccessTokenCacheConfigResolver.java[AccessTokenCacheConfigResolver] - Manages cache configuration
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/RetryStrategyConfigResolver.java[RetryStrategyConfigResolver] - Resolves retry strategy configuration
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/AccessLogFilterConfigResolver.java[AccessLogFilterConfigResolver] - Resolves access log filter configuration
 * link:src/main/java/de/cuioss/sheriff/oauth/quarkus/mapper/ClaimMapperRegistry.java[ClaimMapperRegistry] - CDI-based claim mapper discovery and registration
 
 ==== JwtPropertyKeys
 Configuration property key constants:
 
-* link:src/main/java/de/cuioss/jwt/quarkus/config/JwtPropertyKeys.java[JwtPropertyKeys]
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/config/JwtPropertyKeys.java[JwtPropertyKeys]
 * Centralized property key definitions
 * Consistent naming conventions
 * Documentation for all configuration options
@@ -68,7 +70,7 @@ Configuration property key constants:
 ==== TokenValidatorProducer
 CDI producer for JWT token validators:
 
-* link:src/main/java/de/cuioss/jwt/quarkus/producer/TokenValidatorProducer.java[TokenValidatorProducer]
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/producer/TokenValidatorProducer.java[TokenValidatorProducer]
 * Creates configured token validators for each issuer
 * Handles validator lifecycle management
 * Provides named qualifiers for multiple issuers
@@ -76,7 +78,7 @@ CDI producer for JWT token validators:
 ==== BearerTokenProducer
 CDI producer for bearer token validation:
 
-* link:src/main/java/de/cuioss/jwt/quarkus/producer/BearerTokenProducer.java[BearerTokenProducer]
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/producer/BearerTokenProducer.java[BearerTokenProducer]
 * Produces BearerTokenResult instances for injection
 * Handles token extraction from HTTP requests
 * Supports scope, role, and group validation
@@ -92,17 +94,16 @@ For comprehensive metrics configuration, Prometheus queries, alerting examples, 
 === Runtime Services
 
 ==== OAuthSheriffRecorder
-Quarkus build-time recorder for runtime initialization:
+Quarkus recorder placeholder for future runtime initialization:
 
-* link:src/main/java/de/cuioss/jwt/quarkus/runtime/OAuthSheriffRecorder.java[OAuthSheriffRecorder]
-* Handles runtime configuration setup
-* Manages bean registration
-* Coordinates with deployment module
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/runtime/OAuthSheriffRecorder.java[OAuthSheriffRecorder]
+* Currently empty — all components are managed by CDI
+* Available for future runtime initialization needs called from the deployment processor
 
-==== CuiJwtDevUIRuntimeService
+==== OAuthSheriffDevUIRuntimeService
 Runtime service for DevUI integration:
 
-* link:src/main/java/de/cuioss/jwt/quarkus/runtime/CuiJwtDevUIRuntimeService.java[CuiJwtDevUIRuntimeService]
+* link:src/main/java/de/cuioss/sheriff/oauth/quarkus/runtime/OAuthSheriffDevUIRuntimeService.java[OAuthSheriffDevUIRuntimeService]
 * Provides runtime data for DevUI components
 * Handles JSON-RPC service calls
 * Real-time validation status reporting
@@ -113,8 +114,8 @@ Runtime service for DevUI integration:
 
 [source, yaml]
 ----
-cui:
-  jwt:
+sheriff:
+  oauth:
     issuers:
       my-issuer:
         issuer-identifier: "https://auth.example.com"
@@ -128,12 +129,14 @@ cui:
 
 [source, yaml]
 ----
-cui:
-  jwt:
+sheriff:
+  oauth:
     issuers:
       issuer-one:
         issuer-identifier: "https://auth1.example.com"
-        well-known-url: "https://auth1.example.com/.well-known/openid-configuration"
+        jwks:
+          http:
+            well-known-url: "https://auth1.example.com/.well-known/openid-configuration"
       issuer-two:
         issuer-identifier: "https://auth2.example.com"
         jwks:
@@ -150,12 +153,12 @@ TokenValidator tokenValidator;
 public void processRequest(String jwtString) {
     try {
         AccessTokenContent token = tokenValidator.createAccessToken(AccessTokenRequest.of(jwtString));
-        String subject = token.getSubject();
+        Optional<String> subject = token.getSubject();
         List<String> roles = token.getRoles();
         // Process valid token
     } catch (TokenValidationException e) {
         // Handle validation failure
-        LOGGER.error("Token validation failed: {}", e.getMessage(), e);
+        LOGGER.error("Token validation failed: %s", e.getMessage(), e);
     }
 }
 ----
@@ -168,8 +171,7 @@ public void processRequest(String jwtString) {
 [source, properties]
 ----
 # Global parser settings
-sheriff.oauth.parser.audience=my-application
-sheriff.oauth.parser.max-token-size-bytes=8192
+sheriff.oauth.parser.max-token-size=8192
 
 # Health check configuration
 sheriff.oauth.health.enabled=true
@@ -182,27 +184,18 @@ sheriff.oauth.health.jwks.timeout-seconds=5
 [source, properties]
 ----
 # Issuer configuration
-sheriff.oauth.issuers.my-issuer.url=https://auth.example.com
+sheriff.oauth.issuers.my-issuer.issuer-identifier=https://auth.example.com
 sheriff.oauth.issuers.my-issuer.enabled=true
+sheriff.oauth.issuers.my-issuer.expected-audience=my-application
 
 # JWKS configuration
-sheriff.oauth.issuers.my-issuer.jwks.url=https://auth.example.com/jwks
-sheriff.oauth.issuers.my-issuer.jwks.cache-ttl-seconds=300
-sheriff.oauth.issuers.my-issuer.jwks.refresh-interval-seconds=3600
-sheriff.oauth.issuers.my-issuer.jwks.connection-timeout-ms=5000
-sheriff.oauth.issuers.my-issuer.jwks.read-timeout-ms=10000
-sheriff.oauth.issuers.my-issuer.jwks.max-retries=3
-----
+sheriff.oauth.issuers.my-issuer.jwks.http.url=https://auth.example.com/jwks
+sheriff.oauth.issuers.my-issuer.jwks.http.refresh-interval-seconds=3600
+sheriff.oauth.issuers.my-issuer.jwks.http.connect-timeout-seconds=5
+sheriff.oauth.issuers.my-issuer.jwks.http.read-timeout-seconds=10
 
-=== Parser Configuration
-
-[source, properties]
-----
-# Token validation rules
-sheriff.oauth.issuers.my-issuer.parser.validate-not-before=true
-sheriff.oauth.issuers.my-issuer.parser.validate-expiration=true
-sheriff.oauth.issuers.my-issuer.parser.validate-issued-at=true
-sheriff.oauth.issuers.my-issuer.parser.allowed-algorithms=RS256,RS384,RS512
+# Algorithm preferences
+sheriff.oauth.issuers.my-issuer.algorithm-preferences=RS256,RS384,RS512
 ----
 
 == Best Practices
@@ -273,5 +266,5 @@ sheriff.oauth.issuers.my-issuer.parser.allowed-algorithms=RS256,RS384,RS512
 * xref:../doc/integration/metrics-integration.adoc[Metrics Integration Documentation]
 * xref:../doc/configuration/native-image-configuration.adoc[Native Image Configuration]
 * xref:../doc/development/devui-testing.adoc[DevUI Testing Guide]
-* xref:../../doc/specification/technical-components.adoc[Technical Components Specification]
-* xref:../../doc/security/security-specifications.adoc[Security Specification]
+* xref:../../doc/architecture.adoc[Architecture Reference]
+* xref:../../doc/security/security-reference.adoc[Security Reference]

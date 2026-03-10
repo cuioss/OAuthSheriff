@@ -5,93 +5,56 @@
 :toc-title: Table of Contents
 :sectnums:
 
-
-This document describes the metrics exposed by the oauth-sheriff-quarkus extension for monitoring JWT token validation and security events.
-
 == Overview
 
-The oauth-sheriff-quarkus extension automatically exposes metrics when the Quarkus Micrometer extension is present. These metrics provide insights into JWT validation performance, error patterns, and security events to help monitor application security and performance.
-
-All metrics follow Quarkus and Micrometer naming conventions and are compatible with standard monitoring systems like Prometheus and Grafana.
-
-== Implementation
-
-The metrics integration is implemented through the `JwtMetricsCollector` class which:
-
-* Registers Micrometer counters for each security event type from the underlying JWT validation library
-* Registers Micrometer timers for each validation pipeline step from the `TokenValidatorMonitor`
-* Uses scheduled polling (every 10 seconds) to update metrics from both the `SecurityEventCounter` and `TokenValidatorMonitor`
-* Provides detailed error categorization and tagging for filtering and alerting
-* Provides performance measurement data for validation pipeline optimization
+The oauth-sheriff-quarkus extension automatically exposes metrics when the Quarkus Micrometer extension is present. The `JwtMetricsCollector` registers Micrometer counters, using scheduled polling to update from `SecurityEventCounter`. The polling interval defaults to 10 seconds and is configurable via `sheriff.oauth.metrics.collection.interval` (e.g., `2s` for integration testing).
 
 == Available Metrics
 
-Currently, the extension exposes the following metrics:
-
+[cols="2,1,3,2"]
 |===
 |Metric Name |Type |Description |Tags
 
-|`sheriff.oauth.validation.errors` |Counter |Number of JWT validation errors by type |event_type, result, category
-|`sheriff.oauth.validation.duration` |Timer |Duration of JWT validation pipeline steps |step
+|`sheriff.oauth.validation.errors` |Counter |JWT validation errors by type |event_type, result, category
+|`sheriff.oauth.validation.success` |Counter |Successful JWT operations by type |event_type, result
 |===
 
-=== Metric Tags
+=== Error Metric Tags
 
-Each metric includes the following tags for filtering and analysis:
+* **`event_type`**: e.g., `TOKEN_EXPIRED`, `SIGNATURE_VALIDATION_FAILED`
+* **`result`**: Always `failure`
+* **`category`**: `INVALID_STRUCTURE`, `INVALID_SIGNATURE`, or `SEMANTIC_ISSUES`
 
-==== Error Metrics (`sheriff.oauth.validation.errors`)
+=== Success Metric Tags
 
-* **`event_type`**: The specific type of validation error (e.g., `TOKEN_EXPIRED`, `SIGNATURE_VALIDATION_FAILED`)
-* **`result`**: Always "failure" for error metrics
-* **`category`**: The error category (`STRUCTURE`, `SIGNATURE`, `SEMANTIC`) when available
-
-==== Performance Metrics (`sheriff.oauth.validation.duration`)
-
-* **`step`**: The validation pipeline step being measured:
-  ** `complete_validation` - Complete token validation from start to finish
-  ** `token_parsing` - JWT token parsing and structure validation
-  ** `header_validation` - JWT header validation
-  ** `signature_validation` - JWT signature verification (typically most expensive)
-  ** `claims_validation` - JWT claims validation
-  ** `jwks_operations` - JWKS key retrieval and processing operations
+* **`event_type`**: e.g., `ACCESS_TOKEN_CREATED`, `ID_TOKEN_CREATED`
+* **`result`**: Always `success`
 
 === Supported Event Types
 
-The extension tracks the following JWT validation events:
-
-* **Structure Issues**: `TOKEN_EMPTY`, `TOKEN_SIZE_EXCEEDED`, `INVALID_JWT_FORMAT`, `FAILED_TO_DECODE_JWT`, `FAILED_TO_DECODE_HEADER`, `FAILED_TO_DECODE_PAYLOAD`, `DECODED_PART_SIZE_EXCEEDED`
-* **Semantic Validation**: `MISSING_CLAIM`, `MISSING_RECOMMENDED_ELEMENT`, `TOKEN_EXPIRED`, `TOKEN_NBF_FUTURE`, `AUDIENCE_MISMATCH`, `AZP_MISMATCH`, `ISSUER_MISMATCH`
-* **Signature Validation**: `NO_ISSUER_CONFIG`, `SIGNATURE_VALIDATION_FAILED`, `KEY_NOT_FOUND`, `UNSUPPORTED_ALGORITHM`
-* **JWKS Operations**: `JWKS_FETCH_FAILED`, `JWKS_JSON_PARSE_FAILED`, `FAILED_TO_READ_JWKS_FILE`, `KEY_ROTATION_DETECTED`
-* **Token Creation**: `ACCESS_TOKEN_CREATED`, `ID_TOKEN_CREATED`, `REFRESH_TOKEN_CREATED`
+* **INVALID_STRUCTURE**: `TOKEN_EMPTY`, `TOKEN_SIZE_EXCEEDED`, `FAILED_TO_DECODE_JWT`, `INVALID_JWT_FORMAT`, `DECODED_PART_SIZE_EXCEEDED`, `DPOP_PROOF_INVALID`
+* **SEMANTIC_ISSUES**: `MISSING_CLAIM`, `MISSING_RECOMMENDED_ELEMENT`, `TOKEN_EXPIRED`, `TOKEN_NBF_FUTURE`, `AUDIENCE_MISMATCH`, `AZP_MISMATCH`, `NO_ISSUER_CONFIG`, `ISSUER_MISMATCH`, `TOKEN_TYPE_MISMATCH`, `DPOP_PROOF_MISSING`, `DPOP_PROOF_EXPIRED`, `DPOP_REPLAY_DETECTED`, `DPOP_ATH_MISMATCH`, `DPOP_CNF_MISSING`
+* **INVALID_SIGNATURE**: `SIGNATURE_VALIDATION_FAILED`, `KEY_NOT_FOUND`, `UNSUPPORTED_ALGORITHM`, `JWKS_JSON_PARSE_FAILED`, `DPOP_THUMBPRINT_MISMATCH`
+* **Success (no category)**: `ACCESS_TOKEN_CREATED`, `ID_TOKEN_CREATED`, `REFRESH_TOKEN_CREATED`, `ACCESS_TOKEN_CACHE_HIT`
 
 == Configuration
 
-Metrics collection is enabled automatically when the `quarkus-micrometer` extension is present. No additional configuration is required.
+Enabled automatically when `quarkus-micrometer` is present. Add to your project:
 
-To enable metrics collection in your application:
-
-. Add the micrometer extension to your project:
-+
 [source,xml]
 ----
 <dependency>
     <groupId>io.quarkus</groupId>
     <artifactId>quarkus-micrometer</artifactId>
 </dependency>
-----
-
-. Optionally add a metrics registry (e.g., for Prometheus):
-+
-[source,xml]
-----
+<!-- Optional: Prometheus registry -->
 <dependency>
     <groupId>io.quarkus</groupId>
     <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
 </dependency>
 ----
 
-The metrics will be available at the standard Micrometer endpoint: `/q/metrics`
+Metrics available at `/q/metrics`.
 
 == Monitoring Examples
 
@@ -102,30 +65,23 @@ The metrics will be available at the standard Micrometer endpoint: `/q/metrics`
 # Total JWT validation errors
 sum(sheriff_oauth_validation_errors_total)
 
-# Error rate by category over time
-rate(sheriff_oauth_validation_errors_total[5m]) by (category)
+# Error rate by category
+sum(rate(sheriff_oauth_validation_errors_total[5m])) by (category)
 
-# Signature verification failures (potential security issue)
+# Signature verification failures
 sum(sheriff_oauth_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"})
 
-# Token expiration issues
-rate(sheriff_oauth_validation_errors_total{event_type="TOKEN_EXPIRED"}[5m])
+# Successful token creations
+sum(sheriff_oauth_validation_success_total)
 
-# Average signature validation duration (performance monitoring)
-rate(sheriff_oauth_validation_duration_seconds_sum{step="signature_validation"}[5m]) / rate(sheriff_oauth_validation_duration_seconds_count{step="signature_validation"}[5m])
-
-# 95th percentile of complete validation duration
-histogram_quantile(0.95, rate(sheriff_oauth_validation_duration_seconds_bucket{step="complete_validation"}[5m]))
-
-# JWKS operations duration (network performance indicator)
-rate(sheriff_oauth_validation_duration_seconds_sum{step="jwks_operations"}[5m]) / rate(sheriff_oauth_validation_duration_seconds_count{step="jwks_operations"}[5m])
+# Success rate by type
+sum(rate(sheriff_oauth_validation_success_total[5m])) by (event_type)
 ----
 
 === Alerting Examples
 
 [source,yaml]
 ----
-# Alert on signature verification failures
 - alert: JwtSignatureVerificationFailures
   expr: rate(sheriff_oauth_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"}[5m]) > 0.1
   for: 5m
@@ -133,48 +89,16 @@ rate(sheriff_oauth_validation_duration_seconds_sum{step="jwks_operations"}[5m]) 
     severity: critical
   annotations:
     summary: "JWT signature verification failures detected"
-    description: "Potential security issue: JWT tokens with invalid signatures are being processed at a high rate"
 
-# Alert on high error rates
 - alert: JwtHighErrorRate
-  expr: rate(sheriff_oauth_validation_errors_total[5m]) > 5
-  for: 10m
-  labels:
-    severity: warning
-  annotations:
-    summary: "High JWT validation error rate"
-    description: "JWT validation errors are occurring at a high rate (>5/minute)"
-
-# Alert on slow signature validation (performance issue)
-- alert: JwtSlowSignatureValidation
-  expr: histogram_quantile(0.95, rate(sheriff_oauth_validation_duration_seconds_bucket{step="signature_validation"}[5m])) > 0.1
+  expr: rate(sheriff_oauth_validation_errors_total[5m]) / (rate(sheriff_oauth_validation_errors_total[5m]) + rate(sheriff_oauth_validation_success_total[5m])) > 0.5
   for: 5m
   labels:
     severity: warning
   annotations:
-    summary: "JWT signature validation is slow"
-    description: "95th percentile of signature validation duration is above 100ms"
+    summary: "JWT validation error rate above 50%"
 ----
 
 == Grafana Dashboard
 
-A pre-configured Grafana dashboard is available at link:jwt-metrics-grafana-dashboard.json[jwt-metrics-grafana-dashboard.json] that includes:
-
-* JWT validation error rates by category
-* Error type distribution
-* Time series for security-relevant events
-* Alert indicators for potential security issues
-* Performance metrics for validation pipeline steps
-* Duration histograms and percentiles for performance analysis
-* JWKS operations timing for network performance monitoring
-
-== Future Enhancements
-
-The metrics implementation may be extended in future versions to include:
-
-* Success rate and attempt counters
-* JWKS cache size gauges
-* Issuer-specific tagging
-* Request rate limiting metrics
-
-The current implementation provides comprehensive coverage of both security monitoring (error metrics) and performance monitoring (duration timers) for JWT validation operations.
+A pre-configured dashboard is available at link:../jwt-metrics-grafana-dashboard.json[jwt-metrics-grafana-dashboard.json] covering error rates, event distribution, and security event monitoring.

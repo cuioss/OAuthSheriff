@@ -3,465 +3,137 @@
 :sectnums:
 :source-highlighter: highlight.js
 
-
-This document describes the configuration options available for the OAuth Sheriff Quarkus extension.
+All `sheriff.oauth.*` properties for the Quarkus extension. For the core library builder API, see xref:../../../../../../oauth-sheriff-core/doc/api-reference.adoc[Core API Reference].
 
 == Minimal Configuration
 
-The extension provides sensible defaults for most configuration options. At minimum, you need to configure:
-
-1. At least one issuer with its URL
-2. Either a public key location or JWKS configuration for that issuer
-
 [source,properties]
 ----
-# Minimal configuration example using well-known approach (recommended)
-sheriff.oauth.issuers.default.issuer-identifier=https://your-idp.example.com/
-sheriff.oauth.issuers.default.well-known-url=https://your-idp.example.com/.well-known/openid-configuration
-
-# OR minimal configuration with direct JWKS URL
-# sheriff.oauth.issuers.default.issuer-identifier=https://your-idp.example.com/
-# sheriff.oauth.issuers.default.jwks.url=https://your-idp.example.com/jwks.json
-
-# OR minimal configuration with public key
-# sheriff.oauth.issuers.default.issuer-identifier=https://your-idp.example.com/
-# sheriff.oauth.issuers.default.jwks.file-path=classpath:keys/public_key.pem
+# OpenID Connect Discovery (recommended) — issuer, JWKS, and algorithms auto-discovered
+sheriff.oauth.issuers.keycloak.jwks.http.well-known-url=https://keycloak.example.com/realms/master/.well-known/openid-configuration
 ----
-
-All other configuration options have default values as described below.
-
-== Recommended Configuration
-
-While the minimal configuration will work, we recommend the following best practices:
-
-1. Use the OpenID Connect Discovery (well-known) approach when possible
-2. Configure an audience value to ensure tokens are intended for your application
-3. Consider adjusting the leeway seconds based on your environment's clock synchronization
-4. For production environments, consider configuring connection timeouts and retry settings
-
-[source,properties]
-----
-# Recommended configuration
-sheriff.oauth.issuers.default.issuer-identifier=https://your-idp.example.com/
-sheriff.oauth.issuers.default.well-known-url=https://your-idp.example.com/.well-known/openid-configuration
-sheriff.oauth.issuers.default.jwks.http.connection-timeout-seconds=3
-sheriff.oauth.issuers.default.jwks.http.read-timeout-seconds=3
-sheriff.oauth.issuers.default.jwks.http.max-retries=3
-----
-
-== Global Configuration
-
-[cols="2,1,5"]
-|===
-|Property |Type |Description
-
-|`sheriff.oauth.parser.max-token-size`
-|int (default: 8192)
-|Maximum size of a JWT token in bytes to prevent overflow attacks.
-
-|`sheriff.oauth.parser.max-payload-size`
-|int (default: 2048)
-|Maximum size of decoded JSON payload in bytes.
-
-|`sheriff.oauth.parser.max-string-size`
-|int (default: 1024)
-|Maximum string size for JSON parsing.
-
-|`sheriff.oauth.parser.max-array-size`
-|int (default: 64)
-|Maximum array size for JSON parsing.
-
-|`sheriff.oauth.parser.max-depth`
-|int (default: 10)
-|Maximum depth for JSON parsing.
-
-|`sheriff.oauth.cache.access-token.max-size`
-|int (default: 1000)
-|Maximum number of validated access tokens to cache. Set to 0 to disable caching completely.
-
-|`sheriff.oauth.cache.access-token.eviction-interval-seconds`
-|long (default: 10)
-|Interval in seconds between cache eviction runs. Controls how frequently the cache checks for and removes expired tokens.
-|===
 
 == Issuer Configuration
 
-The extension supports multiple issuers, each with its own configuration. Replace `<issuer-name>` with your issuer identifier.
+Properties under `sheriff.oauth.issuers.<name>.*` — one block per issuer.
 
-[cols="2,1,5"]
+[cols="2,1,1,3", options="header"]
+|===
+|Property |Type |Default |Description
+|`enabled` |boolean |`true` |Enable/disable this issuer
+|`issuer-identifier` |String |— |Matched against `iss` claim. Auto-discovered when using well-known.
+|`expected-audience` |String (csv) |— |Expected `aud` claim values
+|`expected-client-id` |String (csv) |— |Expected `azp` / `client_id` claim values
+|`algorithm-preferences` |String (csv) |— |Allowed signature algorithms (default: all supported)
+|`claim-sub-optional` |boolean |`false` |Allow missing `sub` claim
+|`expected-token-type` |String |— |Expected `typ` header (e.g. `at+jwt` per RFC 9068)
+|===
+
+=== JWKS Source (mutually exclusive)
+
+[cols="2,1,3", options="header"]
 |===
 |Property |Type |Description
-
-|`sheriff.oauth.issuers.<issuer-name>.issuer-identifier`
-|String (required)
-|The issuer URL/identifier that will be matched against the "iss" claim in the JWT.
-
-|`sheriff.oauth.issuers.<issuer-name>.jwks.file-path`
-|Optional<String>
-|Location of the public key or certificate used to verify tokens from this issuer. This can be a file path, URL, or classpath resource.
-
-|`sheriff.oauth.issuers.<issuer-name>.enabled`
-|boolean (default: true)
-|Whether this issuer configuration is enabled.
-
-|`sheriff.oauth.issuers.<issuer-name>.claim-sub-optional`
-|boolean (default: false)
-|Whether the "sub" (subject) claim is optional for this issuer. When set to `true`, the mandatory claims validator will not require the "sub" claim to be present in tokens from this issuer. This provides a workaround for identity providers that don't include the subject claim in access tokens by default. *Warning:* Setting this to `true` relaxes RFC 7519 compliance.
+|`jwks.http.well-known-url` |String |OpenID Connect discovery endpoint (recommended)
+|`jwks.http.url` |String |Direct JWKS endpoint URL
+|`jwks.file-path` |String |Local JWKS file path
+|`jwks.content` |String |Inline JWKS JSON
 |===
 
+=== HTTP JWKS Options
 
-== JWKS Configuration
-
-Each issuer can have a JWKS (JSON Web Key Set) endpoint configuration. There are two approaches to configure JWKS:
-
-1. Direct JWKS URL configuration
-2. OpenID Connect Discovery (well-known) configuration (recommended)
-
-[cols="2,1,5"]
+[cols="2,1,1,3", options="header"]
 |===
-|Property |Type |Description
+|Property |Type |Default |Description
+|`jwks.http.refresh-interval-seconds` |int |`600` |JWKS cache refresh interval
+|`jwks.http.connect-timeout-seconds` |int |`10` |HTTP connect timeout
+|`jwks.http.read-timeout-seconds` |int |`10` |HTTP read timeout
+|`jwks.http.key-rotation-grace-period-seconds` |int |`300` |Grace period for retired keys during rotation
+|`jwks.http.max-retired-key-sets` |int |`3` |Max retained retired key sets
+|===
 
-|`sheriff.oauth.issuers.<issuer-name>.jwks.url`
-|Optional<String>
-|The URL of the JWKS endpoint. This property is mutually exclusive with `wellKnownUrl`. If both are provided, the well-known approach takes precedence.
+=== DPoP (RFC 9449)
 
-|`sheriff.oauth.issuers.<issuer-name>.well-known-url`
-|Optional<String>
-|The URL of the OpenID Connect discovery document (well-known endpoint). When provided, the JWKS URL will be automatically discovered from this endpoint. This is the recommended approach for configuring JWKS as it follows the OpenID Connect discovery standard. Example: https://your-idp.com/realms/my-realm/.well-known/openid-configuration
+[cols="2,1,1,3", options="header"]
+|===
+|Property |Type |Default |Description
+|`dpop.enabled` |boolean |`false` |Enable DPoP validation
+|`dpop.required` |boolean |`false` |Require DPoP for all tokens
+|`dpop.proof-max-age-seconds` |long |`300` |Max age for DPoP proof `iat`
+|`dpop.nonce-cache-size` |int |`10000` |JTI replay cache size
+|`dpop.nonce-cache-ttl-seconds` |long |`300` |JTI cache entry TTL
+|===
 
-|`sheriff.oauth.issuers.<issuer-name>.jwks.content`
-|Optional<String>
-|The direct JWKS content as JSON string. Mutually exclusive with other JWKS sources.
+== Parser
 
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.refresh-interval-seconds`
-|int (default: 300)
-|The refresh interval in seconds for the JWKS cache.
+[cols="2,1,1,3", options="header"]
+|===
+|Property |Type |Default |Description
+|`sheriff.oauth.parser.max-token-size` |int |`8192` |Max JWT token size (bytes)
+|`sheriff.oauth.parser.max-payload-size` |int |`8192` |Max decoded JSON payload (bytes)
+|`sheriff.oauth.parser.max-string-length` |int |`4096` |Max JSON string value (bytes)
+|`sheriff.oauth.parser.max-buffer-size` |int |`131072` |Max JSON buffer size (bytes)
+|===
 
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.connection-timeout-seconds`
-|int (default: 5)
-|The connection timeout in seconds for the JWKS endpoint.
+== Cache
 
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.read-timeout-seconds`
-|int (default: 5)
-|The read timeout in seconds for the JWKS endpoint.
+[cols="2,1,1,3", options="header"]
+|===
+|Property |Type |Default |Description
+|`sheriff.oauth.cache.access-token.max-size` |int |`1000` |Max cached tokens (0 = disabled)
+|`sheriff.oauth.cache.access-token.eviction-interval-seconds` |long |`10` |Eviction run interval
+|===
 
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.max-retries`
-|int (default: 3)
-|The maximum number of retries for failed JWKS requests.
+== Health Checks
 
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.use-system-proxy`
-|boolean (default: false)
-|Whether to use HTTP proxy settings from the system properties.
+[cols="2,1,1,3", options="header"]
+|===
+|Property |Type |Default |Description
+|`sheriff.oauth.health.enabled` |boolean |`true` |Enable health checks (currently unused — defined but not read by any runtime component)
+|`sheriff.oauth.health.jwks.cache-seconds` |int |`30` |Health check result cache TTL
+|`sheriff.oauth.health.jwks.timeout-seconds` |int |`5` |Health check timeout (currently unused — defined but not injected by JwksEndpointHealthCheck)
+|===
 
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.key-rotation-grace-period-seconds`
-|int (default: 300)
-|The grace period in seconds for retired keys during rotation. During this period, tokens signed with recently rotated keys can still be validated, preventing service disruptions for in-flight requests. Set to 0 to immediately invalidate old keys upon rotation. This implements Issue #110 for seamless key rotation.
+== Metrics
 
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.max-retired-key-sets`
-|int (default: 10)
-|The maximum number of retired key sets to retain in memory during the grace period. This prevents unbounded memory growth when keys rotate frequently. Older retired key sets beyond this limit are removed even if still within the grace period.
+[cols="2,1,1,3", options="header"]
+|===
+|Property |Type |Default |Description
+|`sheriff.oauth.metrics.collection.interval` |Duration |`10s` |Metrics collection interval
+|===
+
+== Retry
+
+[cols="2,1,1,3", options="header"]
+|===
+|Property |Type |Default |Description
+|`sheriff.oauth.retry.enabled` |boolean |`true` |Enable HTTP retry
+|`sheriff.oauth.retry.max-attempts` |int |`5` |Max retry attempts
+|`sheriff.oauth.retry.initial-delay-ms` |long |`1000` |Initial retry delay (ms)
+|`sheriff.oauth.retry.max-delay-ms` |long |`30000` |Max retry delay (ms)
+|`sheriff.oauth.retry.backoff-multiplier` |double |`2.0` |Exponential backoff multiplier
+|`sheriff.oauth.retry.jitter-factor` |double |`0.1` |Jitter randomization factor
 |===
 
 == Keycloak Integration
 
-The extension provides optional default claim mappers for seamless integration with Keycloak's standard token structure. These mappers are configured globally via CDI beans and are disabled by default.
-
-[cols="2,1,5"]
+[cols="2,1,1,3", options="header"]
 |===
-|Property |Type |Description
-
-|`sheriff.oauth.keycloak.default-roles-mapper.enabled`
-|boolean (default: false)
-|Enables the default roles mapper that transforms Keycloak's `realm_access.roles` claim to the standard `roles` claim. This allows applications to work with Keycloak tokens without requiring custom protocol mappers.
-
-|`sheriff.oauth.keycloak.default-groups-mapper.enabled`
-|boolean (default: false)
-|Enables the default groups mapper that processes Keycloak's standard `groups` claim. This provides consistent group membership handling for Keycloak tokens.
+|Property |Type |Default |Description
+|`sheriff.oauth.keycloak.default-roles-mapper.enabled` |boolean |`false` |Map `realm_access.roles` to `roles`
+|`sheriff.oauth.keycloak.default-groups-mapper.enabled` |boolean |`false` |Process `groups` claim
 |===
 
-=== Configuration Example
+== HTTP Access Log Filter
 
-[source,properties]
-----
-# Standard issuer configuration
-sheriff.oauth.issuers.keycloak.issuer-identifier=https://keycloak.example.com/realms/master
-sheriff.oauth.issuers.keycloak.well-known-url=https://keycloak.example.com/realms/master/.well-known/openid-configuration
-
-# Enable Keycloak default mappers globally
-sheriff.oauth.keycloak.default-roles-mapper.enabled=true
-sheriff.oauth.keycloak.default-groups-mapper.enabled=true
-----
-
-=== Benefits
-
-* **Global CDI-based Registration**: Claim mappers are discovered and registered via CDI using the `DiscoverableClaimMapper` SPI
-* **Zero Configuration**: Works with Keycloak's default token structure without custom protocol mappers
-* **Opt-in Feature**: Disabled by default, enabled when needed
-* **Simplified Integration**: Reduces Keycloak realm configuration complexity
-* **Standards Compliance**: Maintains compatibility with standard JWT claim names
-* **Extensible**: Custom mappers can be added by implementing `DiscoverableClaimMapper` as CDI beans
-
-== HTTP Access Log Filter Configuration
-
-The extension provides a custom HTTP access log filter that offers more granular control than Quarkus built-in access logging. The filter is controlled by an enabled flag and allows filtering by HTTP status codes and URL patterns.
-
-[cols="2,1,5"]
+[cols="2,1,1,3", options="header"]
 |===
-|Property |Type |Description
-
-|`cui.http.access-log.filter.enabled`
-|boolean (default: false)
-|Whether the access log filter is enabled. When set to true, the filter will process HTTP requests and responses according to the configured filtering rules. When false, the filter is disabled and no access logging will occur.
-
-|`cui.http.access-log.filter.min-status-code`
-|int (default: 400)
-|Minimum HTTP status code to log. Only responses with status codes >= this value will be logged. Common values: 200 (log all responses), 400 (log only client and server errors), 500 (log only server errors).
-
-|`cui.http.access-log.filter.max-status-code`
-|int (default: 599)
-|Maximum HTTP status code to log. Only responses with status codes <= this value will be logged. Set to 599 to include all error codes.
-
-|`cui.http.access-log.filter.include-status-codes`
-|String (comma-separated)
-|Specific HTTP status codes to always log, regardless of min/max range. Useful for logging specific success codes (like 201, 202) along with errors. Example: "201,202,204".
-
-|`cui.http.access-log.filter.include-paths`
-|String (comma-separated)
-|URL path patterns to include in logging. If specified, only requests matching these patterns will be considered for logging. Uses simple glob patterns (* and **). Empty means all paths are eligible. Example: "/api/**,/health/**".
-
-|`cui.http.access-log.filter.exclude-paths`
-|String (comma-separated)
-|URL path patterns to exclude from logging. These patterns override include patterns. Uses simple glob patterns (* and **). Common exclusions: "/jwt/validate". Example: "/metrics/**".
-
-|`cui.http.access-log.filter.pattern`
-|String (default: "{remoteAddr} {method} {path} -> {status} ({duration}ms)")
-|Log format pattern. Supports placeholders: {method} (HTTP method), {path} (request path), {status} (HTTP status code), {duration} (request duration in milliseconds), {remoteAddr} (remote IP address), {userAgent} (User-Agent header).
+|Property |Type |Default |Description
+|`cui.http.access-log.filter.enabled` |boolean |`false` |Enable access log filter
+|`cui.http.access-log.filter.min-status-code` |int |`400` |Min status code to log
+|`cui.http.access-log.filter.max-status-code` |int |`599` |Max status code to log
+|`cui.http.access-log.filter.include-status-codes` |String (csv) |— |Specific status codes to always log
+|`cui.http.access-log.filter.include-paths` |String (csv) |— |URL path patterns to include (glob)
+|`cui.http.access-log.filter.exclude-paths` |String (csv) |— |URL path patterns to exclude (glob)
+|`cui.http.access-log.filter.pattern` |String |`+{remoteAddr} {method} {path} -> {status} ({duration}ms)+` |Log format
 |===
-
-=== Enabling Access Log Filter
-
-The access log filter is controlled by the enabled flag. To enable it, set the enabled property:
-
-[source,properties]
-----
-# Enable access log filter
-cui.http.access-log.filter.enabled=true
-
-# Example: Log only errors (4xx and 5xx status codes) - this is the default
-cui.http.access-log.filter.min-status-code=400
-cui.http.access-log.filter.max-status-code=599
-
-# Example: Log only server errors (5xx status codes)
-cui.http.access-log.filter.min-status-code=500
-cui.http.access-log.filter.max-status-code=599
-
-# Example: Log errors plus specific success codes
-cui.http.access-log.filter.min-status-code=400
-cui.http.access-log.filter.include-status-codes=201,202,204
-
-# Example: Log only API endpoints, exclude metrics
-cui.http.access-log.filter.include-paths=/api/**
-cui.http.access-log.filter.exclude-paths=/metrics/**
-----
-
-== Health Check Configuration
-
-The extension provides MicroProfile Health checks for JWT validation components. These health checks are automatically enabled when the `quarkus-smallrye-health` extension is present.
-
-[cols="2,1,5"]
-|===
-|Property |Type |Description
-
-|`sheriff.oauth.health.jwks.cache-seconds`
-|int (default: 30)
-|The cache time-to-live in seconds for JWKS health check results. This prevents excessive network calls to JWKS endpoints during frequent health check evaluations.
-|===
-
-=== Health Check Endpoints
-
-* **JWKS Endpoint Health Check** (`jwks-endpoints`): Available at `/q/health/ready` - Checks connectivity to all configured JWKS endpoints
-* **Token Validator Health Check** (`jwt-validator`): Available at `/q/health/live` - Validates TokenValidator configuration and availability
-
-== Default Values Summary
-
-For quick reference, here are all the default values in one place:
-
-[cols="2,1"]
-|===
-|Property |Default Value
-
-|sheriff.oauth.parser.max-token-size
-|8192
-
-|sheriff.oauth.parser.max-payload-size
-|2048
-
-|sheriff.oauth.parser.max-string-size
-|1024
-
-|sheriff.oauth.parser.max-array-size
-|64
-
-|sheriff.oauth.parser.max-depth
-|10
-
-|sheriff.oauth.cache.access-token.max-size
-|1000
-
-|sheriff.oauth.cache.access-token.eviction-interval-seconds
-|10
-
-|sheriff.oauth.issuers.<issuer-name>.enabled
-|true
-
-|sheriff.oauth.issuers.<issuer-name>.claim-sub-optional
-|false
-
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.refresh-interval-seconds`
-|300
-
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.connection-timeout-seconds`
-|5
-
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.read-timeout-seconds`
-|5
-
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.max-retries`
-|3
-
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.use-system-proxy`
-|false
-
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.key-rotation-grace-period-seconds`
-|300
-
-|`sheriff.oauth.issuers.<issuer-name>.jwks.http.max-retired-key-sets`
-|10
-
-|`sheriff.oauth.health.jwks.cache-seconds`
-|30
-
-|`sheriff.oauth.keycloak.default-roles-mapper.enabled`
-|false
-
-|`sheriff.oauth.keycloak.default-groups-mapper.enabled`
-|false
-|===
-
-== Example Configuration
-
-=== Example 1: Direct JWKS URL Configuration
-
-[source,properties]
-----
-# Global parser configuration
-sheriff.oauth.parser.max-token-size=8192
-sheriff.oauth.parser.max-payload-size=8192
-sheriff.oauth.parser.max-string-size=4096
-sheriff.oauth.parser.max-array-size=64
-sheriff.oauth.parser.max-depth=10
-
-# Keycloak issuer configuration
-sheriff.oauth.issuers.keycloak.issuer-identifier=https://keycloak.example.com/auth/realms/master
-sheriff.oauth.issuers.keycloak.jwks.file-path=classpath:keys/public_key.pem
-sheriff.oauth.issuers.keycloak.enabled=true
-
-# JWKS configuration for Keycloak (direct URL approach)
-sheriff.oauth.issuers.keycloak.jwks.url=https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs
-sheriff.oauth.issuers.keycloak.jwks.http.refresh-interval-seconds=600
-sheriff.oauth.issuers.keycloak.jwks.http.connection-timeout-seconds=3
-sheriff.oauth.issuers.keycloak.jwks.http.read-timeout-seconds=3
-sheriff.oauth.issuers.keycloak.jwks.http.max-retries=5
-sheriff.oauth.issuers.keycloak.jwks.http.use-system-proxy=true
-
-# Key rotation grace period configuration (Issue #110)
-sheriff.oauth.issuers.keycloak.jwks.http.key-rotation-grace-period-seconds=300  # 5 minute grace period
-sheriff.oauth.issuers.keycloak.jwks.http.max-retired-key-sets=10               # Keep max 10 old key sets
-----
-
-=== Example 2: OpenID Connect Discovery Configuration (Recommended)
-
-[source,properties]
-----
-# Global parser configuration
-sheriff.oauth.parser.max-token-size=8192
-sheriff.oauth.parser.max-payload-size=8192
-sheriff.oauth.parser.max-string-size=4096
-sheriff.oauth.parser.max-array-size=64
-sheriff.oauth.parser.max-depth=10
-
-# Issuer configuration using well-known approach
-sheriff.oauth.issuers.auth0.issuer-identifier=https://your-tenant.auth0.com/
-sheriff.oauth.issuers.auth0.enabled=true
-
-# JWKS configuration using OpenID Connect Discovery (well-known approach)
-sheriff.oauth.issuers.auth0.well-known-url=https://your-tenant.auth0.com/.well-known/openid-configuration
-sheriff.oauth.issuers.auth0.jwks.http.refresh-interval-seconds=300
-sheriff.oauth.issuers.auth0.jwks.http.connection-timeout-seconds=5
-sheriff.oauth.issuers.auth0.jwks.http.read-timeout-seconds=5
-sheriff.oauth.issuers.auth0.jwks.http.max-retries=3
-----
-
-== Metrics Integration
-
-The extension automatically provides metrics integration when the Quarkus Micrometer extension is present. No additional configuration is required for basic metrics collection.
-
-=== Prerequisites
-
-To enable metrics collection, add the following dependency to your project:
-
-[source,xml]
-----
-<dependency>
-    <groupId>io.quarkus</groupId>
-    <artifactId>quarkus-micrometer</artifactId>
-</dependency>
-----
-
-For Prometheus integration, also add:
-
-[source,xml]
-----
-<dependency>
-    <groupId>io.quarkus</groupId>
-    <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
-</dependency>
-----
-
-=== Available Metrics
-
-The extension exposes the following metrics:
-
-|===
-|Metric Name |Type |Description |Tags
-
-|`sheriff.oauth.validation.errors` |Counter |Number of JWT validation errors by type |event_type, result, category
-|===
-
-=== Accessing Metrics
-
-Metrics are available at the standard Micrometer endpoint:
-
-* **Default endpoint**: `/q/metrics` (when using `quarkus-micrometer-registry-prometheus`)
-* **Micrometer endpoint**: `/q/micrometer` (general metrics endpoint)
-
-=== Configuration Options
-
-The metrics integration uses Quarkus Micrometer configuration options:
-
-[source,properties]
-----
-# Enable/disable metrics (default: true when micrometer extension is present)
-quarkus.micrometer.enabled=true
-
-# Prometheus registry configuration (when using prometheus registry)
-quarkus.micrometer.export.prometheus.enabled=true
-quarkus.micrometer.export.prometheus.path=/q/metrics
-----
-
-=== Documentation
-
-For detailed metrics documentation including monitoring examples, alerting configurations, and dashboard setup, see:
-
-* `doc/metrics-integration.adoc` - Complete metrics documentation
-* `doc/jwt-metrics-grafana-dashboard.json` - Pre-configured Grafana dashboard

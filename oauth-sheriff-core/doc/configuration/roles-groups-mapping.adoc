@@ -6,188 +6,119 @@
 :sectnums:
 
 
-The library provides built-in support for role-based and group-based access control through the "roles" and "groups" claims. These claims are common in many JWT implementations but are not part of the core JWT or OpenID Connect specifications.
+The library provides built-in support for role-based and group-based access control through the "roles" and "groups" claims.
 
 == Default Mapping Behavior
 
-By default, both "roles" and "groups" claims use the `JsonCollectionMapper`, which can automatically detect:
+Both claims use `JsonCollectionMapper` by default, which detects:
 
 * JSON arrays of strings: `"roles": ["admin", "user"]`
-* JSON strings (treated as a single value): `"roles": "admin"`
+* JSON strings (single value): `"roles": "admin"`
 
-The `JsonCollectionMapper` has the following limitations:
-
-* It only detects JSON arrays and JSON strings
-* It does not split space-separated or comma-separated strings
-* It treats nested structures as single string values
+It does not split space-separated or comma-separated strings, and treats nested structures as single string values.
 
 == Supported JSON Structures
 
-The following JSON structures are automatically detected and properly mapped:
-
 [source,json]
 ----
-// JSON array of strings - each element becomes a separate role/group
-{
-  "roles": ["admin", "user", "manager"],
-  "groups": ["group1", "group2", "group3"]
-}
+// JSON array - each element becomes a separate role/group
+{ "roles": ["admin", "user", "manager"] }
 
-// Single string value - becomes a single-element list
-{
-  "roles": "admin",
-  "groups": "group1"
-}
+// Single string - becomes a single-element list
+{ "roles": "admin" }
 
-// JSON array with mixed types - non-string values are converted to strings
-{
-  "roles": ["admin", 123, true],
-  "groups": ["group1", {"id": "group2"}]
-}
+// Mixed types - non-string values converted to strings
+{ "roles": ["admin", 123, true] }
 ----
 
 == Unsupported JSON Structures
 
-The following JSON structures are NOT automatically split into multiple values by the default `JsonCollectionMapper`:
-
 [source,json]
 ----
-// Space-separated string - treated as a single value "admin user manager"
-{
-  "roles": "admin user manager"
-}
+// Space-separated - treated as single value "admin user manager"
+{ "roles": "admin user manager" }
 
-// Comma-separated string - treated as a single value "admin,user,manager"
-{
-  "roles": "admin,user,manager"
-}
-
-// Nested arrays - inner arrays are converted to string representation
-{
-  "roles": [["admin"], ["user"]]
-}
-
-// Custom format - treated as a single value
-{
-  "roles": "admin:user:manager"
-}
+// Comma-separated - treated as single value "admin,user,manager"
+{ "roles": "admin,user,manager" }
 ----
 
-NOTE: Character-separated strings (like comma or colon-separated) can be handled using the `StringSplitterMapper`. See the <<Using StringSplitterMapper for Delimited Strings>> section for details.
+NOTE: Character-separated strings can be handled using the `StringSplitterMapper`. See <<Using StringSplitterMapper for Delimited Strings>>.
 
 == Using Roles and Groups
 
-The `AccessTokenContent` class provides methods for working with roles and groups:
-
 [source,java]
 ----
-// Get all roles from the token
 List<String> roles = accessToken.getRoles();
-
-// Get all groups from the token
 List<String> groups = accessToken.getGroups();
-
-// Check if the token has specific roles
 boolean hasRoles = accessToken.providesRoles(List.of("admin", "user"));
-
-// Check if the token has specific groups
 boolean hasGroups = accessToken.providesGroups(List.of("group1", "group2"));
-
-// Get missing roles
 Set<String> missingRoles = accessToken.determineMissingRoles(requiredRoles);
-
-// Get missing groups
-Set<String> missingGroups = accessToken.determineMissingGroups(requiredGroups);
 ----
 
 == Custom Mapping for Roles and Groups
 
-If your identity provider uses a different format for roles or groups, you can configure a custom mapper:
-
 [[Using StringSplitterMapper for Delimited Strings]]
 === Using StringSplitterMapper for Delimited Strings
 
-The library provides a `StringSplitterMapper` that can split string claims by a specified character. This is useful when roles or groups are provided as a single string with values separated by a specific character:
-
 [source,java]
 ----
-// Create a mapper that splits by comma
 StringSplitterMapper commaMapper = new StringSplitterMapper(',');
-
-// Create a mapper that splits by colon
 StringSplitterMapper colonMapper = new StringSplitterMapper(':');
 
-// Configure the issuer to use the custom mappers
 IssuerConfig issuerConfig = IssuerConfig.builder()
         .issuerIdentifier("https://issuer.com")
-        .jwksContent(jwksContent) // or other JWKS configuration
-        .claimMapper("roles", commaMapper) // For comma-separated roles
-        .claimMapper("groups", colonMapper) // For colon-separated groups
+        .jwksContent(jwksContent)
+        .claimMapper("roles", commaMapper)
+        .claimMapper("groups", colonMapper)
         .build();
 ----
 
-The `StringSplitterMapper` is particularly useful for handling formats that the default `JsonCollectionMapper` doesn't support:
-
-* Comma-separated strings: `"roles": "admin,user,manager"` → `["admin", "user", "manager"]`
-* Colon-separated strings: `"roles": "admin:user:manager"` → `["admin", "user", "manager"]`
-* Any other character-separated strings
-
-The mapper:
-
-* Only works with string values (not arrays or other types)
-* Trims whitespace from each value
-* Omits empty values
-* Preserves the original string in the claim value
+The mapper trims whitespace, omits empty values, and only works with string values.
 
 === Nested Claims Mapping
 
-For complex JWT structures where roles and groups are nested within other claims, configure custom paths:
+For nested claim structures (e.g., Keycloak's `realm_access.roles`), implement a custom `ClaimMapper`:
 
 [source,java]
 ----
-// Configure custom claim paths
-RolesGroupsConfig rolesConfig = RolesGroupsConfig.builder()
-    .rolesPath("realm_access/roles")  // Nested path for Keycloak
-    .groupsPath("resource_access/my-app/roles")  // Deep nesting
-    .build();
-
 IssuerConfig issuerConfig = IssuerConfig.builder()
-    .issuer("https://example.com")
-    .rolesGroupsConfig(rolesConfig)
+    .issuerIdentifier("https://example.com")
+    .jwksContent(jwksJsonString)
+    .claimMapper("roles", (mapRepresentation, claimName) -> {
+        // Custom logic to extract nested roles from realm_access/roles
+        // Use getNestedMap() for nested structures, getValue() for direct access
+        return new JsonCollectionMapper().map(mapRepresentation, claimName);
+    })
     .build();
 ----
 
 === Custom Claim Mapper Implementation
 
-For complete control over claim mapping, implement the `ClaimMapper` interface:
-
 [source,java]
 ----
 public class CustomRoleMapper implements ClaimMapper {
     @Override
-    public List<String> mapClaim(Object claimValue) {
-        // Custom logic to extract roles
-        if (claimValue instanceof Map) {
-            // Handle complex nested structures
-        }
-        return Collections.emptyList();
+    public ClaimValue map(MapRepresentation mapRepresentation, String claimName) {
+        // Handle complex nested structures
+        // Use getNestedMap() for nested objects, getValue()/getString() for direct access
+        return new JsonCollectionMapper().map(mapRepresentation, claimName);
     }
 }
 
-// Use the custom mapper
 IssuerConfig issuerConfig = IssuerConfig.builder()
     .issuerIdentifier("https://issuer.com")
+    .jwksContent(jwksJsonString)
     .claimMapper("roles", new CustomRoleMapper())
     .build();
 ----
 
-== CDI-based Custom Mapper Registration (Quarkus)
+== CDI-based Custom Mapper Registration (Quarkus Only)
 
-When using the Quarkus extension, custom claim mappers can be registered as CDI beans and are automatically discovered and applied to all configured issuers. This replaces the need for per-issuer mapper configuration.
+NOTE: This section describes Quarkus-specific functionality. The `DiscoverableClaimMapper` interface is part of the `oauth-sheriff-quarkus` module, not `oauth-sheriff-core`. For standalone core library usage, use the `ClaimMapper` interface directly via `IssuerConfig.builder().claimMapper()`.
+
+Custom claim mappers can be registered as CDI beans and are automatically discovered and applied to all configured issuers.
 
 === Creating a Custom DiscoverableClaimMapper
-
-Implement the `DiscoverableClaimMapper` interface as an `@ApplicationScoped` CDI bean:
 
 [source,java]
 ----
@@ -196,12 +127,12 @@ public class MyCustomClaimMapper implements DiscoverableClaimMapper {
 
     @Override
     public String getClaimName() {
-        return "custom-roles"; // The claim name this mapper handles
+        return "custom-roles";
     }
 
     @Override
     public ClaimMapper getMapper() {
-        return new MyCustomMapperImpl(); // Your ClaimMapper implementation
+        return new MyCustomMapperImpl();
     }
 
     @Override
@@ -211,13 +142,7 @@ public class MyCustomClaimMapper implements DiscoverableClaimMapper {
 }
 ----
 
-The mapper is automatically discovered by the `ClaimMapperRegistry` and applied globally to all configured issuers.
-
-NOTE: The `isEnabled()` method defaults to `true`. You only need to override it if you want to conditionally activate the mapper via configuration properties.
-
 === Built-in Keycloak Mappers
-
-The Quarkus extension provides built-in CDI mapper beans for Keycloak's default claim structures. These are controlled by global configuration properties:
 
 [source,properties]
 ----
@@ -228,9 +153,9 @@ sheriff.oauth.keycloak.default-roles-mapper.enabled=true
 sheriff.oauth.keycloak.default-groups-mapper.enabled=true
 ----
 
-Both properties default to `false`. When enabled, the corresponding mapper is applied to all configured issuers.
+Both default to `false`. When enabled, the mapper is applied to all configured issuers.
 
 === Constraints
 
-* Each claim name must have at most one enabled `DiscoverableClaimMapper`. If duplicates are detected, the application will fail fast with an `IllegalStateException` during startup.
-* Discovered mappers are applied globally to all issuers. For issuer-specific mapper logic, implement the conditional behavior within the `ClaimMapper` implementation itself.
+* Each claim name must have at most one enabled `DiscoverableClaimMapper` -- duplicates cause `IllegalStateException` at startup.
+* Discovered mappers are applied globally. For issuer-specific logic, implement conditional behavior within the `ClaimMapper`.

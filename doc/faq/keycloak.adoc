@@ -13,22 +13,21 @@ Common issues and solutions when integrating the OAuth Sheriff library with Keyc
 * xref:../../README.adoc[README] - Project overview and introduction
 * xref:../../oauth-sheriff-core/README.adoc[Usage Guide] - How to use the library with code examples
 * xref:../Requirements.adoc[Requirements] - Functional and non-functional requirements
-* xref:../Specification.adoc[Specification] - Technical specifications
+* xref:../architecture.adoc[Architecture] - Architecture reference
 * xref:../LogMessages.adoc[Log Messages] - Reference for all log messages
-* xref:../security/Threat-Model.adoc[Threat Model] - Security analysis and mitigations
-* xref:../Build.adoc[Building and Development] - Information for contributors
+* xref:../security/threat-model.adoc[Threat Model] - Security analysis and mitigations
 
 == Missing Mandatory Claims
 
 === Problem: Missing 'sub' Claim
 
-*Error:* `OAUTH_SHERIFF_QUARKUS-124: Bearer token validation failed: Missing mandatory claims: [sub]`
+*Warning:* `JWTValidation-109: Token is missing required claim: sub`
 
-*Cause:* Keycloak access tokens don't include the `sub` claim by default, which is mandatory for ACCESS_TOKEN and ID_TOKEN types per RFC 7519.
+*Cause:* Some Keycloak configurations or custom client scopes may exclude the `sub` claim from access tokens. While Keycloak includes `sub` by default, certain service account configurations or custom protocol mappers can remove it. The `sub` claim is mandatory for ACCESS_TOKEN and ID_TOKEN types per RFC 7519.
 
-=== Solution 1: Configure claimSubOptional (Recommended)
+=== Solution 1: Configure claimSubOptional (For Specific Edge Cases)
 
-The simplest solution is to configure the OAuth Sheriff library to make the `sub` claim optional for Keycloak issuers:
+If your Keycloak setup legitimately excludes the `sub` claim (e.g., certain service account configurations), you can configure the OAuth Sheriff library to make the `sub` claim optional:
 
 [source,properties]
 ----
@@ -39,11 +38,11 @@ sheriff.oauth.issuers.keycloak.claim-sub-optional=true
 *Benefits:*
 
 - No Keycloak realm configuration changes needed
-- Works immediately with default Keycloak token structure
+- Useful for service accounts or custom client scopes that omit `sub`
 - Maintains RFC compliance warnings for awareness
 - Per-issuer configuration allows mixed environments
 
-*Warning:* This relaxes RFC 7519 compliance. The library will log a warning when this setting is enabled.
+*Warning:* This relaxes RFC 7519 compliance. The library will log a warning (`JWTValidation-134`) when this setting is enabled.
 
 === Solution 2: Add Subject Protocol Mapper
 
@@ -140,7 +139,7 @@ Expected token structure after configuration:
 
 *Solution:* Always set `"full.path": "false"` in your group membership mapper:
 
-[source,json]
+[source,jsonc]
 ----
 {
   "name": "groups",
@@ -155,7 +154,7 @@ Expected token structure after configuration:
 ----
 
 **Token comparison:**
-[source,json]
+[source,jsonc]
 ----
 // With "full.path": "true" (default) - WRONG
 {
@@ -177,7 +176,7 @@ Expected token structure after configuration:
 **Common symptoms:**
 
 - BearerToken validation fails with `CONSTRAINT_VIOLATION` status
-- Error: `Bearer token requirements not met - missing groups: [test-group]`
+- HTTP response includes `WWW-Authenticate: Bearer error="insufficient_privileges", required_groups="test-group"`
 - Tests pass for roles but fail for groups
 - User is definitely assigned to the group in Keycloak admin console
 
@@ -203,7 +202,7 @@ This automatically maps:
 
 Benefits:
 
-- Global CDI-based registration via the `DiscoverableClaimMapper` interface (Service Provider Interface)
+- Global CDI-based registration via the `DiscoverableClaimMapper` CDI interface
 - No Keycloak realm modification needed
 - Works with standard Keycloak token structure
 - Custom mappers can be added by implementing `DiscoverableClaimMapper` as CDI beans
@@ -228,6 +227,6 @@ Benefits:
 == References
 
 - https://datatracker.ietf.org/doc/html/rfc7519[RFC 7519: JSON Web Token (JWT)]
-- https://datatracker.ietf.org/doc/html/rfc7540#section-8.1.2[RFC 7540: HTTP/2 Header Compression]
-- https://datatracker.ietf.org/doc/html/rfc7230#section-3.2[RFC 7230: HTTP/1.1 Message Syntax]
+- https://datatracker.ietf.org/doc/html/rfc7517[RFC 7517: JSON Web Key (JWK)]
+- https://datatracker.ietf.org/doc/html/rfc7518[RFC 7518: JSON Web Algorithms (JWA)]
 - https://www.keycloak.org/docs/latest/server_admin/index.html#_protocol-mappers[Keycloak Protocol Mappers Documentation]

@@ -36,16 +36,16 @@ Performance benchmarking for JWT token validation core library using JMH.
 ----
 -Djmh.iterations=5           # Measurement iterations (default: 5)
 -Djmh.warmupIterations=3     # Warmup iterations (default: 3)
--Djmh.forks=2               # JVM forks (default: 2)
--Djmh.threads=4             # Concurrent threads (default: 4)
--Djmh.time=10s              # Time per iteration
--Djmh.includes=*Benchmark   # Benchmark pattern filter
+-Djmh.forks=1               # JVM forks (default: 1)
+-Djmh.threads=100           # Concurrent threads (default: 100)
+-Djmh.time=4s               # Time per iteration (default: 4s)
+-Djmh.include=*Benchmark    # Benchmark pattern filter
 ----
 
 === Profiles
 
 * `benchmark` - Runs the benchmarks with default settings
-* `benchmark,quick` - Fast validation with reduced iterations (2), forks (1), and time (5s)
+* `benchmark,quick` - Fast validation with reduced iterations (2), warmup iterations (1), time (5s), and warmup time (2s)
 * `benchmark-jfr` - Runs benchmarks with Java Flight Recorder profiling
 
 === Running Specific Benchmarks
@@ -54,11 +54,11 @@ Performance benchmarking for JWT token validation core library using JMH.
 ----
 # Single benchmark
 ./mvnw clean verify -pl benchmarking/benchmark-core -Pbenchmark \
-  -Djmh.includes=TokenValidatorBenchmark
+  -Djmh.include=TokenValidatorBenchmark
 
 # Multiple benchmarks
 ./mvnw clean verify -pl benchmarking/benchmark-core -Pbenchmark \
-  -Djmh.includes="TokenValidator|JwksClient"
+  -Djmh.include="TokenValidator|JwksClient"
 ----
 
 == Benchmarks
@@ -66,9 +66,7 @@ Performance benchmarking for JWT token validation core library using JMH.
 === Standard Benchmarks
 
 * `SimpleCoreValidationBenchmark` - Core JWT validation performance (throughput and latency)
-* `SimpleErrorLoadBenchmark` - Streamlined error handling scenarios
-* `ErrorLoadBenchmark` - Comprehensive error scenario testing with various token failures
-* `PerformanceIndicatorBenchmark` - Performance scoring metrics
+* `SimpleErrorLoadBenchmark` - Streamlined error handling scenarios with various token failures
 
 === JFR-Enabled Benchmarks
 
@@ -92,11 +90,10 @@ Results are generated in `target/benchmark-results/`:
 
 Composite metric combining:
 
-* **Throughput (57%)** - Operations per second
-* **Latency (40%)** - Response time (inverted)
-* **Error Resilience (3%)** - Error handling efficiency
+* **Throughput (50%)** - Operations per second normalized by 100
+* **Latency (50%)** - Response time (inverted)
 
-Score = (Throughput × 0.57) + (Latency_Inverted × 0.40) + (Error_Resilience × 0.03)
+Score = (Throughput / 100 × 0.5) + (100 / Latency_ms × 0.5)
 
 == Analysis
 
@@ -120,10 +117,9 @@ jq '.overallScore, .grade' target/benchmark-results/benchmark-summary.json
 
 [source,bash]
 ----
-# Analyze variance
-java -cp "target/classes:target/dependency/*" \
-  de.cuioss.sheriff.oauth.core.benchmark.jfr.JfrVarianceAnalyzer \
-  target/benchmark-results/jfr-benchmark.jfr
+# Analyze variance (uses analyze-jfr Maven profile)
+./mvnw verify -pl benchmarking/benchmark-core -Panalyze-jfr \
+  -Djfr.file=target/benchmark-results/jfr-benchmark.jfr
 
 # View hot methods
 jfr print --events jdk.ExecutionSample \
@@ -141,7 +137,7 @@ Each run generates:
 
 === GitHub Pages
 
-View trends at: https://cuioss.github.io/OAuth-Sheriff/benchmarks/performance-trends.html
+View trends at: https://cuioss.github.io/OAuthSheriff/benchmarks/performance-trends.html
 
 Features:
 
@@ -166,7 +162,7 @@ For custom benchmarking:
 
 For comprehensive documentation on benchmarking, analysis, and visualization:
 
-📚 **link:../doc/README.adoc[Complete Documentation]**
+**link:../README.adoc[Complete Documentation]**
 
 === Quick Links
 

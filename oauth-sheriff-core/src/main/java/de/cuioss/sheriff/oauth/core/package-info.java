@@ -38,7 +38,7 @@
  * For detailed information about the library, see the following documentation:
  * <ul>
  *   <li><a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/Requirements.adoc">Requirements</a></li>
- *   <li><a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/Specification.adoc">Specification</a></li>
+ *   <li><a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/architecture.adoc">Architecture Reference</a></li>
  *   <li><a href="https://github.com/cuioss/OAuthSheriff/tree/main/oauth-sheriff-core/README.adoc">Usage Guide</a></li>
  * </ul>
  * <p>

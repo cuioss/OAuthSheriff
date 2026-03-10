@@ -25,7 +25,7 @@ An **ablation study** further decomposes the gap between the health endpoint and
 |SmallRye Health, minimal JSON
 |Shared infrastructure baseline
 
-|**A: Bare Baseline** (new class)
+|**A: Bare Baseline** (removed; benchmark data retained)
 |`POST /mock-jwt-bare/baseline`
 |Zero CDI injection, pre-built `ValidationResponse`
 |JAX-RS + `@RunOnVirtualThread` + Jackson — **without any CDI beans**
@@ -87,7 +87,7 @@ All variants use **POST with Authorization header** (same WRK Lua script pattern
 |**8.88**
 |**46,800 ops/s**
 
-|**A: Bare Baseline** (`/mock-jwt-bare/baseline`)
+|**A: Bare Baseline** (`/mock-jwt-bare/baseline`) _(endpoint removed after benchmarking; data from original run)_
 |**0.870**
 |**3.63**
 |**11.51**
@@ -160,7 +160,7 @@ The ablation study decomposes the full JWT P50 latency (1.91ms) into measured la
 
 === Ablation Variant Descriptions
 
-* **A: Bare Baseline** (`/mock-jwt-bare/baseline`) — Separate JAX-RS class with zero CDI constructor injection. Returns a pre-built `ValidationResponse`. Isolates JAX-RS + `@RunOnVirtualThread` + Jackson without any CDI beans.
+* **A: Bare Baseline** (`/mock-jwt-bare/baseline`) — Was a separate JAX-RS class with zero CDI constructor injection, removed after benchmarking. Returned a pre-built `ValidationResponse`. Isolated JAX-RS + `@RunOnVirtualThread` + Jackson without any CDI beans. Benchmark data above is from the original run.
 * **B: JAX-RS Baseline** (`/mock-jwt/baseline`) — Same behavior as A, but in the CDI-injected `MockJwtValidationEndpoint` class. Comparing A vs B confirms that `@ApplicationScoped` constructor injection has zero per-request cost.
 * **C: Header Only** (`/mock-jwt/header-only`) — Calls `resolveHeaderMap()` but does not parse headers or construct a HashMap. Returns a pre-built response. The difference C minus B isolates the Vert.x context resolution cost.
 

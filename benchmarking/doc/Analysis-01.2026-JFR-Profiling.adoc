@@ -355,7 +355,7 @@ The `CustomAccessLogFilter` is registered via `@Provider` and runs on **all JAX-
 3. **JWT validation (1.1ms) dominates** — filter overhead (0.1ms) is negligible in comparison
 4. **50% CUI library CPU in filter is misleading** — that's 50% of only 0.3% total CPU
 
-The filter is configured with `min-status-code=206`, so it only **logs** errors but still **executes** `shouldLog()` and `isPathIncluded()` on every response. These methods create `Path.of(path)` objects per request.
+The filter is configured with `min-status-code=400` (the default), so it only **logs** client and server errors but still **executes** `shouldLog()` and `isPathIncluded()` on every response. These methods create `Path.of(path)` objects per request.
 
 For benchmark isolation, the filter can be disabled:
 [source,properties]
@@ -502,4 +502,4 @@ The 14x JMH-to-integration gap (77µs → 1,087µs) is **understood but not opti
 * link:Analysis-01.2026-Integration.adoc[Integration Benchmark Analysis] - Throughput and latency measurements
 * link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition] - Ablation study results
 * link:Analysis-01.2026-Micro.adoc[Microbenchmark Analysis] - JMH component-level timings
-* link:../oauth-sheriff-quarkus-parent/doc/performance/jfr-profiling-guide.adoc[JFR Profiling Guide] - Setup instructions
+* link:../../oauth-sheriff-quarkus-parent/doc/performance/jfr-profiling-guide.adoc[JFR Profiling Guide] - Setup instructions

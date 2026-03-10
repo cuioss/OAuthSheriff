@@ -125,11 +125,11 @@ NOTE: External port mapping is `10443→8443`. Prometheus uses internal service 
 
 |`sheriff_oauth_bearer_token_validation_seconds_count`
 |JWT validation count
-|Histogram
+|Counter (histogram-derived)
 
 |`sheriff_oauth_bearer_token_validation_seconds_sum`
 |Total JWT validation time in seconds
-|Histogram
+|Counter (histogram-derived)
 |===
 
 == Output Format
@@ -220,12 +220,12 @@ target/benchmark-results/
 * **MetricsJsonExporter**: Exports structured JSON output
 * **PrometheusMetricsManager**: Manages Prometheus availability checks
 
-Location: `benchmarking/cui-benchmarking-common/src/main/java/de/cuioss/benchmarking/common/metrics/`
+Location: `benchmarking/benchmarking-common/src/main/java/de/cuioss/benchmarking/common/metrics/`
 
 === Integration
 
-* **WrkResultPostProcessor**: WRK benchmark integration
-* **OutputDirectoryStructure**: Directory structure management
+* **WrkResultPostProcessor**: WRK benchmark integration (in `benchmark-integration-wrk` module)
+* **OutputDirectoryStructure**: Directory structure management (in `benchmarking-common/output/` package)
 
 == CPU Percentage Interpretation
 
@@ -291,9 +291,9 @@ Comprehensive test coverage:
 
 * **PrometheusClientTest**: API client testing with mock responses
 * **MetricsTransformerTest**: Aggregation and transformation logic
-* **MetricsIntegrationTest**: End-to-end metrics collection
+* **MetricsJsonExporterTest**: End-to-end metrics JSON export
 
-Test data: `cui-benchmarking-common/src/test/resources/metrics/`
+Test data: `benchmarking-common/src/test/resources/metrics/`
 
 Uses real Prometheus metrics from actual benchmark runs.
 
@@ -320,7 +320,7 @@ Collected metrics enable analysis of:
 
 == References
 
-* link:../cui-benchmarking-common/README.adoc[Benchmarking Common Module]
+* link:../benchmarking-common/README.adoc[Benchmarking Common Module]
 * link:Architecture.adoc[Benchmark Architecture]
 * link:workflow.adoc[Benchmark Workflow]
 * https://prometheus.io/docs/prometheus/latest/querying/api/[Prometheus API Documentation]

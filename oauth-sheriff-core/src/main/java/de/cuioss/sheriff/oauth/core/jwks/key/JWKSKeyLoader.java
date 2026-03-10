@@ -59,7 +59,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ul>
  * <p>
  * For more details on the security aspects, see the
- * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/specification/security.adoc">Security Specification</a>
+ * <a href="https://github.com/cuioss/OAuthSheriff/tree/main/doc/security/security-reference.adoc">Security Specification</a>
  *
  * @author Oliver Wolff
  */

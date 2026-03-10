@@ -1,0 +1,44 @@
+= Documentation Hub
+:sectnums:
+
+This is the central navigation for OAuthSheriff documentation.
+
+== Core
+
+* xref:Requirements.adoc[Requirements] - Functional and non-functional requirements
+* xref:architecture.adoc[Architecture] - Validation pipeline, components, and design
+* xref:LogMessages.adoc[Log Messages] - Reference for all log messages
+
+== Security
+
+* xref:security/threat-model.adoc[Threat Model] - STRIDE threat analysis with coverage status
+* xref:security/security-reference.adoc[Security Reference] - Attack mitigations, controls, and best practices
+
+== Specifications
+
+* xref:specification/token-decryption.adoc[Token Decryption] - Future JWE support
+
+== Module Documentation
+
+* xref:../oauth-sheriff-core/README.adoc[oauth-sheriff-core] - Core library usage and API
+** xref:../oauth-sheriff-core/doc/usage-guide.adoc[Usage Guide]
+** xref:../oauth-sheriff-core/doc/api-reference.adoc[API Reference]
+** xref:../oauth-sheriff-core/doc/developing.adoc[Developing]
+** xref:../oauth-sheriff-core/doc/UnitTesting.adoc[Unit Testing]
+* xref:../oauth-sheriff-quarkus-parent/README.adoc[oauth-sheriff-quarkus-parent] - Quarkus extension
+** xref:../oauth-sheriff-quarkus-parent/doc/README.adoc[Module Documentation]
+
+== Benchmarking
+
+* xref:../benchmarking/README.adoc[Benchmarking Overview]
+* xref:../benchmarking/doc/Analysis-01.2026-Micro.adoc[Micro-Benchmark Analysis (January 2026)]
+* xref:../benchmarking/doc/Analysis-01.2026-Integration.adoc[Integration Benchmark Analysis (January 2026)]
+* xref:../benchmarking/doc/performance-scoring.adoc[Performance Scoring]
+
+== Configuration
+
+* xref:../oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus/src/main/resources/META-INF/quarkus-config-doc.adoc[Configuration Reference] - All `sheriff.oauth.*` properties
+
+== FAQ
+
+* xref:faq/keycloak.adoc[Keycloak FAQ]

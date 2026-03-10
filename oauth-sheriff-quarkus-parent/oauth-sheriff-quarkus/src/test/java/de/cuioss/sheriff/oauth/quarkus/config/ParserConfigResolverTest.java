@@ -41,9 +41,8 @@ class ParserConfigResolverTest {
         TestConfig config = new TestConfig(Map.of(
                 JwtPropertyKeys.PARSER.MAX_TOKEN_SIZE, "16384",
                 JwtPropertyKeys.PARSER.MAX_PAYLOAD_SIZE, "8192",
-                JwtPropertyKeys.PARSER.MAX_STRING_SIZE, "4096",
-                JwtPropertyKeys.PARSER.MAX_ARRAY_SIZE, "256",
-                JwtPropertyKeys.PARSER.MAX_DEPTH, "20"
+                JwtPropertyKeys.PARSER.MAX_STRING_LENGTH, "4096",
+                JwtPropertyKeys.PARSER.MAX_BUFFER_SIZE, "256"
         ));
         ParserConfigResolver resolver = new ParserConfigResolver(config);
 
@@ -53,7 +52,6 @@ class ParserConfigResolverTest {
         assertEquals(8192, result.getMaxPayloadSize(), "Should use custom payload size");
         assertEquals(4096, result.getMaxStringLength(), "Should use custom string length");
         assertEquals(256, result.getMaxBufferSize(), "Should use custom buffer size");
-        // MAX_DEPTH is no longer supported in ParserConfig
     }
 
 
@@ -103,7 +101,6 @@ class ParserConfigResolverTest {
         assertEquals(ParserConfig.DEFAULT_MAX_PAYLOAD_SIZE, result.getMaxPayloadSize(), "Should use default payload size");
         assertEquals(ParserConfig.DEFAULT_MAX_STRING_LENGTH, result.getMaxStringLength(), "Should use default string length");
         assertEquals(ParserConfig.DEFAULT_MAX_BUFFER_SIZE, result.getMaxBufferSize(), "Should use default buffer size");
-        // MAX_DEPTH is no longer supported in ParserConfig
         assertLogMessagePresentContaining(TestLogLevel.DEBUG, "Resolving ParserConfig from properties");
         assertLogMessagePresent(TestLogLevel.INFO, INFO.RESOLVED_PARSER_CONFIG.format(
                 String.valueOf(ParserConfig.DEFAULT_MAX_TOKEN_SIZE),

@@ -6,19 +6,16 @@
 :sectnums:
 
 
-The `ParserConfig` class provides important security settings for token processing, implementing defense-in-depth against various attack vectors.
+The `ParserConfig` class provides security settings for token processing, implementing defense-in-depth against various attack vectors.
 
 == Configuration Example
 
 [source,java]
 ----
-// Create a TokenValidator with custom security settings
 ParserConfig config = ParserConfig.builder()
-        .maxTokenSize(4 * 1024)        // Limit token size to 4KB (default is 8KB)
-        .maxPayloadSize(1 * 1024)      // Limit payload size to 1KB (default is 2KB)
-        .maxStringSize(512)            // Limit JSON string size to 512B (default is 1KB)
-        .maxArraySize(32)              // Limit JSON array size to 32 elements (default is 64)
-        .maxDepth(5)                   // Limit JSON parsing depth to 5 levels (default is 10)
+        .maxTokenSize(4 * 1024)        // 4KB (default 8KB)
+        .maxPayloadSize(4 * 1024)      // 4KB (default 8KB)
+        .maxStringLength(2 * 1024)     // 2KB (default 4KB)
         .build();
 
 TokenValidator validator = TokenValidator.builder()
@@ -29,8 +26,6 @@ TokenValidator validator = TokenValidator.builder()
 
 == Security Layers
 
-The parser configuration implements defense-in-depth with multiple distinct size limits:
-
 [cols="1,3,1,3"]
 |===
 |Setting |Purpose |Default |Applied When
@@ -38,119 +33,59 @@ The parser configuration implements defense-in-depth with multiple distinct size
 |`maxTokenSize`
 |Limits entire JWT token string
 |8KB
-|Before any processing, applied to the raw token string
+|Before any processing
 
 |`maxPayloadSize`
 |Limits each decoded JWT part
-|2KB
-|After Base64 decoding, applied to header and payload separately
+|8KB
+|After Base64 decoding
 
-|`maxStringSize`
-|Limits individual JSON string values
-|1KB
-|During JSON parsing, applied to each string field
+|`maxStringLength`
+|DSL-JSON enforced limit on maximum string buffer size
+|4KB
+|During JSON parsing
 
-|`maxArraySize`
-|Limits JSON array size
-|64 elements
-|During JSON parsing, applied to each array
-
-|`maxDepth`
-|Limits JSON nesting depth
-|10 levels
-|During JSON parsing, prevents deep nesting attacks
+|`maxBufferSize`
+|Configurable buffer size limit (not currently enforced by DSL-JSON; reserved for future use)
+|128KB
+|Not actively enforced
 |===
 
-== Size Relationships
-
-Since Base64 encoding increases size by approximately 33%, the size limits are designed with this relationship in mind:
-
-* An 8KB token yields ~6KB of decoded content
-* With 2KB limits per part, we can accommodate reasonable header and payload sizes
-* Individual string limits prevent single-field attacks while allowing normal claims
-
-== Attack Prevention
-
-The configuration prevents multiple attack vectors:
-
-=== Denial of Service (DoS)
-
-* **`maxTokenSize`**: Prevents processing of extremely large token strings that could consume excessive memory or CPU
-* **`maxPayloadSize`**: Limits memory allocation for decoded parts, preventing memory exhaustion
-
-=== JSON Parsing Attacks
-
-* **`maxStringSize`**: Prevents attacks where individual fields contain massive strings
-* **`maxArraySize`**: Limits array processing to prevent excessive iteration
-* **`maxDepth`**: Prevents stack overflow from deeply nested JSON structures
-
-=== Memory Exhaustion
-
-The layered approach ensures memory limits at multiple stages:
-
-1. Raw token size check (before any allocation)
-2. Decoded part size check (after Base64 decoding)
-3. Individual field size checks (during JSON parsing)
+Base64 encoding increases size by ~33%: an 8KB token yields ~6KB decoded content. The 8KB per-part limit accommodates header + payload; the 4KB string limit prevents individual field attacks.
 
 == Recommended Settings
 
 === High Security Environment
 
-For environments with strict security requirements:
-
 [source,java]
 ----
 ParserConfig highSecurity = ParserConfig.builder()
         .maxTokenSize(2 * 1024)      // 2KB tokens
-        .maxPayloadSize(512)         // 512B payloads
-        .maxStringSize(256)          // 256B strings
-        .maxArraySize(16)            // 16 array elements
-        .maxDepth(3)                 // 3 nesting levels
+        .maxPayloadSize(2 * 1024)    // 2KB payloads
+        .maxStringLength(1 * 1024)   // 1KB strings
         .build();
 ----
 
 === Standard Environment
 
-Default settings are suitable for most applications:
-
 [source,java]
 ----
 ParserConfig standard = ParserConfig.builder()
-        // Use defaults: 8KB token, 2KB payload, 1KB strings
+        // Use defaults: 8KB token, 8KB payload, 4KB strings
         .build();
 ----
 
 === Legacy System Support
 
-For systems with large tokens or complex claims:
-
 [source,java]
 ----
 ParserConfig legacy = ParserConfig.builder()
         .maxTokenSize(16 * 1024)     // 16KB tokens
-        .maxPayloadSize(4 * 1024)    // 4KB payloads
-        .maxStringSize(2 * 1024)     // 2KB strings
-        .maxArraySize(128)           // 128 array elements
-        .maxDepth(15)                // 15 nesting levels
+        .maxPayloadSize(16 * 1024)   // 16KB payloads
+        .maxStringLength(8 * 1024)   // 8KB strings
         .build();
 ----
 
 == Monitoring and Tuning
 
-When tokens are rejected due to size limits, the library logs detailed error messages indicating which limit was exceeded. Monitor these errors to tune your configuration:
-
-1. Start with default settings
-2. Monitor for size-related validation errors
-3. Adjust specific limits based on actual token characteristics
-4. Balance security requirements with operational needs
-
-== Integration with Other Security Measures
-
-The parser configuration works in conjunction with other security features:
-
-* **Signature Validation**: Ensures token authenticity regardless of size
-* **Claim Validation**: Validates token content after parsing
-* **Issuer Validation**: Ensures tokens come from trusted sources
-* **Expiration Checking**: Prevents replay of old tokens
-
-These layers provide comprehensive protection against both technical attacks and business logic vulnerabilities.
+When tokens are rejected due to size limits, the library logs detailed error messages indicating which limit was exceeded. Start with defaults, monitor for size-related validation errors, then adjust based on actual token characteristics.

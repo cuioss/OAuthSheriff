@@ -5,154 +5,73 @@
 :toc-title: Table of Contents
 :sectnums:
 
-
 == Overview
 
-The oauth-sheriff-quarkus extension integrates the JWT validation library with Quarkus applications, providing automatic configuration, health checks, metrics, and DevUI integration. This document describes the current implementation and architecture of the extension.
+The oauth-sheriff-quarkus extension integrates the JWT validation library with Quarkus, providing automatic configuration, health checks, metrics, and DevUI integration.
 
 == Architecture
 
-The extension follows the standard Quarkus extension architecture with separate deployment and runtime modules:
+The extension follows standard Quarkus extension architecture with separate deployment and runtime modules:
 
-* **Deployment Module**: Handles build-time processing, registers classes for reflection, and sets up DevUI components
-* **Runtime Module**: Provides runtime components, configuration classes, health checks, and metrics integration
+* **Deployment Module**: Build-time processing, reflection registration, DevUI setup
+* **Runtime Module**: Configuration classes, health checks, metrics integration
 
-=== Key Components
+=== OAuthSheriffProcessor
 
-==== OAuthSheriffProcessor
-
-The `OAuthSheriffProcessor` class handles build-time processing for the extension:
+Handles build-time processing:
 
 * Registers the `oauth-sheriff` feature
-* Sets up reflection for configuration classes:
-  ** `JwtValidationConfig` and its nested classes
-  ** Core JWT validation classes like `TokenValidator`, `IssuerConfig`, etc.
-
-* Registers classes that need runtime initialization:
-  ** `HttpJwksLoader` for proper native image support
-
+* Sets up reflection for `TokenValidator`, `IssuerConfig`, etc.
+* Registers `HttpJwksLoader` for runtime initialization (native image support)
 * Configures DevUI components for development mode
 
-==== OAuthSheriffRecorder
+=== OAuthSheriffRecorder
 
-The `OAuthSheriffRecorder` class follows Quarkus best practices by leveraging CDI for component management. All runtime initialization is handled by CDI, and health checks are automatically discovered by Quarkus through their annotations (`@ApplicationScoped`, `@Readiness`, `@Liveness`).
+Leverages CDI for component management. All runtime initialization is handled by CDI; health checks are automatically discovered through annotations (`@ApplicationScoped`, `@Readiness`, `@Liveness`).
 
-==== Health Checks
+=== Health Checks
 
-Two health checks are provided:
+* `JwksEndpointHealthCheck` (`@Readiness`): Monitors JWKS endpoint connectivity
+* `TokenValidatorHealthCheck` (`@Liveness`): Checks whether issuer configurations are present
 
-* `JwksEndpointHealthCheck` (`@Readiness`): Monitors connectivity to JWKS endpoints
-* `TokenValidatorHealthCheck` (`@Liveness`): Validates TokenValidator configuration
+Automatically discovered by Quarkus -- no explicit registration needed. See xref:health-checks.adoc[Health Checks] for details.
 
-These health checks are automatically discovered by Quarkus through their annotations:
+=== Metrics Integration
 
-* `@ApplicationScoped`: Defines the bean scope
-* `@Readiness` or `@Liveness`: Identifies the health check type
-* Implementation of the `HealthCheck` interface
-
-No explicit registration is needed in the `OAuthSheriffProcessor` class, as Quarkus handles the discovery and registration automatically.
-
-See xref:health-checks.adoc[Health Checks] for detailed information.
-
-==== Metrics Integration
-
-The extension automatically exposes metrics when the Quarkus Micrometer extension is present:
-
-* JWT validation error counters
-* Security event monitoring
-* Performance metrics
-
-See xref:metrics-integration.adoc[Metrics Integration] for detailed information.
+Automatically exposes JWT validation error counters, security event monitoring, and performance metrics when Micrometer is present. See xref:metrics-integration.adoc[Metrics Integration] for details.
 
 == Configuration
 
-The extension uses MicroProfile Config API with the `sheriff.oauth` prefix:
+Uses MicroProfile Config API with the `sheriff.oauth` prefix:
 
 [source,properties]
 ----
-# Basic configuration
-sheriff.oauth.enabled=true
-sheriff.oauth.parser.allow-unsafe-algorithms=false
-sheriff.oauth.parser.max-token-size-bytes=8192
-
-# Issuer configuration
+sheriff.oauth.parser.max-token-size=8192
 sheriff.oauth.issuers.keycloak.issuer-identifier=https://keycloak.example.com/auth/realms/master
 sheriff.oauth.issuers.keycloak.jwks.http.url=https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs
 ----
 
-Configuration is resolved through dedicated resolver classes that access properties via MicroProfile Config.
-
 == DevUI Integration
 
-In development mode, the extension provides DevUI integration with:
+In development mode (`@BuildStep(onlyIf = IsDevelopment.class)`):
 
-* JWT Validation Status monitoring
-* JWKS Endpoint connectivity status
-* Token debugging tools
-* Configuration overview
-
-The DevUI integration is implemented through:
-
-* `OAuthSheriffProcessor.createJwtDevUICard()`: Creates the DevUI card pages
-* `OAuthSheriffProcessor.createJwtDevUIJsonRPCService()`: Registers the JSON-RPC service
-* `OAuthSheriffDevUIRuntimeService`: Provides runtime data access for the DevUI components
-
-The DevUI components are only active in development mode, controlled by the `@BuildStep(onlyIf = IsDevelopment.class)` annotation.
+* `OAuthSheriffProcessor.createJwtDevUICard()`: Creates DevUI card pages
+* `OAuthSheriffProcessor.createJwtDevUIJsonRPCService()`: Registers JSON-RPC service
+* `OAuthSheriffDevUIRuntimeService`: Provides runtime data access
 
 == Native Image Support
-
-The extension supports GraalVM native image compilation with:
 
 * Reflection configuration for JWT validation classes
 * Runtime initialization for network-dependent components
 * Proper resource inclusion
 
-See xref:../configuration/native-image-configuration.adoc[Native Image Configuration] for detailed information.
-
-== Best Practices
-
-=== Component Discovery
-
-The extension leverages Quarkus's built-in mechanisms for component discovery:
-
-* Health checks are automatically discovered through annotations
-* CDI manages component lifecycle
-* Metrics are automatically registered when Micrometer is present
-
-=== Simplicity
-
-The extension follows the principle of simplicity:
-
-* Minimal code in the Recorder class
-* Clear separation between build-time and runtime components
-* Reliance on Quarkus's built-in mechanisms rather than custom implementations
-
-=== Documentation
-
-Comprehensive documentation is provided for all aspects of the extension:
-
-* Configuration options
-* Health check behavior
-* Metrics integration
-* DevUI components
+See xref:../configuration/native-image-configuration.adoc[Native Image Configuration] for details.
 
 == Testing
-
-The extension includes comprehensive tests:
 
 * Unit tests for all components
 * Integration tests with Quarkus test framework
 * Health check validation
 * Metrics collection verification
 
-See xref:../development/quarkus-test-setup.adoc[Quarkus Test Setup] for information on testing the extension.
-
-== Maven Configuration
-
-The extension is configured as a standard Quarkus extension with:
-
-* Deployment and runtime modules
-* Proper dependency management
-* Build plugin configuration
-
-See xref:../configuration/maven-build-configuration.adoc[Maven Build Configuration] for detailed information.
+See xref:../development/quarkus-test-setup.adoc[Quarkus Test Setup] for testing information.

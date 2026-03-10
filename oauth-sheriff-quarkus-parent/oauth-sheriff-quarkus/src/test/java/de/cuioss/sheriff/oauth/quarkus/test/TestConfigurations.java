@@ -146,9 +146,8 @@ public final class TestConfigurations {
         return new TestConfig(Map.of(
                 JwtPropertyKeys.PARSER.MAX_TOKEN_SIZE, "16384",
                 JwtPropertyKeys.PARSER.MAX_PAYLOAD_SIZE, "16384",
-                JwtPropertyKeys.PARSER.MAX_STRING_SIZE, "8192",
-                JwtPropertyKeys.PARSER.MAX_ARRAY_SIZE, "128",
-                JwtPropertyKeys.PARSER.MAX_DEPTH, "15",
+                JwtPropertyKeys.PARSER.MAX_STRING_LENGTH, "8192",
+                JwtPropertyKeys.PARSER.MAX_BUFFER_SIZE, "128",
                 JwtPropertyKeys.ISSUERS.ENABLED.formatted("test"), "true",
                 JwtPropertyKeys.ISSUERS.ISSUER_IDENTIFIER.formatted("test"), "https://test.example.com",
                 JwtPropertyKeys.ISSUERS.JWKS_FILE_PATH.formatted("test"), "classpath:keys/test_public_key.jwks"
@@ -354,35 +353,24 @@ public final class TestConfigurations {
         }
 
         /**
-         * Sets the maximum string size for JSON parsing.
+         * Sets the maximum string length for JSON parsing in bytes.
          *
-         * @param size maximum string size
+         * @param length maximum string length
          * @return this builder
          */
-        public ParserConfigBuilder maxStringSize(int size) {
-            parent.addProperty(JwtPropertyKeys.PARSER.MAX_STRING_SIZE, String.valueOf(size));
+        public ParserConfigBuilder maxStringLength(int length) {
+            parent.addProperty(JwtPropertyKeys.PARSER.MAX_STRING_LENGTH, String.valueOf(length));
             return this;
         }
 
         /**
-         * Sets the maximum array size for JSON parsing.
+         * Sets the maximum buffer size for JSON parsing in bytes.
          *
-         * @param size maximum array size
+         * @param size maximum buffer size
          * @return this builder
          */
-        public ParserConfigBuilder maxArraySize(int size) {
-            parent.addProperty(JwtPropertyKeys.PARSER.MAX_ARRAY_SIZE, String.valueOf(size));
-            return this;
-        }
-
-        /**
-         * Sets the maximum depth for JSON parsing.
-         *
-         * @param depth maximum depth
-         * @return this builder
-         */
-        public ParserConfigBuilder maxDepth(int depth) {
-            parent.addProperty(JwtPropertyKeys.PARSER.MAX_DEPTH, String.valueOf(depth));
+        public ParserConfigBuilder maxBufferSize(int size) {
+            parent.addProperty(JwtPropertyKeys.PARSER.MAX_BUFFER_SIZE, String.valueOf(size));
             return this;
         }
 

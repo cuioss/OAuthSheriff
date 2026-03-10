@@ -7,19 +7,11 @@
 
 == Purpose
 
-This document defines testing configuration patterns and utilities for applications using the OAuth Sheriff Quarkus extension. It provides test profile setup, token generation utilities, and validation testing approaches.
-
-== Related Documentation
-
-* xref:../development/quarkus-test-setup.adoc[Quarkus Test Framework Setup] - Test framework configuration
-* xref:../development/devui-testing.adoc[DevUI Testing] - Development interface testing
-* xref:maven-build-configuration.adoc[Maven Build Configuration] - Build system test integration
+Testing configuration patterns and utilities for applications using the OAuth Sheriff Quarkus extension, covering test profiles, token generation, and validation testing.
 
 == Test Profile Configuration
 
 === Basic Test Profile Setup
-
-**Create JWT Test Profile**:
 
 [source,java]
 ----
@@ -27,38 +19,26 @@ public class JwtTestProfile implements QuarkusTestProfile {
     @Override
     public Map<String, String> getConfigOverrides() {
         Map<String, String> config = new HashMap<>();
-
-        // Test issuer configuration
-        config.put("sheriff.oauth.issuers.default.url", "https://test.example.com/auth");
+        config.put("sheriff.oauth.issuers.default.issuer-identifier", "https://test.example.com/auth");
         config.put("sheriff.oauth.issuers.default.enabled", "true");
-        config.put("sheriff.oauth.issuers.default.public-key-location", "");
-
-        // Test parser configuration
-        config.put("sheriff.oauth.parser.audience", "test-application");
-
+        config.put("sheriff.oauth.issuers.default.jwks.file-path", "classpath:test-jwks.json");
+        config.put("sheriff.oauth.issuers.default.expected-audience", "test-application");
         return config;
     }
 }
 ----
-
-**Apply Test Profile**:
 
 [source,java]
 ----
 @QuarkusTest
 @TestProfile(JwtTestProfile.class)
 class JwtValidationTest {
-
     @Inject
     TokenValidator tokenValidator;
-
-    // Test methods
 }
 ----
 
 === Multi-Issuer Test Configuration
-
-**Complex Issuer Configuration**:
 
 [source,java]
 ----
@@ -66,20 +46,13 @@ public class MultiIssuerTestProfile implements QuarkusTestProfile {
     @Override
     public Map<String, String> getConfigOverrides() {
         Map<String, String> config = new HashMap<>();
-
-        // Primary test issuer
-        config.put("sheriff.oauth.issuers.primary.url", "https://primary-auth.example.com");
+        config.put("sheriff.oauth.issuers.primary.jwks.http.well-known-url", "https://primary-auth.example.com/.well-known/openid-configuration");
         config.put("sheriff.oauth.issuers.primary.enabled", "true");
-        config.put("sheriff.oauth.issuers.primary.audience", "primary-app");
-
-        // Secondary test issuer
-        config.put("sheriff.oauth.issuers.secondary.url", "https://secondary-auth.example.com");
+        config.put("sheriff.oauth.issuers.primary.expected-audience", "primary-app");
+        config.put("sheriff.oauth.issuers.secondary.jwks.http.well-known-url", "https://secondary-auth.example.com/.well-known/openid-configuration");
         config.put("sheriff.oauth.issuers.secondary.enabled", "true");
-        config.put("sheriff.oauth.issuers.secondary.audience", "secondary-app");
-
-        // Parser configuration
+        config.put("sheriff.oauth.issuers.secondary.expected-audience", "secondary-app");
         config.put("sheriff.oauth.parser.max-token-size", "16384");
-
         return config;
     }
 }
@@ -87,338 +60,163 @@ public class MultiIssuerTestProfile implements QuarkusTestProfile {
 
 == Test Token Generation
 
-=== Using TestTokenHolder Utility
+The `TestTokenHolder` class generates signed JWT tokens for testing. It takes a `TokenType` and a `ClaimControlParameter` in its constructor, generates claims using built-in generators, and signs the token with an in-memory RSA key pair.
 
-**Basic Token Creation**:
+=== Basic Token Creation
 
 [source,java]
 ----
 @Test
 void shouldValidateBasicToken() {
-    // Create test token with standard claims
-    String token = TestTokenHolder.builder()
-        .issuer("https://test.example.com/auth")
-        .audience("test-application")
-        .subject("test-user")
-        .addClaim("scope", "read write")
-        .build()
-        .getToken();
+    // Create a token holder with default (valid) claims for ACCESS_TOKEN
+    var claimControl = ClaimControlParameter.builder().build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    // Validate token
-    ValidationResult result = tokenValidator.validate(token);
-    assertTrue(result.isValid());
+    // Get a matching IssuerConfig with the correct public key material
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+
+    // Build a TokenValidator using the issuer config
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    // Validate the token — returns AccessTokenContent on success
+    AccessTokenContent result = tokenValidator.createAccessToken(
+        AccessTokenRequest.of(tokenHolder.getRawToken()));
+    assertNotNull(result);
 }
 ----
 
-**Token with Custom Claims**:
-
-[source,java]
-----
-@Test
-void shouldExtractCustomClaims() {
-    // Create token with specific claims
-    String token = TestTokenHolder.builder()
-        .issuer("https://test.example.com/auth")
-        .audience("test-application")
-        .addClaim("roles", Arrays.asList("admin", "user"))
-        .addClaim("email", "test@example.com")
-        .addClaim("organization", "test-org")
-        .build()
-        .getToken();
-
-    // Validate and extract claims
-    ValidationResult result = tokenValidator.validate(token);
-    assertTrue(result.isValid());
-    assertEquals("test@example.com", result.getClaims().get("email"));
-    assertTrue(result.getClaims().get("roles") instanceof List);
-}
-----
-
-=== Advanced Token Configuration
-
-**Expired Token Testing**:
+=== Expired Token Testing
 
 [source,java]
 ----
 @Test
 void shouldRejectExpiredToken() {
-    // Create expired token
-    String expiredToken = TestTokenHolder.builder()
-        .issuer("https://test.example.com/auth")
-        .audience("test-application")
-        .expirationTime(Instant.now().minusSeconds(3600)) // 1 hour ago
-        .build()
-        .getToken();
+    // Create a token holder with an expired token
+    var claimControl = ClaimControlParameter.builder()
+        .expiredToken(true)
+        .build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    // Validation should fail
-    ValidationResult result = tokenValidator.validate(expiredToken);
-    assertFalse(result.isValid());
-    assertEquals("TOKEN_EXPIRED", result.getErrorCode());
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    // Validation throws TokenValidationException for expired tokens
+    assertThrows(TokenValidationException.class, () ->
+        tokenValidator.createAccessToken(
+            AccessTokenRequest.of(tokenHolder.getRawToken())));
 }
 ----
 
-**Invalid Signature Testing**:
+=== Invalid Signature Testing
 
 [source,java]
 ----
 @Test
 void shouldRejectInvalidSignature() {
-    // Create token with invalid signature
-    String invalidToken = TestTokenHolder.builder()
-        .issuer("https://test.example.com/auth")
-        .audience("test-application")
-        .invalidSignature() // Method to create invalid signature
-        .build()
-        .getToken();
+    // Create a valid token
+    var claimControl = ClaimControlParameter.builder().build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    // Validation should fail
-    assertThrows(TokenValidationException.class, () -> {
-        tokenValidator.validate(invalidToken);
-    });
+    // Use a DIFFERENT key material for the issuer config (signature mismatch)
+    var differentTokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
+    IssuerConfig issuerConfig = differentTokenHolder.getIssuerConfig();
+
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    // Validation throws TokenValidationException for signature mismatch
+    assertThrows(TokenValidationException.class, () ->
+        tokenValidator.createAccessToken(
+            AccessTokenRequest.of(tokenHolder.getRawToken())));
 }
 ----
 
 == Testing Patterns
 
-=== Integration Testing with Mock Services
-
-**Mock JWKS Endpoint Testing**:
+=== Token Claim Manipulation
 
 [source,java]
 ----
-@QuarkusTest
-@TestProfile(MockJwksTestProfile.class)
-class JwksIntegrationTest {
+@Test
+void shouldValidateTokenWithCustomClaims() {
+    var claimControl = ClaimControlParameter.builder().build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    @Test
-    void shouldLoadJwksFromMockEndpoint() {
-        // Test with mock JWKS endpoint
-        String token = TestTokenHolder.builder()
-            .issuer("https://mock-auth.example.com")
-            .audience("test-application")
-            .signWithMockKey() // Use mock key that matches JWKS
-            .build()
-            .getToken();
+    // Mutate claims using the fluent API
+    tokenHolder.withClaim("custom_claim", ClaimValue.forPlainString("custom_value"));
 
-        ValidationResult result = tokenValidator.validate(token);
-        assertTrue(result.isValid());
-    }
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    AccessTokenContent result = tokenValidator.createAccessToken(
+        AccessTokenRequest.of(tokenHolder.getRawToken()));
+    assertNotNull(result);
 }
 ----
 
 === Error Scenario Testing
 
-**Missing Claims Testing**:
-
 [source,java]
 ----
 @Test
-void shouldRejectTokenWithMissingClaims() {
-    // Create token without required claims
-    String incompleteToken = TestTokenHolder.builder()
-        .issuer("https://test.example.com/auth")
-        // Missing audience claim
-        .subject("test-user")
-        .build()
-        .getToken();
+void shouldRejectTokenWithMissingAudience() {
+    // Create a token with the audience claim missing
+    var claimControl = ClaimControlParameter.builder()
+        .missingAudience(true)
+        .build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    // Validation should fail
-    ValidationResult result = tokenValidator.validate(incompleteToken);
-    assertFalse(result.isValid());
-    assertTrue(result.getErrors().contains("MISSING_AUDIENCE"));
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
+
+    assertThrows(TokenValidationException.class, () ->
+        tokenValidator.createAccessToken(
+            AccessTokenRequest.of(tokenHolder.getRawToken())));
 }
-----
 
-**Invalid Issuer Testing**:
-
-[source,java]
-----
 @Test
 void shouldRejectUnknownIssuer() {
-    String tokenFromUnknownIssuer = TestTokenHolder.builder()
-        .issuer("https://unknown-issuer.example.com")
-        .audience("test-application")
-        .subject("test-user")
-        .build()
-        .getToken();
+    // Create a token with a specific issuer
+    var claimControl = ClaimControlParameter.builder().build();
+    var tokenHolder = new TestTokenHolder(TokenType.ACCESS_TOKEN, claimControl);
 
-    assertThrows(TokenValidationException.class, () -> {
-        tokenValidator.validate(tokenFromUnknownIssuer);
-    });
-}
-----
+    // Override the issuer claim to one not matching the IssuerConfig
+    tokenHolder.withClaim("iss", ClaimValue.forPlainString("https://unknown-issuer.example.com"));
 
-== Performance Testing Configuration
+    IssuerConfig issuerConfig = tokenHolder.getIssuerConfig();
+    TokenValidator tokenValidator = TokenValidator.builder()
+        .issuerConfig(issuerConfig)
+        .build();
 
-=== Load Testing Setup
-
-**High-Volume Token Validation**:
-
-[source,java]
-----
-@Test
-void shouldHandleHighVolumeValidation() {
-    // Create multiple test tokens
-    List<String> tokens = IntStream.range(0, 1000)
-        .mapToObj(i -> TestTokenHolder.builder()
-            .issuer("https://test.example.com/auth")
-            .audience("test-application")
-            .subject("user-" + i)
-            .build()
-            .getToken())
-        .collect(Collectors.toList());
-
-    // Validate all tokens
-    long start = System.currentTimeMillis();
-    List<ValidationResult> results = tokens.parallelStream()
-        .map(tokenValidator::validate)
-        .collect(Collectors.toList());
-    long duration = System.currentTimeMillis() - start;
-
-    // Assert all validations succeeded
-    assertTrue(results.stream().allMatch(ValidationResult::isValid));
-
-    // Performance assertion (example: <1000ms for 1000 tokens)
-    assertTrue(duration < 1000, "Validation took " + duration + "ms");
-}
-----
-
-=== Memory Usage Testing
-
-**Memory Pressure Testing**:
-
-[source,java]
-----
-@Test
-void shouldHandleMemoryPressure() {
-    // Create large tokens to test memory handling
-    String largeToken = TestTokenHolder.builder()
-        .issuer("https://test.example.com/auth")
-        .audience("test-application")
-        .addClaim("large_data", "x".repeat(8192)) // 8KB claim
-        .build()
-        .getToken();
-
-    // Validate multiple large tokens
-    for (int i = 0; i < 100; i++) {
-        ValidationResult result = tokenValidator.validate(largeToken);
-        assertTrue(result.isValid());
-    }
-
-    // Force garbage collection and verify no memory leaks
-    System.gc();
-    Runtime runtime = Runtime.getRuntime();
-    long usedMemory = runtime.totalMemory() - runtime.freeMemory();
-
-    // Memory usage should be reasonable (adjust threshold as needed)
-    assertTrue(usedMemory < 100 * 1024 * 1024, "Memory usage: " + usedMemory + " bytes");
-}
-----
-
-== Test Utilities
-
-=== Custom Test Assertions
-
-**JWT-Specific Assertions**:
-
-[source,java]
-----
-public class JwtAssertions {
-
-    public static void assertValidJwt(String token, TokenValidator validator) {
-        ValidationResult result = validator.validate(token);
-        assertTrue(result.isValid(), "JWT validation failed: " + result.getErrors());
-    }
-
-    public static void assertJwtHasClaim(String token, String claimName, Object expectedValue) {
-        ValidationResult result = tokenValidator.validate(token);
-        assertTrue(result.isValid());
-        assertEquals(expectedValue, result.getClaims().get(claimName));
-    }
-
-    public static void assertJwtFromIssuer(String token, String expectedIssuer) {
-        ValidationResult result = tokenValidator.validate(token);
-        assertTrue(result.isValid());
-        assertEquals(expectedIssuer, result.getClaims().get("iss"));
-    }
-}
-----
-
-=== Test Data Builders
-
-**Fluent Token Builder**:
-
-[source,java]
-----
-public class TestJwtBuilder {
-    private String issuer = "https://test.example.com/auth";
-    private String audience = "test-application";
-    private Map<String, Object> claims = new HashMap<>();
-
-    public TestJwtBuilder withIssuer(String issuer) {
-        this.issuer = issuer;
-        return this;
-    }
-
-    public TestJwtBuilder withAudience(String audience) {
-        this.audience = audience;
-        return this;
-    }
-
-    public TestJwtBuilder withClaim(String name, Object value) {
-        this.claims.put(name, value);
-        return this;
-    }
-
-    public String build() {
-        return TestTokenHolder.builder()
-            .issuer(issuer)
-            .audience(audience)
-            .claims(claims)
-            .build()
-            .getToken();
-    }
+    assertThrows(TokenValidationException.class, () ->
+        tokenValidator.createAccessToken(
+            AccessTokenRequest.of(tokenHolder.getRawToken())));
 }
 ----
 
 == Test Configuration Properties
 
-=== Test-Specific Properties
-
-**Test Application Properties**:
-
 [source,properties]
 ----
 # Test-specific JWT configuration
-%test.sheriff.oauth.issuers.test.url=https://test-issuer.example.com
+%test.sheriff.oauth.issuers.test.issuer-identifier=https://test-issuer.example.com
 %test.sheriff.oauth.issuers.test.enabled=true
-%test.sheriff.oauth.issuers.test.audience=test-application
+%test.sheriff.oauth.issuers.test.expected-audience=test-application
+%test.sheriff.oauth.issuers.test.jwks.file-path=classpath:test-jwks.json
 
 # Relaxed validation for testing
 %test.sheriff.oauth.parser.max-token-size=32768
 %test.sheriff.oauth.parser.max-payload-size=16384
 
 # Logging for test debugging
-%test.quarkus.log.category."de.cuioss.jwt".level=DEBUG
+%test.quarkus.log.category."de.cuioss.sheriff.oauth".level=DEBUG
 ----
-
-=== CI/CD Test Configuration
-
-**Continuous Integration Setup**:
-
-[source,properties]
-----
-# CI-specific configuration
-%ci.sheriff.oauth.issuers.ci.url=https://ci-auth.example.com
-%ci.sheriff.oauth.issuers.ci.enabled=true
-
-# Optimized for CI performance
-%ci.sheriff.oauth.parser.cache-size=100
-%ci.sheriff.oauth.validation.timeout=5000
-----
-
-== See Also
-
-* xref:../development/quarkus-test-setup.adoc[Quarkus Test Framework Setup] - Test framework configuration and dependencies
-* xref:../development/devui-testing.adoc[DevUI Testing] - Development interface testing approaches
-* xref:maven-build-configuration.adoc[Maven Build Configuration] - Build system integration for testing

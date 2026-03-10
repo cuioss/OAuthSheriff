@@ -6,22 +6,17 @@
 :sectnums:
 
 
-This document provides a comprehensive API reference for the JWT validation library.
-
 == Core Classes
 
 === TokenValidator
 
-The main entry point for token validation operations.
+The main entry point for token validation.
 
 [source,java]
 ----
-public class TokenValidator {
-    // Builder pattern for configuration
+public class TokenValidator implements Closeable {
     public static Builder builder() { ... }
 
-    // Token creation methods (performs validation and returns validated token)
-    // These methods throw TokenValidationException if validation fails
     public AccessTokenContent createAccessToken(AccessTokenRequest request);
     public IdTokenContent createIdToken(IdTokenRequest request);
     public RefreshTokenContent createRefreshToken(RefreshTokenRequest request);
@@ -33,9 +28,9 @@ Represents a validated access token with its claims.
 
 [source,java]
 ----
-public class AccessTokenContent {
+public class AccessTokenContent extends BaseTokenContent {
     // Standard claims
-    public Optional<String> getSubject();     // Subject may be optional based on issuer config
+    public Optional<String> getSubject();
     public String getIssuer();
     public Optional<List<String>> getAudience();
     public OffsetDateTime getExpirationTime();
@@ -44,7 +39,7 @@ public class AccessTokenContent {
     // Access token specific
     public List<String> getRoles();
     public List<String> getGroups();
-    public List<String> getScopes();          // Note: plural form
+    public List<String> getScopes();
     public Optional<String> getEmail();
     public Optional<String> getPreferredUsername();
 
@@ -60,33 +55,27 @@ public class AccessTokenContent {
 
 === IssuerConfig
 
-Configuration for a specific token issuer.
-
 [source,java]
 ----
-public class IssuerConfig {
+public class IssuerConfig implements LoadingStatusProvider {
     public static Builder builder() { ... }
 
-    public static class Builder {
-        // Issuer identification
-        public Builder issuerIdentifier(String issuer);
-
-        // Key configuration
-        public Builder signatureKey(String key);
-        public Builder jwksContent(String jwks);
-        public Builder jwksUri(String uri);
-        public Builder httpJwksLoaderConfig(HttpJwksLoaderConfig config);
-
-        // Validation configuration
-        public Builder expectedAudience(String... audience);
-        public Builder expectedClientId(String clientId);
-        public Builder clockSkew(Duration skew);
-
-        // Claim mapping
-        public Builder claimMapper(String claim, ClaimMapper mapper);
-        public Builder rolesPath(String path);
-        public Builder groupsPath(String path);
-
+    public static class IssuerConfigBuilder {
+        public IssuerConfigBuilder enabled(boolean enabled);
+        public IssuerConfigBuilder issuerIdentifier(String issuer);
+        public IssuerConfigBuilder jwksContent(String jwks);
+        public IssuerConfigBuilder jwksFilePath(String path);
+        public IssuerConfigBuilder httpJwksLoaderConfig(HttpJwksLoaderConfig config);
+        public IssuerConfigBuilder jwksLoader(JwksLoader loader);
+        public IssuerConfigBuilder expectedAudience(String audience);
+        public IssuerConfigBuilder expectedAudience(Set<String> audience);
+        public IssuerConfigBuilder expectedClientId(String clientId);
+        public IssuerConfigBuilder expectedClientId(Set<String> clientId);
+        public IssuerConfigBuilder claimSubOptional(boolean optional);
+        public IssuerConfigBuilder expectedTokenType(String type);
+        public IssuerConfigBuilder dpopConfig(DpopConfig config);
+        public IssuerConfigBuilder algorithmPreferences(SignatureAlgorithmPreferences prefs);
+        public IssuerConfigBuilder claimMapper(String claim, ClaimMapper mapper);
         public IssuerConfig build();
     }
 }
@@ -96,62 +85,49 @@ public class IssuerConfig {
 
 === ParserConfig
 
-Security configuration for token parsing.
-
 [source,java]
 ----
 public class ParserConfig {
-    public static Builder builder() { ... }
-
-    public static class Builder {
-        public Builder maxTokenSize(int bytes);      // Default: 8192
-        public Builder maxPayloadSize(int bytes);    // Default: 2048
-        public Builder maxStringSize(int bytes);     // Default: 1024
-        public Builder maxArraySize(int elements);   // Default: 64
-        public Builder maxDepth(int levels);         // Default: 10
-
-        public ParserConfig build();
+    public static class ParserConfigBuilder {
+        public ParserConfigBuilder maxTokenSize(int bytes);      // Default: 8192 (8KB)
+        public ParserConfigBuilder maxPayloadSize(int bytes);    // Default: 8192 (8KB)
+        public ParserConfigBuilder maxStringLength(int bytes);   // Default: 4096 (4KB)
+        public ParserConfigBuilder maxBufferSize(int bytes);     // Default: 131072 (128KB)
     }
 }
 ----
 
 === AccessTokenCacheConfig
 
-Configuration for access token caching.
-
 [source,java]
 ----
 public class AccessTokenCacheConfig {
-    public static Builder builder() { ... }
-
-    public static class Builder {
-        public Builder maxSize(long entries);        // Default: 1000
-        public Builder ttlSeconds(long seconds);     // Default: 300
-        public Builder enabled(boolean enabled);     // Default: true
-
-        public AccessTokenCacheConfig build();
+    public static class AccessTokenCacheConfigBuilder {
+        public AccessTokenCacheConfigBuilder maxSize(int entries);                  // Default: 1000
+        public AccessTokenCacheConfigBuilder evictionIntervalSeconds(long seconds); // Default: 10
     }
 }
 ----
 
 === HttpJwksLoaderConfig
 
-Configuration for JWKS endpoint loading.
-
 [source,java]
 ----
 public class HttpJwksLoaderConfig {
-    public static Builder builder() { ... }
-
-    public static class Builder {
-        public Builder jwksUri(String uri);
-        public Builder wellKnown(HttpWellKnownResolver resolver);
-        public Builder connectTimeoutSeconds(int seconds);
-        public Builder readTimeoutSeconds(int seconds);
-        public Builder refreshIntervalSeconds(int seconds);
-        public Builder sslContext(SSLContext context);
-
-        public HttpJwksLoaderConfig build();
+    public static class HttpJwksLoaderConfigBuilder {
+        public HttpJwksLoaderConfigBuilder jwksUri(URI uri);
+        public HttpJwksLoaderConfigBuilder jwksUrl(String url);
+        public HttpJwksLoaderConfigBuilder wellKnownUrl(String url);
+        public HttpJwksLoaderConfigBuilder wellKnownUri(URI uri);
+        public HttpJwksLoaderConfigBuilder connectTimeoutSeconds(int seconds);
+        public HttpJwksLoaderConfigBuilder readTimeoutSeconds(int seconds);
+        public HttpJwksLoaderConfigBuilder refreshIntervalSeconds(int seconds);
+        public HttpJwksLoaderConfigBuilder sslContext(SSLContext context);
+        public HttpJwksLoaderConfigBuilder retryConfig(RetryConfig config);
+        public HttpJwksLoaderConfigBuilder issuerIdentifier(String issuer);
+        public HttpJwksLoaderConfigBuilder keyRotationGracePeriod(Duration period);
+        public HttpJwksLoaderConfigBuilder maxRetiredKeySets(int maxRetiredKeySets);
+        public HttpJwksLoaderConfigBuilder parserConfig(ParserConfig config);
     }
 }
 ----
@@ -160,65 +136,34 @@ public class HttpJwksLoaderConfig {
 
 === JsonCollectionMapper
 
-Maps JSON arrays and strings to collections.
-
-[source,java]
-----
-public class JsonCollectionMapper implements ClaimMapper {
-    // Automatically handles:
-    // - JSON arrays: ["admin", "user"]
-    // - Single strings: "admin"
-    // - Mixed types: ["admin", 123, true]
-}
-----
+Handles JSON arrays (`["admin", "user"]`), single strings (`"admin"`), and mixed types.
 
 === StringSplitterMapper
 
-Splits delimited strings into collections.
-
-[source,java]
-----
-public class StringSplitterMapper implements ClaimMapper {
-    public StringSplitterMapper(char separator);
-
-    // Splits strings like:
-    // "admin,user,manager" with ',' separator
-    // "admin:user:manager" with ':' separator
-}
-----
+Splits delimited strings: `"admin,user"` with `','` separator, `"admin:user"` with `':'` separator.
 
 === Custom ClaimMapper
-
-Interface for implementing custom claim mapping logic.
 
 [source,java]
 ----
 public interface ClaimMapper {
-    List<String> mapClaim(Object claimValue);
+    ClaimValue map(MapRepresentation mapRepresentation, String claimName);
 }
 ----
 
 == Error Handling
 
-The library uses exceptions to indicate validation failures rather than result objects.
-
 === TokenValidationException
-
-Main exception for validation failures.
 
 [source,java]
 ----
-public class TokenValidationException extends Exception {
-    public String getMessage();
-    // Contains detailed error information
+public class TokenValidationException extends RuntimeException {
+    public EventType getEventType();
+    public EventCategory getCategory();
 }
 ----
 
 == Security Configuration
-
-=== Security Layers
-
-The library implements multiple security layers:
 
 [cols="1,3,1,3"]
 |===
@@ -231,48 +176,20 @@ The library implements multiple security layers:
 
 |`maxPayloadSize`
 |Limits each decoded JWT part
-|2KB
+|8KB
 |After Base64 decoding
 
-|`maxStringSize`
-|Limits individual JSON string values
-|1KB
+|`maxStringLength`
+|DSL-JSON enforced limit on string buffer size
+|4KB
 |During JSON parsing
 
-|`maxArraySize`
-|Limits JSON array size
-|64
-|During JSON parsing
-
-|`maxDepth`
-|Limits JSON nesting depth
-|10
-|During JSON parsing
+|`maxBufferSize`
+|Reserved buffer size limit (not currently passed to DSL-JSON; stored for DevUI display)
+|128KB
+|Not enforced during parsing
 |===
 
-=== Size Relationships
-
-Base64 encoding increases size by ~33%, so:
-
-* 8KB token → ~6KB decoded content
-* 2KB per part limit accommodates header + payload
-* 1KB string limit prevents individual field attacks
-
-These limits provide defense-in-depth against:
-
-* Denial-of-service attacks
-* Memory exhaustion
-* JSON parsing vulnerabilities
-
-=== WellKnownDiscoveryException  
-
-Exception for OpenID Connect discovery failures.
-
-[source,java]
-----
-public class WellKnownDiscoveryException extends Exception {
-    // Network errors, malformed responses, missing fields
-}
-----
+Base64 encoding increases size by ~33%, so an 8KB token yields ~6KB decoded content. These limits provide defense-in-depth against denial-of-service attacks, memory exhaustion, and JSON parsing vulnerabilities.
 
 For usage examples, see xref:usage-guide.adoc[Usage Guide].

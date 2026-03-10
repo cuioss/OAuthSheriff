@@ -6,69 +6,63 @@
 :sectnums:
 
 
-This guide provides practical examples and patterns for using the JWT validation library.
-
 == Basic Token Validation
-
-The simplest way to validate a JWT token:
 
 [source,java]
 ----
-// Create TokenValidator
 TokenValidator tokenValidator = TokenValidator.builder()
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://example.com")
-        .signatureKey("your-secret-key")
+        .issuerIdentifier("https://example.com")
+        .jwksContent(jwksJsonString)
         .build())
     .build();
 
-// Validate and create token (throws TokenValidationException if invalid)
 try {
     AccessTokenContent token = tokenValidator.createAccessToken(AccessTokenRequest.of(jwtString));
-    String subject = token.getSubject();
+    Optional<String> subject = token.getSubject();
     List<String> roles = token.getRoles();
 } catch (TokenValidationException e) {
-    // Handle validation failure
-    LOGGER.error("Token validation failed: {}", e.getMessage(), e);
+    LOGGER.error("Token validation failed: %s", e.getMessage(), e);
 }
 ----
 
 == Access Token Caching
 
-The library provides built-in caching for validated access tokens:
-
 [source,java]
 ----
-// Enable caching with configuration
 AccessTokenCacheConfig cacheConfig = AccessTokenCacheConfig.builder()
     .maxSize(1000)
-    .ttlSeconds(300)
+    .evictionIntervalSeconds(300L)
     .build();
 
 TokenValidator tokenValidator = TokenValidator.builder()
-    .accessTokenCacheConfig(cacheConfig)
+    .cacheConfig(cacheConfig)
     .issuerConfig(issuerConfig)
     .build();
 
-// Subsequent validations of the same token are cached
+// Subsequent validations of the same token are served from cache
 AccessTokenContent token1 = tokenValidator.createAccessToken(AccessTokenRequest.of(jwtString));
 AccessTokenContent token2 = tokenValidator.createAccessToken(AccessTokenRequest.of(jwtString)); // From cache
 ----
 
 == Multi-Issuer Configuration
 
-Configure multiple identity providers:
-
 [source,java]
 ----
 TokenValidator tokenValidator = TokenValidator.builder()
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://keycloak.example.com/auth/realms/main")
-        .jwksUri("https://keycloak.example.com/auth/realms/main/protocol/openid-connect/certs")
+        .issuerIdentifier("https://keycloak.example.com/auth/realms/main")
+        .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
+            .issuerIdentifier("https://keycloak.example.com/auth/realms/main")
+            .jwksUrl("https://keycloak.example.com/auth/realms/main/protocol/openid-connect/certs")
+            .build())
         .build())
     .issuerConfig(IssuerConfig.builder()
-        .issuer("https://auth0.example.com/")
-        .jwksUri("https://auth0.example.com/.well-known/jwks.json")
+        .issuerIdentifier("https://auth0.example.com/")
+        .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
+            .issuerIdentifier("https://auth0.example.com/")
+            .jwksUrl("https://auth0.example.com/.well-known/jwks.json")
+            .build())
         .build())
     .build();
 
@@ -78,52 +72,13 @@ AccessTokenContent token = tokenValidator.createAccessToken(AccessTokenRequest.o
 
 == OpenID Connect Discovery
 
-Automatic configuration using OpenID Connect discovery:
-
 [source,java]
 ----
-// Configure issuer with OIDC discovery - issuer identifier is automatically extracted
 IssuerConfig issuerConfig = IssuerConfig.builder()
     .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
         .wellKnownUrl("https://accounts.google.com/.well-known/openid-configuration")
         .build())
-    .expectedAudience("your-google-client-id") // Replace with your actual client ID
-    .build();
-----
-
-=== Using Well-Known Discovery
-
-[source,java]
-----
-// Simple well-known discovery - just provide the URL as a string
-IssuerConfig issuerConfig = IssuerConfig.builder()
-    .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
-        .wellKnownUrl("https://example.com/.well-known/openid-configuration")
-        .build())
-    .expectedAudience("your-client-id")
-    .build();
-
-IssuerConfig issuerConfig = IssuerConfig.builder()
-    .expectedAudience("your-client-id")
-    .httpJwksLoaderConfig(jwksConfig)
-    .build();
-----
-
-=== Configuring HttpJwksLoaderConfig
-
-[source,java]
-----
-HttpJwksLoaderConfig loaderConfig = HttpJwksLoaderConfig.builder()
-    .connectTimeoutMs(5000)
-    .readTimeoutMs(5000)
-    .maxRetries(3)
-    .retryDelayMs(1000)
-    .build();
-
-IssuerConfig issuerConfig = IssuerConfig.builder()
-    .issuer("https://example.com")
-    .jwksUri("https://example.com/.well-known/jwks.json")
-    .jwksLoaderConfig(loaderConfig)
+    .expectedAudience("your-google-client-id")
     .build();
 ----
 
@@ -137,35 +92,27 @@ TokenValidator tokenValidator = TokenValidator.builder()
         .maxTokenSize(16384)
         .maxPayloadSize(8192)
         .build())
-    .clockSkew(Duration.ofSeconds(30))
     .build();
 ----
 
 == Custom Claim Mapping
 
-Map custom claims to roles and groups:
-
 [source,java]
 ----
-// Configure custom claim paths
-RolesGroupsConfig rolesConfig = RolesGroupsConfig.builder()
-    .rolesPath("realm_access/roles")
-    .groupsPath("groups")
-    .build();
-
 IssuerConfig issuerConfig = IssuerConfig.builder()
-    .issuer("https://example.com")
-    .rolesGroupsConfig(rolesConfig)
+    .issuerIdentifier("https://example.com")
+    .jwksContent(jwksJsonString)
+    .claimMapper("roles", customRolesMapper)   // Custom mapper for nested roles
+    .claimMapper("groups", customGroupsMapper) // Custom mapper for groups
     .build();
 
 TokenValidator validator = TokenValidator.builder()
     .issuerConfig(issuerConfig)
     .build();
 
-// Token claims are automatically mapped
 AccessTokenContent token = validator.createAccessToken(AccessTokenRequest.of(jwtString));
-Set<String> roles = token.getRoles(); // From realm_access/roles
-Set<String> groups = token.getGroups(); // From groups claim
+List<String> roles = token.getRoles();   // From custom roles mapper
+List<String> groups = token.getGroups(); // From custom groups mapper
 ----
 
 For more examples, see the xref:api-reference.adoc[API Reference].

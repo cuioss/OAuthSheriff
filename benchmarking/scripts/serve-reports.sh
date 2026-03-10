@@ -4,7 +4,7 @@
 #   ./serve-reports.sh [module] [port]    - Start server for specified module (default: library, port: 8080)
 #   ./serve-reports.sh stop               - Stop running server
 # Modules:
-#   library  - benchmark-library results (default)
+#   library  - benchmark-core results (default)
 #   wrk      - benchmark-integration-wrk results
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -77,7 +77,7 @@ fi
 # Set reports directory based on module
 case "$MODULE" in
     library)
-        REPORTS_DIR="$PROJECT_ROOT/benchmarking/benchmark-library/target/benchmark-results/gh-pages-ready"
+        REPORTS_DIR="$PROJECT_ROOT/benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready"
         MODULE_DESC="Library Benchmark Results"
         ;;
     wrk)
@@ -93,10 +93,10 @@ if [ ! -d "$REPORTS_DIR" ]; then
     case "$MODULE" in
         library)
             echo "Please run library benchmarks first:"
-            echo "  ./mvnw verify -pl benchmarking/benchmark-library -Pbenchmark"
+            echo "  ./mvnw verify -pl benchmarking/benchmark-core -Pbenchmark"
             echo ""
             echo "This will generate HTML reports in:"
-            echo "  benchmarking/benchmark-library/target/benchmark-results/gh-pages-ready/"
+            echo "  benchmarking/benchmark-core/target/benchmark-results/gh-pages-ready/"
             ;;
         wrk)
             echo "Please run WRK load testing benchmarks first:"

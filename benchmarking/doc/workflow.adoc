@@ -23,7 +23,7 @@ The benchmark processing is automatically triggered in GitHub Actions:
 1. **Environment Setup**
    - Checkout code with full history
    - Set up JDK 21 with Maven cache
-   - Build oauth-sheriff-core module
+   - Build entire project (all modules, tests skipped)
 
 2. **Micro Benchmarks**
    - Run JMH benchmarks using `benchmark` profile
@@ -43,7 +43,7 @@ The benchmark processing is automatically triggered in GitHub Actions:
 
 5. **Deployment**
    - Deploy combined results to cuioss.github.io
-   - Results available at `oauth-sheriff/benchmarks`
+   - Results available at `OAuthSheriff/benchmarks`
 
 == Local Development
 
@@ -96,25 +96,28 @@ Each benchmark module generates a consistent artifact structure:
 [source]
 ----
 target/benchmark-results/
-├── badges/                      # Shields.io compatible badges
-│   ├── performance-badge.json   # Overall performance score
-│   ├── trend-badge.json         # Trend indicator
-│   └── last-run-badge.json      # Timestamp badge
-├── data/                        # Metrics data
-│   ├── metrics.json            # Combined metrics
-│   └── *-metrics.json          # Individual benchmark metrics
 ├── gh-pages-ready/             # GitHub Pages deployment structure
 │   ├── index.html              # Main landing page
 │   ├── trends.html             # Historical trends
-│   ├── api/                    # JSON API endpoints
-│   └── badges/                 # Badge files
-├── benchmark-summary.json       # Overall summary with quality gates
-└── *-benchmark-result.json     # Raw JMH results
+│   ├── badges/                 # Shields.io compatible badges
+│   │   ├── performance-badge.json   # Overall performance score
+│   │   ├── trend-badge.json         # Trend indicator
+│   │   └── last-run-badge.json      # Timestamp badge
+│   ├── data/                   # Metrics and summary data
+│   │   ├── benchmark-summary.json   # Overall summary with quality gates
+│   │   └── *-metrics.json          # Individual benchmark metrics
+│   └── api/                    # JSON API endpoints
+│       ├── latest.json         # Latest benchmark results
+│       ├── benchmarks.json     # List of all benchmarks
+│       └── status.json         # Current quality gate status
+├── history/                    # Historical archive data (NOT deployed)
+├── prometheus/                 # Raw Prometheus metrics (NOT deployed)
+└── wrk/                        # WRK raw results (NOT deployed)
 ----
 
 === Badge Types
 
-* **Performance Score** - Weighted composite score (0-100)
+* **Performance Score** - Weighted composite score (uncapped; higher is better)
 * **Trend** - Up/down/stable indicator with percentage change
 * **Last Run** - Timestamp of most recent benchmark
 * **WRK Performance** - WRK load testing specific score
@@ -133,7 +136,6 @@ Each benchmark run evaluates:
 The generated artifacts include JSON API endpoints:
 
 * `api/latest.json` - Latest benchmark results
-* `api/metrics.json` - Detailed metrics breakdown
 * `api/status.json` - Current quality gate status
 * `api/benchmarks.json` - List of all benchmarks
 
@@ -148,14 +150,14 @@ See xref:../../doc/Requirements.adoc#OAUTH-SHERIFF-9[Performance Requirements] f
 Check that:
 
 - Benchmarks completed successfully
-- No compilation errors in cui-benchmarking-common
+- No compilation errors in benchmarking-common
 - Correct profile used (`-Pbenchmark`)
 
 === Quality Gates Failing
 
 Review:
 
-- Performance thresholds in `SummaryGenerator`
+- Performance thresholds in `BenchmarkConstants`
 - Baseline comparison data availability
 - Resource constraints during benchmark run
 
@@ -165,4 +167,4 @@ Ensure:
 
 - Python installed for `serve-reports.sh` (Python 3 or 2)
 - Port 8080 available (or use `./serve-reports.sh stop` to stop existing server)
-- Generated reports exist in `cui-benchmarking-common/target/benchmark-reports-preview/`
+- Generated reports exist in `benchmark-core/target/benchmark-results/gh-pages-ready/` (or `benchmark-integration-wrk/target/benchmark-results/gh-pages-ready/` for WRK)

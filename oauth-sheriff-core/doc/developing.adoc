@@ -6,114 +6,114 @@
 :toc-title: Table of Contents
 
 
-This guide provides information for developers extending or integrating with the oauth-sheriff-core library.
-
 == Performance Metrics Infrastructure
 
-The library includes a lightweight, thread-safe performance monitoring system in the `de.cuioss.sheriff.oauth.core.metrics` package for analyzing JWT validation performance.
+The `de.cuioss.sheriff.oauth.core.metrics` package provides lightweight, thread-safe performance monitoring for JWT validation.
 
 === TokenValidatorMonitor and MetricsTicker
 
-`TokenValidatorMonitor` measures execution times for different JWT validation pipeline stages with microsecond precision using the `MetricsTicker` abstraction:
-
 [source,java]
 ----
-// Create monitor with default window size (100 samples)
-TokenValidatorMonitor monitor = new TokenValidatorMonitor();
+// Create monitor via TokenValidatorMonitorConfig
+TokenValidatorMonitorConfig monitorConfig = TokenValidatorMonitorConfig.builder()
+    .windowSize(100)
+    .measurementType(MeasurementType.SIGNATURE_VALIDATION)
+    .build();
+TokenValidatorMonitor monitor = monitorConfig.createMonitor();
 
-// Create a ticker for a specific measurement type
 MetricsTicker ticker = MetricsTickerFactory.createTicker(MeasurementType.SIGNATURE_VALIDATION, monitor);
 
-// Start recording
 ticker.startRecording();
 // ... perform signature validation ...
-// Stop and record the measurement
 ticker.stopAndRecord();
 
-// Get average for analysis
-Duration avgSignatureTime = monitor.getAverageDuration(MeasurementType.SIGNATURE_VALIDATION);
+// getValidationMetrics returns Optional<StripedRingBufferStatistics>
+Optional<StripedRingBufferStatistics> metrics = monitor.getValidationMetrics(MeasurementType.SIGNATURE_VALIDATION);
+metrics.ifPresent(stats -> {
+    Duration p50 = stats.p50();
+    Duration p99 = stats.p99();
+});
 ----
-
-The `MetricsTicker` interface provides a clean abstraction that supports both active monitoring and no-op implementations to minimize overhead when metrics are disabled.
 
 === MeasurementType
 
-The `MeasurementType` enum defines measurable pipeline stages:
+Pipeline steps (in execution order):
 
 * `COMPLETE_VALIDATION` - End-to-end validation time
-* `TOKEN_PARSING` - JWT structure validation and decoding
-* `HEADER_VALIDATION` - Header claims validation
+* `TOKEN_FORMAT_CHECK` - Pre-pipeline string validation (empty/blank/size checks)
+* `TOKEN_PARSING` - Base64URL decoding and JSON structure parsing
+* `ISSUER_EXTRACTION` - Extract and validate issuer (iss) claim
+* `CACHE_LOOKUP` - Check cache before expensive operations (access tokens only)
+* `ISSUER_CONFIG_RESOLUTION` - Resolve issuer configuration
+* `HEADER_VALIDATION` - Header claims and algorithm validation
 * `SIGNATURE_VALIDATION` - Cryptographic verification (typically most expensive)
-* `CLAIMS_VALIDATION` - Token claims validation
-* `JWKS_OPERATIONS` - Key loading and caching operations
+* `TOKEN_BUILDING` - Build typed token object from validated JWT
+* `CLAIMS_VALIDATION` - Token claims validation (exp, nbf, aud, iss)
+* `CACHE_STORE` - Store validated token in cache (access tokens only)
+
+Cross-cutting concerns:
+
+* `JWKS_OPERATIONS` - Key loading and caching operations (within signature validation)
+* `RETRY_ATTEMPT` - Individual HTTP retry attempt timing
+* `RETRY_COMPLETE` - Complete retry cycle with all attempts and delays
+* `RETRY_DELAY` - Exponential backoff delay timing between retries
 
 === Design Principles
 
-* **Lock-free operations** - Uses atomic operations for minimal overhead
-* **Rolling window sampling** - Maintains configurable number of recent measurements
-* **Microsecond precision** - High-resolution timing for accurate analysis
-* **Framework-agnostic** - No external dependencies, can integrate with Micrometer/Prometheus
+* **Lock-free operations** - Atomic operations for minimal overhead
+* **Rolling window sampling** - Configurable number of recent measurements
+* **Microsecond precision** - High-resolution timing
+* **Framework-agnostic** - No external dependencies, integrates with Micrometer/Prometheus
 
 == Security Event Monitoring
-
-The `SecurityEventCounter` in `de.cuioss.sheriff.oauth.core.security` provides thread-safe counters for security events:
 
 [source,java]
 ----
 SecurityEventCounter counter = tokenValidator.getSecurityEventCounter();
-
-// Get current counts
 long invalidTokens = counter.getCount(EventType.INVALID_JWT_FORMAT);
 Map<EventType, Long> allCounts = counter.getCounters();
-
-// Reset counters if needed
 counter.reset(EventType.INVALID_JWT_FORMAT);
 ----
 
-Event types are categorized by `EventCategory`:
-
-* `INVALID_STRUCTURE` - Malformed tokens, size violations
-* `INVALID_SIGNATURE` - Signature verification failures
-* `SEMANTIC_ISSUES` - Expired tokens, audience mismatches
+Event categories: `INVALID_STRUCTURE` (malformed tokens, size violations), `INVALID_SIGNATURE` (verification failures), `SEMANTIC_ISSUES` (expired tokens, audience mismatches).
 
 == Custom Claim Mapping
 
-To handle non-standard token claims, implement custom `ClaimMapper` instances:
-
 [source,java]
 ----
-// Create custom mapper for non-standard "role" claim
 ClaimMapper roleMapper = new JsonCollectionMapper();
-
 IssuerConfig issuerConfig = IssuerConfig.builder()
     .issuerIdentifier("https://issuer.com")
     .jwksContent(jwksContent)
-    .claimMapper("role", roleMapper)  // Register custom mapper
+    .claimMapper("role", roleMapper)
     .build();
 ----
 
-Built-in mappers include:
-
-* `JsonCollectionMapper` - Handles JSON arrays and strings
-* `StringSplitterMapper` - Splits delimited strings
-* `IdentityMapper` - Returns values unchanged
+Built-in mappers: `JsonCollectionMapper` (JSON arrays/strings), `StringSplitterMapper` (delimited strings), `IdentityMapper` (unchanged values).
 
 == Integration Points
 
 === Pipeline Customization
 
-The validation pipeline consists of:
+The access token validation pipeline consists of:
 
-. `NonValidatingJwtParser` - Basic JWT parsing
-. `TokenHeaderValidator` - Header validation
-. `TokenSignatureValidator` - Signature verification
-. `TokenClaimValidator` - Claims validation
+. `TokenStringValidator` - Pre-pipeline format check (null, blank, size limits)
+. `NonValidatingJwtParser` - Base64URL decoding and JSON parsing
+. Issuer extraction - Extract issuer (iss) claim from decoded JWT
+. Cache lookup - Check access token cache (before expensive operations)
+. `IssuerConfigResolver` - Resolve issuer configuration
+. `TokenHeaderValidator` - Header and algorithm validation
+. `TokenSignatureValidator` - Cryptographic signature verification (most expensive)
+. `TokenBuilder` - Build typed `AccessTokenContent` object
+. `TokenClaimValidator` - Claims validation (exp, nbf, aud, iss)
+. `DpopProofValidator` - DPoP proof validation (if configured, RFC 9449)
+. Cache store - Store validated token for future lookups
 
 Each validator throws `TokenValidationException` with specific `EventType` on failure.
 
 == Testing Support
 
-The library provides comprehensive test utilities via the `generators` artifact. See xref:UnitTesting.adoc[Unit Testing Guide] for details.
+See xref:UnitTesting.adoc[Unit Testing Guide] for test utilities via the `generators` artifact.
 
 == Thread Safety
 
@@ -127,30 +127,21 @@ The library provides comprehensive test utilities via the `generators` artifact.
 * Signature validation typically consumes 90%+ of validation time
 * Use `TokenValidatorMonitor` to identify bottlenecks
 * Configure appropriate JWKS refresh intervals (300-3600 seconds)
-* Consider using the built-in access token cache (see README for configuration)
+* Consider using the built-in access token cache
 
-=== Metrics Precision Notes
-
-Some validation operations execute in sub-microsecond time and may appear as zero when exported:
-
-* `TOKEN_FORMAT_CHECK` - Simple `String.isBlank()` check, typically < 1000ns
-* `ISSUER_EXTRACTION` - `Optional.get()` from decoded JWT, typically < 1000ns
-* `JWKS_OPERATIONS` - May show as 0 if keys are cached; actual JWKS fetches occur within signature validation
-
-When these nanosecond measurements are converted to milliseconds for JSON export, they round to 0. This is expected behavior for extremely fast operations and does not indicate missing measurements.
+Some operations (`TOKEN_FORMAT_CHECK`, `ISSUER_EXTRACTION`, `JWKS_OPERATIONS` with cached keys) execute in sub-microsecond time and may appear as zero when exported to milliseconds. This is expected behavior.
 
 == Memory Management
 
 Configure limits in `ParserConfig` to prevent attacks:
 
 * `maxTokenSize` - Limits entire JWT token (default 8KB)
-* `maxPayloadSize` - Limits decoded parts (default 2KB)
-* `maxStringSize` - Limits JSON strings (default 1KB)
-* `maxArraySize` - Limits array elements (default 64)
-* `maxDepth` - Limits JSON nesting (default 10)
+* `maxPayloadSize` - Limits decoded JWT parts (default 8KB)
+* `maxStringLength` - Limits JSON string buffer size (default 4KB)
+* `maxBufferSize` - Reserved buffer size limit (not currently enforced; default 128KB)
 
 == Related Documentation
 
 * xref:../README.adoc[README] - Usage examples and configuration
-* xref:../../doc/specification/technical-components.adoc[Technical Components] - Architecture details
+* xref:../../doc/architecture.adoc[Technical Components] - Architecture details
 * xref:UnitTesting.adoc[Unit Testing Guide] - Test utilities documentation

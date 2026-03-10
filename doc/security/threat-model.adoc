@@ -1,0 +1,373 @@
+= JWT Token Handling - Threat Model
+:toc: left
+:toclevels: 3
+:sectnums:
+:source-highlighter: highlight.js
+
+== Overview
+
+_See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8[OAUTH-SHERIFF-8: Security Requirements] and xref:../architecture.adoc[Architecture] and xref:security-reference.adoc[Security Reference]_
+
+This document outlines the threat model for the JWT Token Validation library. The threat model follows OWASP recommendations and the STRIDE methodology. Each category lists threats, current mitigations with implementation references, coverage status, and open recommendations.
+
+== System Context
+
+The JWT Token Validation library:
+
+* Processes JWT tokens from OAuth2/OpenID Connect providers
+* Validates token signatures using JWKS (JSON Web Key Sets)
+* Extracts and processes token claims
+* Handles multiple token types (Access, ID, Refresh)
+* Supports multiple issuers with per-issuer configuration
+* Implements key management and rotation
+* Supports DPoP sender-constrained tokens (RFC 9449)
+
+== STRIDE Threat Analysis
+
+=== Spoofing
+
+_See Requirements xref:../Requirements.adoc#OAUTH-SHERIFF-8.1[OAUTH-SHERIFF-8.1] and xref:../Requirements.adoc#OAUTH-SHERIFF-8.4[OAUTH-SHERIFF-8.4]_
+
+==== Threats and Mitigations
+
+[cols="1,2,3,2", options="header"]
+|===
+|ID |Threat |Mitigation |Test Coverage
+
+|S1
+|Forged JWT tokens
+|Cryptographic signature verification via link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenSignatureValidator.java[TokenSignatureValidator]; asymmetric-only (HMAC/"none" rejected per RFC 8725)
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest]
+
+|S2
+|JWKS endpoint impersonation
+|TLS 1.2+ enforced for all JWKS communication via `SecureSSLContextProvider` (cui-http-client); HTTPS-only endpoints
+|Integration tests verify HTTPS
+
+|S3
+|Expired/revoked token reuse
+|Expiration (`exp`) and not-before (`nbf`) validation in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenClaimValidator.java[TokenClaimValidator]
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenClaimValidatorTest.java[TokenClaimValidatorTest]
+
+|S4
+|Tokens from untrusted issuers
+|Strict issuer allowlist in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/IssuerConfig.java[IssuerConfig]; issuer resolved by link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/IssuerConfigResolver.java[IssuerConfigResolver]
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/IssuerConfigResolverTest.java[IssuerConfigResolverTest]
+
+|S5
+|Token substitution (client confusion)
+|Audience (`aud`) + authorized party (`azp`) validation in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenClaimValidator.java[TokenClaimValidator]
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/ClientConfusionAttackTest.java[ClientConfusionAttackTest]
+|===
+
+==== Open Recommendations
+
+* Token blacklisting for revoked tokens
+* Rate limiting for token validation attempts
+* JWK thumbprint validation for JWKS endpoints
+
+=== Tampering
+
+_See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8.2[OAUTH-SHERIFF-8.2: Safe Parsing]_
+
+==== Threats and Mitigations
+
+[cols="1,2,3,2", options="header"]
+|===
+|ID |Threat |Mitigation |Test Coverage
+
+|T1
+|Token content modification
+|Signature verification detects any modification; link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenSignatureValidator.java[TokenSignatureValidator]
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest]
+
+|T2
+|JWKS cache tampering
+|Immutable key sets in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/jwks/http/HttpJwksLoader.java[HttpJwksLoader]; TLS transport; refresh intervals
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/jwks/http/HttpJwksLoaderGracePeriodTest.java[HttpJwksLoaderGracePeriodTest]
+
+|T3
+|Parser manipulation
+|Size limits (token 8 KB, payload 8 KB, string 4 KB, buffer 128 KB) in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/NonValidatingJwtParser.java[NonValidatingJwtParser]; immutable token objects
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest]
+
+|T4
+|Algorithm substitution (RS256→HS256)
+|HMAC rejected; algorithm-key type matching enforced; explicit `alg` validation against allowed set
+|`TokenSignatureValidatorTest.shouldRejectAlgorithmConfusionAttack()`
+
+|T5
+|Header manipulation
+|Header validated by link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenHeaderValidator.java[TokenHeaderValidator]; `jwk` header rejected; `jku`/`x5u` headers ignored (keys only from pre-loaded JWKS endpoints)
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenHeaderValidatorTest.java[TokenHeaderValidatorTest]
+|===
+
+==== Open Recommendations
+
+* Integrity checksums for cached JWKS data
+* Strict content-type validation for JWKS responses
+
+=== Repudiation
+
+_See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-7[OAUTH-SHERIFF-7: Logging Requirements]_
+
+==== Threats and Mitigations
+
+[cols="1,2,3,2", options="header"]
+|===
+|ID |Threat |Mitigation |Test Coverage
+
+|R1
+|Denial of token usage
+|Structured logging via link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/JWTValidationLogMessages.java[JWTValidationLogMessages]; all validation events logged
+|Logging verified in validator tests
+
+|R2
+|Unauthorized token operations
+|Security event counting via link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/security/SecurityEventCounter.java[SecurityEventCounter]; Micrometer metrics in Quarkus
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/security/SecurityEventCounterTest.java[SecurityEventCounterTest]
+
+|R3
+|Missing audit trail
+|All validation failures logged with sanitized token metadata; no sensitive claims in logs
+|Logging verified in validator tests
+
+|R4
+|Inability to trace token usage
+|Token claims accessible via generic claims map in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/domain/token/BaseTokenContent.java[BaseTokenContent] (including `jti` if present); security event counters
+|Token content tests
+
+|R5
+|Log data tampering
+|Application-level concern (outside library scope)
+|—
+|===
+
+==== Open Recommendations
+
+* Correlation IDs for cross-service tracing
+* Log integrity protection (application-level)
+
+=== Information Disclosure
+
+_See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8.3[OAUTH-SHERIFF-8.3: Secure Communication]_
+
+==== Threats and Mitigations
+
+[cols="1,2,3,2", options="header"]
+|===
+|ID |Threat |Mitigation |Test Coverage
+
+|I1
+|Sensitive claims in logs
+|Log templates in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/JWTValidationLogMessages.java[JWTValidationLogMessages] avoid logging sensitive token content by design; no sensitive data in `toString()`
+|Logging tests
+
+|I2
+|Token data in error messages
+|Secure error handling; validation errors contain category, not token content
+|Error handling tests
+
+|I3
+|JWKS cache content exposure
+|Internal-only access; no public API exposing cached keys
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/jwks/http/HttpJwksLoaderGracePeriodTest.java[HttpJwksLoaderGracePeriodTest]
+
+|I4
+|Debug information exposure
+|Structured log levels; DEBUG/TRACE guarded
+|Logging tests
+
+|I5
+|Side-channel attacks
+|Not directly mitigated (low risk for validation-only library)
+|—
+
+|I6
+|Insecure JWKS communication
+|TLS 1.2+ enforced via `SecureSSLContextProvider` (cui-http-client); configurable minimum TLS version
+|Integration tests verify HTTPS
+|===
+
+==== Open Recommendations
+
+* Certificate pinning for JWKS endpoints
+* Constant-time comparison for security-critical comparisons
+
+=== Denial of Service
+
+_See Requirements xref:../Requirements.adoc#OAUTH-SHERIFF-8.1[OAUTH-SHERIFF-8.1: Token Size Limits] and xref:../Requirements.adoc#OAUTH-SHERIFF-9[OAUTH-SHERIFF-9: Performance]_
+
+==== Threats and Mitigations
+
+[cols="1,2,3,2", options="header"]
+|===
+|ID |Threat |Mitigation |Test Coverage
+
+|D1
+|JWKS endpoint flooding
+|JWKS refresh interval controls (default 600s); caching in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/jwks/http/HttpJwksLoader.java[HttpJwksLoader]; retry behavior via cui-http-client `ResilientHttpAdapter`
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/jwks/http/HttpJwksLoaderGracePeriodTest.java[HttpJwksLoaderGracePeriodTest]
+
+|D2
+|Large token processing
+|Token size limit 8 KB enforced before any parsing in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/pipeline/NonValidatingJwtParser.java[NonValidatingJwtParser]
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest]
+
+|D3
+|Complex token structures
+|Payload size limit 8 KB, string size 4 KB, buffer 128 KB; safe JSON parsing
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/NonValidatingJwtParserTest.java[NonValidatingJwtParserTest]
+
+|D4
+|Resource exhaustion (parallel requests)
+|Thread-safe implementation; connection/read timeouts for HTTP operations
+|Concurrency tests
+
+|D5
+|Cache poisoning
+|JWKS from trusted HTTPS endpoints only; key rotation grace period with bounded retired key sets (default 3)
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/jwks/http/HttpJwksLoaderGracePeriodTest.java[HttpJwksLoaderGracePeriodTest]
+
+|D6
+|CPU exhaustion (crypto operations)
+|Token validated only after size/structure checks pass; access token cache avoids re-validation
+|Performance benchmarks
+|===
+
+==== Open Recommendations
+
+* Request throttling per client
+* Circuit breaker for JWKS endpoint failures
+
+=== Elevation of Privilege
+
+_See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8.4[OAUTH-SHERIFF-8.4: Claims Validation]_
+
+==== Threats and Mitigations
+
+[cols="1,2,3,2", options="header"]
+|===
+|ID |Threat |Mitigation |Test Coverage
+
+|E1
+|Token scope manipulation
+|Immutable scope extraction in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/domain/token/AccessTokenContent.java[AccessTokenContent]; type-safe claim access
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/domain/token/AccessTokenContentTest.java[AccessTokenContentTest]
+
+|E2
+|Role/permission injection
+|Strict claim type checking; immutable role/group lists
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/domain/token/AccessTokenContentTest.java[AccessTokenContentTest]
+
+|E3
+|Privilege escalation via claim manipulation
+|Full claims validation pipeline; signature protects claim integrity
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenClaimValidatorTest.java[TokenClaimValidatorTest]
+
+|E4
+|Bypass of token validation
+|No public decode-without-verify API; signature validation mandatory in pipeline
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenSignatureValidatorTest.java[TokenSignatureValidatorTest]
+
+|E5
+|Algorithm confusion attacks
+|HMAC rejected; algorithm-key type matching; per-issuer algorithm configuration via link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/security/SignatureAlgorithmPreferences.java[SignatureAlgorithmPreferences]
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenSignatureValidatorAlgorithmTest.java[TokenSignatureValidatorAlgorithmTest]
+
+|E6
+|Key confusion attacks
+|Key ID (`kid`) validation; pre-loaded keys only — no dynamic file/DB lookup
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/security/KeyInjectionAttackTest.java[KeyInjectionAttackTest]
+
+|E7
+|Client confusion attacks
+|`aud` + `azp` claim validation; mandatory when configured
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/ClientConfusionAttackTest.java[ClientConfusionAttackTest]
+
+|E8
+|Scope upgrade attacks
+|Scopes accessible for application-level validation; Quarkus `@BearerAuth` interceptor enforces required scopes
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/domain/token/AccessTokenContentTest.java[AccessTokenContentTest]
+
+|E9
+|Mutable claims as identity
+|`sub` claim mandatory and validated (configurable opt-out via `claim-sub-optional`)
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/pipeline/validator/TokenClaimValidatorTest.java[TokenClaimValidatorTest]
+|===
+
+==== Open Recommendations
+
+* Role hierarchy validation
+* Mandatory audience validation for client applications
+* Warning when mutable claims (e.g., `email`) used for identification
+
+=== DPoP Threats (RFC 9449)
+
+_See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-8.7[OAUTH-SHERIFF-8.7: DPoP Sender-Constrained Tokens]_
+
+==== Threats and Mitigations
+
+[cols="1,2,3,2", options="header"]
+|===
+|ID |Threat |Mitigation |Test Coverage
+
+|DP1
+|DPoP proof replay
+|JTI-based replay protection with bounded cache (default 10,000 entries, 300s TTL) in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/dpop/DpopReplayProtection.java[DpopReplayProtection]
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/dpop/DpopProofValidatorTest.java[DpopProofValidatorTest]
+
+|DP2
+|Token exfiltration (no sender binding)
+|DPoP proof `jkt` (JWK Thumbprint) binding validates proof key matches access token's `cnf.jkt` claim
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/dpop/DpopPipelineIntegrationTest.java[DpopPipelineIntegrationTest]
+
+|DP3
+|Stale DPoP proof
+|Proof `iat` validated against configurable max age (default 300s) in link:../../oauth-sheriff-core/src/main/java/de/cuioss/sheriff/oauth/core/dpop/DpopProofValidator.java[DpopProofValidator]
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/dpop/DpopProofValidatorTest.java[DpopProofValidatorTest]
+
+|DP4
+|DPoP algorithm confusion
+|DPoP proof `alg` validated against allowed asymmetric algorithms; HMAC/"none" rejected
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/dpop/DpopProofValidatorTest.java[DpopProofValidatorTest]
+
+|DP5
+|HTTP method/URI mismatch
+|DPoP proof `htm` and `htu` validation is not performed by the library; this is handled at the application/framework level (e.g., Quarkus integration)
+|link:../../oauth-sheriff-core/src/test/java/de/cuioss/sheriff/oauth/core/dpop/DpopPipelineIntegrationTest.java[DpopPipelineIntegrationTest]
+|===
+
+==== Open Recommendations
+
+* Server nonce support (`nonce` claim in DPoP proof)
+* DPoP proof binding for refresh tokens
+
+== Coverage Summary
+
+[cols="1,1,1,1", options="header"]
+|===
+|STRIDE Category |Threats |Mitigated |Test Covered
+
+|Spoofing |5 |5 (100%) |5 (100%)
+|Tampering |5 |5 (100%) |5 (100%)
+|Repudiation |5 |4 (80%) |4 (80%)
+|Information Disclosure |6 |5 (83%) |5 (83%)
+|Denial of Service |6 |6 (100%) |6 (100%)
+|Elevation of Privilege |9 |9 (100%) |9 (100%)
+|DPoP |5 |5 (100%) |5 (100%)
+|**Total** |**41** |**39 (95%)** |**39 (95%)**
+|===
+
+Unmitigated: R5 (log tampering — application-level), I5 (side-channel — low risk for validation library).
+
+== References
+
+* https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html[OWASP JWT Security Cheat Sheet for Java]
+* https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725 - JWT Best Current Practices]
+* https://datatracker.ietf.org/doc/html/rfc7519[RFC 7519 - JSON Web Token]
+* https://datatracker.ietf.org/doc/html/rfc7518[RFC 7518 - JSON Web Algorithms]
+* https://datatracker.ietf.org/doc/html/rfc9449[RFC 9449 - OAuth 2.0 Demonstrating Proof of Possession (DPoP)]
+* https://blog.doyensec.com/2025/01/30/oauth-common-vulnerabilities.html[OAuth Common Vulnerabilities (Doyensec, 2025)]
+* https://datatracker.ietf.org/doc/html/rfc6749[RFC 6749 - The OAuth 2.0 Authorization Framework]
+* https://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect Core 1.0]

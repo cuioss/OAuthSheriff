@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * which implements the requirement <a href="../../../../../../../../../../doc/Requirements.adoc#OAUTH-SHERIFF-8.5">OAUTH-SHERIFF-8.5: Cryptographic Agility</a> as specified
  * in the security specification.
  * <p>
- * See: doc/specification/security-specifications.adoc
+ * See: doc/security/security-reference.adoc
  */
 @EnableTestLogger(debug = SignatureAlgorithmPreferences.class, warn = SignatureAlgorithmPreferences.class)
 @EnableGeneratorController
