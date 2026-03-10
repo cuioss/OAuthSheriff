@@ -16,7 +16,7 @@ The benchmarking infrastructure provides:
 * **Dual Benchmark Types** - Micro benchmarks for library performance, integration benchmarks for real-world scenarios
 * **GitHub Pages Integration** - Ready-to-deploy artifacts for visualization
 * **Performance Tracking** - Historical trends and quality gates
-* **Common Infrastructure** - Shared utilities in cui-benchmarking-common for consistency
+* **Common Infrastructure** - Shared utilities in benchmarking-common for consistency
 
 == Modules
 
@@ -108,21 +108,23 @@ See link:benchmarking-common/README.adoc[benchmarking-common README] for details
 [source]
 ----
 target/benchmark-results/
-├── badges/                      # Shields.io compatible badges
-│   ├── performance-badge.json   # Overall performance score
-│   ├── trend-badge.json         # Trend indicator
-│   └── last-run-badge.json      # Timestamp badge
-├── data/                        # Metrics data
-│   ├── metrics.json            # Combined metrics
-│   └── *-metrics.json          # Individual benchmark metrics
-├── reports/                     # HTML reports
 ├── gh-pages-ready/             # GitHub Pages deployment structure
 │   ├── index.html              # Main landing page
 │   ├── trends.html             # Historical trends
-│   ├── api/                    # JSON API endpoints
-│   └── badges/                 # Badge files
-├── benchmark-summary.json       # Overall summary with quality gates
-└── *-benchmark-result.json     # Raw JMH/WRK results
+│   ├── badges/                 # Shields.io compatible badges
+│   │   ├── performance-badge.json   # Overall performance score
+│   │   ├── trend-badge.json         # Trend indicator
+│   │   └── last-run-badge.json      # Timestamp badge
+│   ├── data/                   # Metrics and summary data
+│   │   ├── benchmark-summary.json   # Overall summary with quality gates
+│   │   └── *-metrics.json          # Individual benchmark metrics
+│   └── api/                    # JSON API endpoints
+│       ├── latest.json         # Latest benchmark results
+│       ├── benchmarks.json     # List of all benchmarks
+│       └── status.json         # Current quality gate status
+├── history/                    # Historical archive data (NOT deployed)
+├── prometheus/                 # Raw Prometheus metrics (NOT deployed)
+└── wrk/                        # WRK raw results (NOT deployed)
 ----
 
 === Quality Gates

@@ -355,7 +355,7 @@ The `CustomAccessLogFilter` is registered via `@Provider` and runs on **all JAX-
 3. **JWT validation (1.1ms) dominates** — filter overhead (0.1ms) is negligible in comparison
 4. **50% CUI library CPU in filter is misleading** — that's 50% of only 0.3% total CPU
 
-The filter is configured with `min-status-code=206`, so it only **logs** errors but still **executes** `shouldLog()` and `isPathIncluded()` on every response. These methods create `Path.of(path)` objects per request.
+The filter is configured with `min-status-code=400` (the default), so it only **logs** client and server errors but still **executes** `shouldLog()` and `isPathIncluded()` on every response. These methods create `Path.of(path)` objects per request.
 
 For benchmark isolation, the filter can be disabled:
 [source,properties]

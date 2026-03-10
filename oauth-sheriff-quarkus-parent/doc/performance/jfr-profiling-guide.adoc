@@ -16,7 +16,7 @@ Technical instructions for configuring and analyzing Java Flight Recorder (JFR) 
 [source,properties]
 ----
 # application.properties
-quarkus.native.monitoring=jcmd,jfr,heapdump
+quarkus.native.monitoring=jfr
 ----
 
 **Separate Dockerfile Approach**:
@@ -25,13 +25,14 @@ quarkus.native.monitoring=jcmd,jfr,heapdump
 ----
 # Dockerfile.native.distroless (Production) - single-stage, copies pre-built native executable
 FROM quay.io/quarkus/quarkus-distroless-image:2.0
-COPY --chmod=0755 target/*-runner /app/application
+COPY --chmod=0755 oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/*-runner /app/application
 ----
 
 [source,dockerfile]
 ----
 # Dockerfile.native.jfr (Profiling) - single-stage, copies pre-built native executable
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
+COPY --chmod=0755 oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/*-runner /app/application
 RUN mkdir -p /tmp/jfr-output && chmod 777 /tmp/jfr-output
 ENTRYPOINT ["/app/application", "-XX:+FlightRecorder", \
   "-XX:StartFlightRecording=filename=/tmp/jfr-output/jwt-profile.jfr,dumponexit=true,duration=240s,settings=profile"]

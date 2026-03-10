@@ -57,7 +57,10 @@ e-2-e-playwright/
 │   └── accessibility-wcag-compliance.spec.js  # WCAG 2.1 AA compliance
 ├── utils/
 │   ├── constants.js                           # URLs, timeouts, selectors
-│   └── devui-navigation.js                    # Click-based SPA navigation helpers
+│   ├── devui-navigation.js                    # Click-based SPA navigation helpers
+│   ├── keycloak-token-service.js              # Keycloak token acquisition
+│   ├── run-tests-with-precheck.js             # Pre-flight environment checks
+│   └── test-logger.js                         # Structured test logging
 └── fixtures/
     └── test-fixtures.js                       # Shared test fixtures
 ----

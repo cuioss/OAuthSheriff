@@ -14,7 +14,7 @@ The main entry point for token validation.
 
 [source,java]
 ----
-public class TokenValidator {
+public class TokenValidator implements Closeable {
     public static Builder builder() { ... }
 
     public AccessTokenContent createAccessToken(AccessTokenRequest request);
@@ -28,7 +28,7 @@ Represents a validated access token with its claims.
 
 [source,java]
 ----
-public class AccessTokenContent {
+public class AccessTokenContent extends BaseTokenContent {
     // Standard claims
     public Optional<String> getSubject();
     public String getIssuer();
@@ -57,7 +57,7 @@ public class AccessTokenContent {
 
 [source,java]
 ----
-public class IssuerConfig {
+public class IssuerConfig implements LoadingStatusProvider {
     public static Builder builder() { ... }
 
     public static class IssuerConfigBuilder {
@@ -184,9 +184,9 @@ public class TokenValidationException extends RuntimeException {
 |During JSON parsing
 
 |`maxBufferSize`
-|DSL-JSON enforced limit on buffer size for parsing
+|Reserved buffer size limit (not currently passed to DSL-JSON; stored for DevUI display)
 |128KB
-|During JSON parsing
+|Not enforced during parsing
 |===
 
 Base64 encoding increases size by ~33%, so an 8KB token yields ~6KB decoded content. These limits provide defense-in-depth against denial-of-service attacks, memory exhaustion, and JSON parsing vulnerabilities.

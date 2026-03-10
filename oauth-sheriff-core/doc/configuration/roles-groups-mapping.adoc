@@ -86,8 +86,8 @@ IssuerConfig issuerConfig = IssuerConfig.builder()
     .jwksContent(jwksJsonString)
     .claimMapper("roles", (mapRepresentation, claimName) -> {
         // Custom logic to extract nested roles from realm_access/roles
-        // Return a ClaimValue with the extracted roles list
-        return mapRepresentation.getClaimValue(claimName);
+        // Use getNestedMap() for nested structures, getValue() for direct access
+        return new JsonCollectionMapper().map(mapRepresentation, claimName);
     })
     .build();
 ----
@@ -100,7 +100,8 @@ public class CustomRoleMapper implements ClaimMapper {
     @Override
     public ClaimValue map(MapRepresentation mapRepresentation, String claimName) {
         // Handle complex nested structures
-        return mapRepresentation.getClaimValue(claimName);
+        // Use getNestedMap() for nested objects, getValue()/getString() for direct access
+        return new JsonCollectionMapper().map(mapRepresentation, claimName);
     }
 }
 

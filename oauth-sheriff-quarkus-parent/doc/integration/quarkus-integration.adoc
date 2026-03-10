@@ -46,9 +46,7 @@ Uses MicroProfile Config API with the `sheriff.oauth` prefix:
 
 [source,properties]
 ----
-sheriff.oauth.enabled=true
-sheriff.oauth.parser.allow-unsafe-algorithms=false
-sheriff.oauth.parser.max-token-size-bytes=8192
+sheriff.oauth.parser.max-token-size=8192
 sheriff.oauth.issuers.keycloak.issuer-identifier=https://keycloak.example.com/auth/realms/master
 sheriff.oauth.issuers.keycloak.jwks.http.url=https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs
 ----

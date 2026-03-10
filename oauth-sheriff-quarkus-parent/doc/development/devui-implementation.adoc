@@ -79,7 +79,7 @@ The JSON-RPC service is registered via `createJwtDevUIJsonRPCService()` in `OAut
 
 |`getHealthInfo()`
 |Overall extension health
-|`configurationValid`, `tokenValidatorAvailable`, `overallStatus`, `message`, `healthStatus`
+|`configurationValid`, `tokenValidatorAvailable`, `securityCounterAvailable`, `overallStatus`, `message`, `healthStatus`
 |===
 
 NOTE: `validateToken` only validates access tokens. ClaimValue objects are converted to simple strings for JSON-RPC serialization.

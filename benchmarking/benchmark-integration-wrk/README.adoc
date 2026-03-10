@@ -42,7 +42,8 @@ cd oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
 
 WRK runs via Docker for multi-architecture support (ARM64 + x86_64):
 
-* **Docker Image**: `wrk:local` built from `Dockerfile.wrk` (Alpine-based, 10MB)
+* **Docker Image**: `wrk:local` built from `Dockerfile.wrk` (Alpine-based, multi-arch)
+* **Execution**: Via `docker compose run --rm wrk` using the `wrk` service defined in `docker-compose.yml`
 * **Lua Scripts**: Embedded in image at `/scripts/` (health_live_check.lua, jwt_benchmark.lua)
 * **No Installation Required**: Docker automatically selects correct architecture variant
 
@@ -217,20 +218,26 @@ Results in `target/benchmark-results/`:
 |File
 |Description
 
-|`wrk-health-output.txt`
+|`wrk/wrk-health-live-results.txt`
 |Raw WRK output for health endpoint
 
-|`wrk-health-results.json`
-|Processed JSON report for health benchmark
-
-|`wrk-jwt-output.txt`
+|`wrk/wrk-jwt-results.txt`
 |Raw WRK output for JWT endpoint
 
-|`wrk-jwt-results.json`
-|Processed JSON report for JWT benchmark
+|`gh-pages-ready/benchmark-data.json`
+|Unified benchmark report (HTML reports generated alongside)
 
-|`quarkus-logs.txt`
-|Application logs from benchmark run
+|`prometheus/healthCheck-metrics.json`
+|Prometheus metrics captured during health benchmark
+
+|`prometheus/jwtValidation-metrics.json`
+|Prometheus metrics captured during JWT benchmark
+
+|`quarkus.log`
+|Application logs from benchmark run (written by Quarkus file logging)
+
+|`keycloak-logs-<timestamp>.txt`
+|Keycloak container logs dumped after benchmarks
 |===
 
 === JSON Report Format
@@ -261,14 +268,18 @@ Results in `target/benchmark-results/`:
 [source,bash]
 ----
 # Check raw WRK output
-cat target/benchmark-results/wrk-health-output.txt
+cat target/benchmark-results/wrk/wrk-health-live-results.txt
+cat target/benchmark-results/wrk/wrk-jwt-results.txt
 
-# Analyze JSON reports
-jq '.performance' target/benchmark-results/wrk-health-results.json
+# Analyze unified benchmark report
+jq '.benchmarks' target/benchmark-results/gh-pages-ready/benchmark-data.json
 
-# Compare runs
-diff <(jq '.performance' baseline/wrk-jwt-results.json) \
-     <(jq '.performance' target/benchmark-results/wrk-jwt-results.json)
+# Check Prometheus metrics
+jq '.' target/benchmark-results/prometheus/healthCheck-metrics.json
+jq '.' target/benchmark-results/prometheus/jwtValidation-metrics.json
+
+# View application logs
+cat target/benchmark-results/quarkus.log
 ----
 
 === Performance Tuning
@@ -332,22 +343,25 @@ Health checks scale better but also degrade at 300 connections (P90 15ms vs 2.5m
     <goals><goal>exec</goal></goals>
     <configuration>
         <skip>${skip.benchmark}</skip>
-        <executable>wrk</executable>
+        <executable>bash</executable>
         <arguments>
-            <argument>-t${wrk.threads}</argument>
-            <argument>-c${wrk.connections}</argument>
-            <argument>-d${wrk.duration}</argument>
-            <argument>--timeout</argument>
-            <argument>${wrk.timeout}</argument>
-            <argument>--latency</argument>
-            <argument>-s</argument>
-            <argument>${wrk.script.dir}/custom.lua</argument>
-            <argument>${integration.service.url}/api/custom</argument>
+            <argument>${wrk.script.dir}/custom_benchmark.sh</argument>
         </arguments>
-        <outputFile>${wrk.results.dir}/wrk-custom-output.txt</outputFile>
+        <outputFile>${wrk.output.dir}/wrk-custom-results.txt</outputFile>
+        <timeout>240000</timeout>
+        <environmentVariables>
+            <WRK_THREADS>${wrk.threads}</WRK_THREADS>
+            <WRK_CONNECTIONS>${wrk.connections}</WRK_CONNECTIONS>
+            <WRK_DURATION>${wrk.duration}</WRK_DURATION>
+            <WRK_TIMEOUT>${wrk.timeout}</WRK_TIMEOUT>
+            <COMPOSE_DIR>${integration.compose.dir}</COMPOSE_DIR>
+        </environmentVariables>
     </configuration>
 </execution>
 ----
+
+The shell script should use `docker compose run --rm wrk` to execute WRK inside the Docker network
+(see `health_live_benchmark.sh` and `jwt_benchmark.sh` for reference implementations).
 
 3. Add post-processing execution for results
 

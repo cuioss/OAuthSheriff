@@ -18,7 +18,7 @@
 |===
 | Operation | Time | Notes
 
-| RSA-256 Signature Verification | 68us | Default JDK provider
+| RS256 Signature Verification | 68us | Default JDK provider
 | Full JWT Parsing + Verification | 77us | Includes JSON parsing
 | Token Cache Lookup | 0.1us | Lock-free concurrent cache
 |===

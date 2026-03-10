@@ -58,7 +58,7 @@ The OAuth Sheriff benchmarking infrastructure consists of three specialized modu
       ▼                      ▼
 ┌──────────────┐  ┌─────────────────────────┐
 │oauth-sheriff-      │  │Docker Containers:       │
-│validation    │  │ • Quarkus App           │
+│core          │  │ • Quarkus App           │
 │              │  │ • Keycloak              │
 │              │  │ • Prometheus            │
 └──────────────┘  └─────────────────────────┘
@@ -119,7 +119,6 @@ de.cuioss.benchmarking.common/
 ├── metrics/       # Metrics collection and processing
 ├── model/         # Data models (BenchmarkData)
 ├── output/        # Output directory management
-├── profiler/      # Profiling utilities
 ├── report/        # Report and badge generation
 ├── repository/    # Token repositories
 ├── runner/        # Benchmark runner framework
@@ -196,11 +195,11 @@ Key scripts:
 ----
 Quarkus:     https://localhost:10443
   /jwt/validate    - JWT validation endpoint
-  /q/health        - Health endpoint
+  /q/health/live   - Health endpoint
   /q/metrics       - Metrics endpoint
 
 Keycloak:    https://localhost:1443
-  /auth/realms/... - Token issuance
+  /realms/...      - Token issuance
 
 Prometheus:  http://localhost:9090
   /api/v1/query    - Metrics API

@@ -69,7 +69,7 @@ NOTE: It's important to distinguish between:
 
 ==== DecodedJwt Extensions
 
-The `DecodedJwt` class needs to be extended to support JWE structure:
+The `DecodedJwt` record needs to be extended to support JWE structure:
 
 * Add fields for JWE-specific parts (encrypted key, initialization vector, ciphertext, authentication tag)
 * Update constructors and methods to handle JWE tokens

@@ -47,7 +47,7 @@ Properties under `sheriff.oauth.issuers.<name>.*` — one block per issuer.
 |Property |Type |Default |Description
 |`jwks.http.refresh-interval-seconds` |int |`600` |JWKS cache refresh interval
 |`jwks.http.connect-timeout-seconds` |int |`10` |HTTP connect timeout
-|`jwks.http.read-timeout-seconds` |int |`30` |HTTP read timeout
+|`jwks.http.read-timeout-seconds` |int |`10` |HTTP read timeout
 |`jwks.http.key-rotation-grace-period-seconds` |int |`300` |Grace period for retired keys during rotation
 |`jwks.http.max-retired-key-sets` |int |`3` |Max retained retired key sets
 |===
@@ -89,9 +89,9 @@ Properties under `sheriff.oauth.issuers.<name>.*` — one block per issuer.
 [cols="2,1,1,3", options="header"]
 |===
 |Property |Type |Default |Description
-|`sheriff.oauth.health.enabled` |boolean |`true` |Enable health checks
+|`sheriff.oauth.health.enabled` |boolean |`true` |Enable health checks (currently unused — defined but not read by any runtime component)
 |`sheriff.oauth.health.jwks.cache-seconds` |int |`30` |Health check result cache TTL
-|`sheriff.oauth.health.jwks.timeout-seconds` |int |`5` |Health check timeout
+|`sheriff.oauth.health.jwks.timeout-seconds` |int |`5` |Health check timeout (currently unused — defined but not injected by JwksEndpointHealthCheck)
 |===
 
 == Metrics

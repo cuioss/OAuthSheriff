@@ -7,7 +7,7 @@
 
 == Overview
 
-The oauth-sheriff-quarkus extension automatically exposes metrics when the Quarkus Micrometer extension is present. The `JwtMetricsCollector` registers Micrometer counters, using scheduled polling (every 10 seconds) to update from `SecurityEventCounter`.
+The oauth-sheriff-quarkus extension automatically exposes metrics when the Quarkus Micrometer extension is present. The `JwtMetricsCollector` registers Micrometer counters, using scheduled polling to update from `SecurityEventCounter`. The polling interval defaults to 10 seconds and is configurable via `sheriff.oauth.metrics.collection.interval` (e.g., `2s` for integration testing).
 
 == Available Metrics
 
@@ -66,7 +66,7 @@ Metrics available at `/q/metrics`.
 sum(sheriff_oauth_validation_errors_total)
 
 # Error rate by category
-rate(sheriff_oauth_validation_errors_total[5m]) by (category)
+sum(rate(sheriff_oauth_validation_errors_total[5m])) by (category)
 
 # Signature verification failures
 sum(sheriff_oauth_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILED"})
@@ -75,7 +75,7 @@ sum(sheriff_oauth_validation_errors_total{event_type="SIGNATURE_VALIDATION_FAILE
 sum(sheriff_oauth_validation_success_total)
 
 # Success rate by type
-rate(sheriff_oauth_validation_success_total[5m]) by (event_type)
+sum(rate(sheriff_oauth_validation_success_total[5m])) by (event_type)
 ----
 
 === Alerting Examples

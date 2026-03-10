@@ -12,7 +12,7 @@ Performance testing using WRK with stress profile (10 threads, 150 connections) 
 
 * **JWT Validation (cache enabled, size 20)**: 23,800 ops/s (strong performance)
 * **Health Check**: 88,700 ops/s (excellent scaling)
-* **Target Achievement**: 48% of minimum target (50k ops/s)
+* **Target Achievement**: Exceeds minimum target (>10k ops/s) at 23.8k ops/s
 * **Error Rate**: 0% (no timeouts)
 
 == WRK Stress Profile Results
@@ -56,10 +56,10 @@ NOTE: Previous benchmarks (October 2025) included a separate cache-OFF run. The 
 === Resource Utilization
 
 * **CPU**: JWT (cache ON): 85.0% peak (79.7% avg) | Health: 72.8% peak (67.3% avg)
-* **Memory**: Heap peak 126.0MB (JWT) | GC overhead: 0%
+* **Memory**: Heap peak 126.0MB (JWT) | GC overhead: ~3.7% of wall-clock time (see link:Analysis-01.2026-JFR-Profiling.adoc#_garbage_collection_analysis[JFR GC analysis])
 * **Threads**: JWT: 135 peak (114 avg) | Health: 41 peak (35 avg)
 * **Cache**: 266,649 hits, 100% hit rate
-* **GC**: Zero overhead (native compilation)
+* **GC**: ~3.7% of wall-clock time (1,312 events in 60s, mostly 1-2ms pauses; see link:Analysis-01.2026-JFR-Profiling.adoc#_garbage_collection_analysis[JFR GC analysis])
 
 == Performance Analysis
 

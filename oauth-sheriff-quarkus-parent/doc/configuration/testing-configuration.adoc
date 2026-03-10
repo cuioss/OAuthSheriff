@@ -19,10 +19,10 @@ public class JwtTestProfile implements QuarkusTestProfile {
     @Override
     public Map<String, String> getConfigOverrides() {
         Map<String, String> config = new HashMap<>();
-        config.put("sheriff.oauth.issuers.default.url", "https://test.example.com/auth");
+        config.put("sheriff.oauth.issuers.default.issuer-identifier", "https://test.example.com/auth");
         config.put("sheriff.oauth.issuers.default.enabled", "true");
-        config.put("sheriff.oauth.issuers.default.public-key-location", "");
-        config.put("sheriff.oauth.parser.audience", "test-application");
+        config.put("sheriff.oauth.issuers.default.jwks.file-path", "classpath:test-jwks.json");
+        config.put("sheriff.oauth.issuers.default.expected-audience", "test-application");
         return config;
     }
 }
@@ -46,12 +46,12 @@ public class MultiIssuerTestProfile implements QuarkusTestProfile {
     @Override
     public Map<String, String> getConfigOverrides() {
         Map<String, String> config = new HashMap<>();
-        config.put("sheriff.oauth.issuers.primary.url", "https://primary-auth.example.com");
+        config.put("sheriff.oauth.issuers.primary.jwks.http.well-known-url", "https://primary-auth.example.com/.well-known/openid-configuration");
         config.put("sheriff.oauth.issuers.primary.enabled", "true");
-        config.put("sheriff.oauth.issuers.primary.audience", "primary-app");
-        config.put("sheriff.oauth.issuers.secondary.url", "https://secondary-auth.example.com");
+        config.put("sheriff.oauth.issuers.primary.expected-audience", "primary-app");
+        config.put("sheriff.oauth.issuers.secondary.jwks.http.well-known-url", "https://secondary-auth.example.com/.well-known/openid-configuration");
         config.put("sheriff.oauth.issuers.secondary.enabled", "true");
-        config.put("sheriff.oauth.issuers.secondary.audience", "secondary-app");
+        config.put("sheriff.oauth.issuers.secondary.expected-audience", "secondary-app");
         config.put("sheriff.oauth.parser.max-token-size", "16384");
         return config;
     }
@@ -208,9 +208,10 @@ void shouldRejectUnknownIssuer() {
 [source,properties]
 ----
 # Test-specific JWT configuration
-%test.sheriff.oauth.issuers.test.url=https://test-issuer.example.com
+%test.sheriff.oauth.issuers.test.issuer-identifier=https://test-issuer.example.com
 %test.sheriff.oauth.issuers.test.enabled=true
-%test.sheriff.oauth.issuers.test.audience=test-application
+%test.sheriff.oauth.issuers.test.expected-audience=test-application
+%test.sheriff.oauth.issuers.test.jwks.file-path=classpath:test-jwks.json
 
 # Relaxed validation for testing
 %test.sheriff.oauth.parser.max-token-size=32768

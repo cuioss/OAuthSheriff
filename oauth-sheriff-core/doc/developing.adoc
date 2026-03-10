@@ -37,12 +37,26 @@ metrics.ifPresent(stats -> {
 
 === MeasurementType
 
+Pipeline steps (in execution order):
+
 * `COMPLETE_VALIDATION` - End-to-end validation time
-* `TOKEN_PARSING` - JWT structure validation and decoding
-* `HEADER_VALIDATION` - Header claims validation
+* `TOKEN_FORMAT_CHECK` - Pre-pipeline string validation (empty/blank/size checks)
+* `TOKEN_PARSING` - Base64URL decoding and JSON structure parsing
+* `ISSUER_EXTRACTION` - Extract and validate issuer (iss) claim
+* `CACHE_LOOKUP` - Check cache before expensive operations (access tokens only)
+* `ISSUER_CONFIG_RESOLUTION` - Resolve issuer configuration
+* `HEADER_VALIDATION` - Header claims and algorithm validation
 * `SIGNATURE_VALIDATION` - Cryptographic verification (typically most expensive)
-* `CLAIMS_VALIDATION` - Token claims validation
-* `JWKS_OPERATIONS` - Key loading and caching operations
+* `TOKEN_BUILDING` - Build typed token object from validated JWT
+* `CLAIMS_VALIDATION` - Token claims validation (exp, nbf, aud, iss)
+* `CACHE_STORE` - Store validated token in cache (access tokens only)
+
+Cross-cutting concerns:
+
+* `JWKS_OPERATIONS` - Key loading and caching operations (within signature validation)
+* `RETRY_ATTEMPT` - Individual HTTP retry attempt timing
+* `RETRY_COMPLETE` - Complete retry cycle with all attempts and delays
+* `RETRY_DELAY` - Exponential backoff delay timing between retries
 
 === Design Principles
 
@@ -81,12 +95,19 @@ Built-in mappers: `JsonCollectionMapper` (JSON arrays/strings), `StringSplitterM
 
 === Pipeline Customization
 
-The validation pipeline consists of:
+The access token validation pipeline consists of:
 
-. `NonValidatingJwtParser` - Basic JWT parsing
-. `TokenHeaderValidator` - Header validation
-. `TokenSignatureValidator` - Signature verification
-. `TokenClaimValidator` - Claims validation
+. `TokenStringValidator` - Pre-pipeline format check (null, blank, size limits)
+. `NonValidatingJwtParser` - Base64URL decoding and JSON parsing
+. Issuer extraction - Extract issuer (iss) claim from decoded JWT
+. Cache lookup - Check access token cache (before expensive operations)
+. `IssuerConfigResolver` - Resolve issuer configuration
+. `TokenHeaderValidator` - Header and algorithm validation
+. `TokenSignatureValidator` - Cryptographic signature verification (most expensive)
+. `TokenBuilder` - Build typed `AccessTokenContent` object
+. `TokenClaimValidator` - Claims validation (exp, nbf, aud, iss)
+. `DpopProofValidator` - DPoP proof validation (if configured, RFC 9449)
+. Cache store - Store validated token for future lookups
 
 Each validator throws `TokenValidationException` with specific `EventType` on failure.
 

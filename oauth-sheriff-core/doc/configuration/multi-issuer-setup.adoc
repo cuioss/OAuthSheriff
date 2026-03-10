@@ -17,6 +17,7 @@ TokenValidator tokenValidator = TokenValidator.builder()
         .issuerIdentifier("https://keycloak.example.com/auth/realms/main")
         .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
             .jwksUrl("https://keycloak.example.com/auth/realms/main/protocol/openid-connect/certs")
+            .issuerIdentifier("https://keycloak.example.com/auth/realms/main")
             .build())
         .expectedAudience("my-app")
         .build())
@@ -24,6 +25,7 @@ TokenValidator tokenValidator = TokenValidator.builder()
         .issuerIdentifier("https://auth0.example.com/")
         .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
             .jwksUrl("https://auth0.example.com/.well-known/jwks.json")
+            .issuerIdentifier("https://auth0.example.com/")
             .build())
         .expectedAudience("my-app-auth0")
         .build())
@@ -52,6 +54,7 @@ TokenValidator tokenValidator = TokenValidator.builder()
         .issuerIdentifier("https://external.example.com")
         .httpJwksLoaderConfig(HttpJwksLoaderConfig.builder()
             .jwksUrl("https://external.example.com/.well-known/jwks.json")
+            .issuerIdentifier("https://external.example.com")
             .build())
         .build())
     .issuerConfig(IssuerConfig.builder()
@@ -68,7 +71,8 @@ TokenValidator tokenValidator = TokenValidator.builder()
 // Keycloak uses nested roles - use custom ClaimMapper
 ClaimMapper keycloakRolesMapper = (mapRepresentation, claimName) -> {
     // Custom logic to extract from realm_access/roles
-    return mapRepresentation.getClaimValue(claimName);
+    // Use getNestedMap() for nested structures, getValue() for direct access
+    return new JsonCollectionMapper().map(mapRepresentation, claimName);
 };
 
 TokenValidator tokenValidator = TokenValidator.builder()

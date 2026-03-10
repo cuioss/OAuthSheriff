@@ -98,7 +98,7 @@ native-image -O2 \
   YourApp
 ----
 
-NOTE: `--enable-all-security-services` was deprecated in GraalVM 24 and removed in GraalVM 25 -- all security services are now enabled by default. The flag is retained in project configurations for backward compatibility with GraalVM 23 and earlier.
+NOTE: `--enable-all-security-services` was deprecated in GraalVM 24 and removed in GraalVM 25 -- all security services are now enabled by default. This project does not use the flag; no backward compatibility configuration is needed.
 
 === Enterprise Edition (Oracle GraalVM)
 

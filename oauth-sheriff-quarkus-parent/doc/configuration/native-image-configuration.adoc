@@ -17,8 +17,7 @@ Native image configuration for the OAuth Sheriff Quarkus extension, including re
 ----
 # application.properties
 quarkus.native.container-build=true
-quarkus.native.additional-build-args=--enable-all-security-services
-quarkus.native.additional-build-args=--enable-url-protocols=https,http
+quarkus.native.additional-build-args=--enable-url-protocols=https,--enable-http,--enable-https,-O2
 quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key
 ----
 
@@ -31,7 +30,7 @@ The OAuth Sheriff Quarkus deployment automatically registers the following class
 * **Token Content**: `AccessTokenContent`, `IdTokenContent`, `RefreshTokenContent`, `ClaimValue`
 * **Security/Algorithm**: `SignatureAlgorithmPreferences`, `JwkAlgorithmPreferences`, `SecurityEventCounter`
 
-**Total Reflection Classes**: 4,734+ types registered automatically.
+**Total Reflection Classes**: 36 classes registered automatically across 5 build steps.
 
 === Resource Configuration
 
@@ -59,15 +58,14 @@ quarkus.native.native-image-xmx=8g
 ----
 quarkus.native.container-build=true
 quarkus.native.container-runtime-options=-m=4g
-quarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-25
+quarkus.native.builder-image=quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25
 ----
 
 === Security Configuration
 
 [source,properties]
 ----
-quarkus.native.additional-build-args=--enable-all-security-services
-quarkus.native.additional-build-args=--enable-url-protocols=https,http,file
+quarkus.native.additional-build-args=--enable-url-protocols=https,--enable-http,--enable-https
 ----
 
 == Runtime Configuration
@@ -111,7 +109,7 @@ quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key
 
 [source,properties]
 ----
-quarkus.native.additional-build-args=--enable-monitoring=jfr
+quarkus.native.monitoring=jfr
 quarkus.native.debug.enabled=false
 quarkus.native.enable-reports=true
 ----
@@ -123,19 +121,20 @@ quarkus.native.enable-reports=true
 [source,properties]
 ----
 quarkus.native.container-build=true
-quarkus.native.additional-build-args=-O2,--gc=serial,--enable-all-security-services,--enable-url-protocols=https,--enable-monitoring=jfr
+quarkus.native.additional-build-args=-O2,--gc=serial,--enable-url-protocols=https,--enable-http,--enable-https
+quarkus.native.monitoring=jfr
 quarkus.native.native-image-xmx=8g
 quarkus.native.container-runtime-options=-m=4g
 quarkus.native.resources.includes=**/*.p12,**/*.crt,**/*.key,**/*.json
 quarkus.native.enable-reports=true
-quarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-25
+quarkus.native.builder-image=quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-25
 ----
 
 === Microservice Configuration
 
 [source,properties]
 ----
-quarkus.native.additional-build-args=-O2,--gc=serial,--enable-security-services=crypto
+quarkus.native.additional-build-args=-O2,--gc=serial,--enable-url-protocols=https
 quarkus.native.native-image-xmx=4g
 quarkus.native.resources.includes=**/certificates/**
 quarkus.native.container-runtime-options=-m=64m
@@ -169,7 +168,7 @@ quarkus.native.container-runtime-options=-m=64m
 
 * Native image size: ~65MB (expected for JWT validation)
 * Startup time: <1 second
-* Reflection classes: 4,734+ registered
+* Reflection classes: 36 registered
 * Security services: All enabled for JWT support
 
 [source,bash]

@@ -139,7 +139,7 @@ Expected token structure after configuration:
 
 *Solution:* Always set `"full.path": "false"` in your group membership mapper:
 
-[source,json]
+[source,jsonc]
 ----
 {
   "name": "groups",
@@ -154,7 +154,7 @@ Expected token structure after configuration:
 ----
 
 **Token comparison:**
-[source,json]
+[source,jsonc]
 ----
 // With "full.path": "true" (default) - WRONG
 {
@@ -202,7 +202,7 @@ This automatically maps:
 
 Benefits:
 
-- Global CDI-based registration via the `DiscoverableClaimMapper` interface (Service Provider Interface)
+- Global CDI-based registration via the `DiscoverableClaimMapper` CDI interface
 - No Keycloak realm modification needed
 - Works with standard Keycloak token structure
 - Custom mappers can be added by implementing `DiscoverableClaimMapper` as CDI beans

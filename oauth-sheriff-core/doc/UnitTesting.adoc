@@ -20,7 +20,9 @@ See xref:../README.adoc#test-artifact[Test Artifact Dependencies] in the main mo
 === Contents
 
 * `de.cuioss.sheriff.oauth.core.test` - Core test utilities
+* `de.cuioss.sheriff.oauth.core.test.dispatcher` - MockWebServer dispatchers (`WellKnownDispatcher`, `JwksResolveDispatcher`)
 * `de.cuioss.sheriff.oauth.core.test.generator` - Token and claim generators
+* `de.cuioss.sheriff.oauth.core.test.junit` - JUnit 5 extensions and annotations (`@TestTokenSource`)
 
 == Key Test Utilities
 
@@ -169,52 +171,47 @@ The `WellKnownDispatcher` utility simulates an OpenID Provider's `/.well-known/o
 [source,java]
 ----
 @EnableMockWebServer
-@ModuleDispatcher
 class MyServiceUsingWellKnownTest {
 
     @Getter
-    private static final WellKnownDispatcher wellKnownDispatcher = new WellKnownDispatcher();
-
-    public ModuleDispatcherElement getModuleDispatcher() {
-        return wellKnownDispatcher;
-    }
+    private final WellKnownDispatcher moduleDispatcher = new WellKnownDispatcher();
 
     @BeforeEach
-    void setUp(URIBuilder uriBuilder) {
-        wellKnownDispatcher.returnDefault();
-        wellKnownDispatcher.setCallCounter(0);
+    void setUp() {
+        moduleDispatcher.returnDefault();
+        moduleDispatcher.setCallCounter(0);
     }
 
     @Test
     void testSuccessfulOidcDiscovery(URIBuilder uriBuilder) throws Exception {
-        URL wellKnownUrl = URI.create(uriBuilder
-                .addPathSegment("/.well-known/openid-configuration")
-                .buildAsString()).toURL();
-
-        WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
-            .wellKnownUrl(wellKnownUrl.toString())
-            .parserConfig(ParserConfig.builder().build())
-            .build();
-        HttpWellKnownResolver resolver = new HttpWellKnownResolver(wellKnownConfig);
+        moduleDispatcher.returnDefault();
 
         String baseUrl = uriBuilder.buildAsString();
+        String wellKnownUrl = uriBuilder.addPathSegment(".well-known")
+                .addPathSegment("openid-configuration").buildAsString();
+
+        WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
+            .wellKnownUrl(wellKnownUrl)
+            .retryConfig(RetryConfig.builder().maxAttempts(1).build())
+            .build();
+        HttpWellKnownResolver resolver = wellKnownConfig.createResolver();
+
         assertEquals(baseUrl, resolver.getIssuer().orElseThrow());
-        wellKnownDispatcher.assertCallsAnswered(1);
+        moduleDispatcher.assertCallsAnswered(1);
     }
 
     @Test
     void testOidcDiscoveryError(URIBuilder uriBuilder) throws Exception {
-        wellKnownDispatcher.returnError();
+        moduleDispatcher.returnError();
 
-        URL wellKnownUrl = URI.create(uriBuilder
-                .addPathSegment("/.well-known/openid-configuration")
-                .buildAsString()).toURL();
+        String wellKnownUrl = uriBuilder.addPathSegment(".well-known")
+                .addPathSegment("openid-configuration").buildAsString();
 
         WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
-            .wellKnownUrl(wellKnownUrl.toString())
-            .parserConfig(ParserConfig.builder().build())
+            .wellKnownUrl(wellKnownUrl)
+            .retryConfig(RetryConfig.builder().maxAttempts(1).build())
             .build();
-        HttpWellKnownResolver resolver = new HttpWellKnownResolver(wellKnownConfig);
+        HttpWellKnownResolver resolver = wellKnownConfig.createResolver();
 
         // getIssuer() returns empty Optional when discovery fails
         assertTrue(resolver.getIssuer().isEmpty());

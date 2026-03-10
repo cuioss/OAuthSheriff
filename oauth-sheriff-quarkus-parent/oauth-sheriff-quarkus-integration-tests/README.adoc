@@ -85,7 +85,7 @@ DOCKERFILE=Dockerfile.native.jfr DOCKER_IMAGE_TAG=jfr docker compose build oauth
 ./mvnw clean verify -Pjfr -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
 
 # Extract JFR recordings (automatic via Maven)
-ls -la -pl oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/jfr-results/
+ls -la oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/jfr-results/
 ----
 
 === Image Comparison
@@ -202,15 +202,15 @@ The integration tests use **two Keycloak realms** to validate different JWT conf
 ==== Benchmark Realm (Well-Known Discovery)
 
 * **Realm**: `benchmark`
-* **Client**: `benchmark-client` (public client)
+* **Client**: `benchmark-client` / `benchmark-secret` (confidential client)
 * **User**: `benchmark-user` / `benchmark-password`
 * **Configuration**: Uses well-known discovery endpoint
-* **Purpose**: Tests automatic JWKS resolution via `/.well-known/openid_configuration`
+* **Purpose**: Tests automatic JWKS resolution via `/.well-known/openid-configuration`
 
 [source,properties]
 ----
-sheriff.oauth.issuers.keycloak.issuer-identifier=http://localhost:1080/realms/benchmark
-sheriff.oauth.issuers.keycloak.jwks.http.well-known-url=http://keycloak:8080/realms/benchmark/.well-known/openid-configuration
+sheriff.oauth.issuers.keycloak.issuer-identifier=https://keycloak:8443/realms/benchmark
+sheriff.oauth.issuers.keycloak.jwks.http.well-known-url=https://keycloak:8443/realms/benchmark/.well-known/openid-configuration
 ----
 
 ==== Integration Realm (Direct JWKS)
@@ -223,8 +223,8 @@ sheriff.oauth.issuers.keycloak.jwks.http.well-known-url=http://keycloak:8080/rea
 
 [source,properties]
 ----
-sheriff.oauth.issuers.integration.issuer-identifier=http://localhost:1080/realms/integration
-sheriff.oauth.issuers.integration.jwks.http.url=http://keycloak:8080/realms/integration/protocol/openid-connect/certs
+sheriff.oauth.issuers.integration.issuer-identifier=https://keycloak:8443/realms/integration
+sheriff.oauth.issuers.integration.jwks.http.url=https://keycloak:8443/realms/integration/protocol/openid-connect/certs
 ----
 
 Both realms are automatically imported into Keycloak during container startup via the `docker-compose.yml` configuration.
@@ -265,9 +265,9 @@ sheriff.oauth.issuers.integration.jwks.http.url=https://keycloak:8443/realms/int
 
 Self-signed certificates via `generate-certificates.sh`:
 
-* Keystore/Truststore: `*.p12` (password: `integration-test`)
+* Keystore/Truststore: `*.p12` (password: `localhost-trust`)
 * Subject: `CN=localhost`
-* SAN: `dns:localhost,ip:127.0.0.1`
+* SAN: `dns:localhost,dns:keycloak,ip:127.0.0.1,ip:0.0.0.0`
 
 === Key Properties
 
@@ -364,7 +364,7 @@ docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 **Keycloak Access Logging**: The Keycloak container includes HTTP access logging to diagnose JWKS endpoint issues:
 
-* **JWKS endpoint requests**: `/.well-known/openid_configuration`, `/protocol/openid-connect/certs`
+* **JWKS endpoint requests**: `/.well-known/openid-configuration`, `/protocol/openid-connect/certs`
 * **Container-to-container communication**: Network connectivity between JWT app and Keycloak
 * **SSL/TLS handshake diagnostics**: Certificate validation success/failure
 * **Request timing**: Latency and timeout analysis for JWKS loading

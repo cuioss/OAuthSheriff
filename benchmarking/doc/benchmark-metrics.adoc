@@ -125,11 +125,11 @@ NOTE: External port mapping is `10443→8443`. Prometheus uses internal service 
 
 |`sheriff_oauth_bearer_token_validation_seconds_count`
 |JWT validation count
-|Histogram
+|Counter (histogram-derived)
 
 |`sheriff_oauth_bearer_token_validation_seconds_sum`
 |Total JWT validation time in seconds
-|Histogram
+|Counter (histogram-derived)
 |===
 
 == Output Format
@@ -224,8 +224,8 @@ Location: `benchmarking/benchmarking-common/src/main/java/de/cuioss/benchmarking
 
 === Integration
 
-* **WrkResultPostProcessor**: WRK benchmark integration
-* **OutputDirectoryStructure**: Directory structure management
+* **WrkResultPostProcessor**: WRK benchmark integration (in `benchmark-integration-wrk` module)
+* **OutputDirectoryStructure**: Directory structure management (in `benchmarking-common/output/` package)
 
 == CPU Percentage Interpretation
 

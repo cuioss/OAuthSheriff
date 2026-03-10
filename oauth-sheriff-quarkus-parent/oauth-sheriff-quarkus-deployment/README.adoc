@@ -75,7 +75,7 @@ Access DevUI components during development:
 [source, bash]
 ----
 ./mvnw quarkus:dev
-# Navigate to http://localhost:8080/q/dev/
+# Navigate to http://localhost:8080/q/dev-ui/
 # Find "OAuth Sheriff" section for JWT validation tools
 ----
 
@@ -89,7 +89,7 @@ Automatically registers these classes for reflection:
 **Classes with Methods and Constructors:**
 
 * `de.cuioss.sheriff.oauth.core.TokenValidator` - Main validation component
-* `de.cuioss.sheriff.oauth.quarkus.config.IssuerConfigResolver` - Configuration resolver
+* `de.cuioss.sheriff.oauth.core.IssuerConfigResolver` - Configuration resolver
 * `de.cuioss.sheriff.oauth.core.security.SecurityEventCounter` - Security metrics
 * `io.micrometer.core.instrument.MeterRegistry` - Metrics registry
 

@@ -36,16 +36,16 @@ Performance benchmarking for JWT token validation core library using JMH.
 ----
 -Djmh.iterations=5           # Measurement iterations (default: 5)
 -Djmh.warmupIterations=3     # Warmup iterations (default: 3)
--Djmh.forks=2               # JVM forks (default: 2)
--Djmh.threads=4             # Concurrent threads (default: 4)
--Djmh.time=10s              # Time per iteration
--Djmh.includes=*Benchmark   # Benchmark pattern filter
+-Djmh.forks=1               # JVM forks (default: 1)
+-Djmh.threads=100           # Concurrent threads (default: 100)
+-Djmh.time=4s               # Time per iteration (default: 4s)
+-Djmh.include=*Benchmark    # Benchmark pattern filter
 ----
 
 === Profiles
 
 * `benchmark` - Runs the benchmarks with default settings
-* `benchmark,quick` - Fast validation with reduced iterations (2), forks (1), and time (5s)
+* `benchmark,quick` - Fast validation with reduced iterations (2), warmup iterations (1), time (5s), and warmup time (2s)
 * `benchmark-jfr` - Runs benchmarks with Java Flight Recorder profiling
 
 === Running Specific Benchmarks
@@ -54,11 +54,11 @@ Performance benchmarking for JWT token validation core library using JMH.
 ----
 # Single benchmark
 ./mvnw clean verify -pl benchmarking/benchmark-core -Pbenchmark \
-  -Djmh.includes=TokenValidatorBenchmark
+  -Djmh.include=TokenValidatorBenchmark
 
 # Multiple benchmarks
 ./mvnw clean verify -pl benchmarking/benchmark-core -Pbenchmark \
-  -Djmh.includes="TokenValidator|JwksClient"
+  -Djmh.include="TokenValidator|JwksClient"
 ----
 
 == Benchmarks
@@ -102,9 +102,9 @@ Score = (Throughput × 0.57) + (Latency_Inverted × 0.40) + (Error_Resilience ×
 
 [source,bash]
 ----
-# Serve results locally with web UI
+# Serve results locally with web UI (note: serve-reports.sh serves benchmark-library results)
 cd benchmarking/scripts
-./serve-reports.sh library  # Opens http://localhost:8080
+./serve-reports.sh library  # Opens http://localhost:8080 (serves benchmark-library, not benchmark-core)
 
 # Or analyze JSON directly
 jq '.[] | {benchmark: .benchmark, score: .primaryMetric.score, unit: .primaryMetric.scoreUnit}' \
@@ -118,10 +118,9 @@ jq '.overallScore, .grade' target/benchmark-results/benchmark-summary.json
 
 [source,bash]
 ----
-# Analyze variance
-java -cp "target/classes:target/dependency/*" \
-  de.cuioss.benchmarking.common.jfr.JfrVarianceAnalyzer \
-  target/benchmark-results/jfr-benchmark.jfr
+# Analyze variance (uses analyze-jfr Maven profile)
+./mvnw verify -pl benchmarking/benchmark-core -Panalyze-jfr \
+  -Djfr.file=target/benchmark-results/jfr-benchmark.jfr
 
 # View hot methods
 jfr print --events jdk.ExecutionSample \

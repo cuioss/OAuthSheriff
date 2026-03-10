@@ -15,7 +15,6 @@ All messages follow the format: `Benchmarking-[identifier]: [message]`
 * 001-099: INFO messages
 * 100-199: WARN messages
 * 200-299: ERROR messages
-* 500-599: DEBUG messages
 
 == INFO Level Messages (001-099)
 
@@ -24,6 +23,7 @@ All messages follow the format: `Benchmarking-[identifier]: [message]`
 | ID | Constant | Message Template
 
 | 001 | BENCHMARK_RUNNER_STARTING | Starting CUI benchmark runner...
+| 002 | DETAILED_PAGE_GENERATED | Generated detailed page: %s
 | 003 | BENCHMARKS_COMPLETED | Benchmarks completed successfully with %s results
 | 004 | ARTIFACTS_GENERATED | All artifacts generated successfully
 | 005 | PROCESSING_RESULTS | Processing %s benchmark results to generate artifacts
@@ -51,17 +51,50 @@ All messages follow the format: `Benchmarking-[identifier]: [message]`
 | 027 | JWT_BENCHMARKS_STARTING | JWT validation micro benchmarks starting - Key cache initialized
 | 028 | KEY_PREGENERATION_STARTING | BenchmarkKeyCache: Starting RSA key pre-generation...
 | 029 | KEY_PREGENERATION_COMPLETED | BenchmarkKeyCache: Pre-generated keys for %s issuer configurations in %s ms
-| 030 | KEY_CACHE_INITIALIZED | BenchmarkKeyCache: Initialized with %s configurations
-| 031 | QUARKUS_BENCHMARKS_STARTING | Quarkus JWT integration benchmarks starting - Service: %s, Keycloak: %s
-| 032 | PROCESSING_RESULTS_STARTING | QuarkusIntegrationRunner.processResults() - Starting with %s results
-| 033 | CALLING_PROCESS_QUARKUS_METRICS | QuarkusIntegrationRunner.processResults() - Calling processQuarkusMetrics()
-| 034 | PROCESS_QUARKUS_METRICS_COMPLETED | QuarkusIntegrationRunner.processResults() - Completed processQuarkusMetrics()
-| 035 | PROCESS_QUARKUS_METRICS_ENTRY | QuarkusIntegrationRunner.processQuarkusMetrics() - ENTRY POINT
-| 036 | PROCESSING_METRICS_FROM_URL | QuarkusIntegrationRunner.processQuarkusMetrics() - Processing metrics from %s to %s
-| 037 | CREATING_METRICS_FETCHER | QuarkusIntegrationRunner.processQuarkusMetrics() - Creating QuarkusMetricsFetcher
-| 038 | CREATING_METRICS_EXPORTER | QuarkusIntegrationRunner.processQuarkusMetrics() - Creating SimpleMetricsExporter
-| 039 | CALLING_EXPORT_JWT_METRICS | QuarkusIntegrationRunner.processQuarkusMetrics() - Calling exporter.exportJwtValidationMetrics()
-| 040 | EXPORT_JWT_METRICS_COMPLETED | QuarkusIntegrationRunner.processQuarkusMetrics() - Completed exporter.exportJwtValidationMetrics()
+| 030 | UNIFIED_REPORT_GENERATION_START | Starting unified report generation
+| 031 | UNIFIED_REPORT_GENERATION_COMPLETE | Unified report generation completed
+| 032 | GENERATING_DATA_FILE | Generating benchmark data JSON file
+| 033 | DATA_FILE_GENERATED | Generated data file: %s
+| 034 | GENERATING_HTML_FILES | Generating HTML report files
+| 035 | HTML_FILES_GENERATED | Generated HTML files in: %s
+| 036 | GENERATING_BADGES_UNIFIED | Generating performance badges
+| 037 | BADGES_GENERATED | Generated badges in: %s
+| 038 | GENERATING_API_ENDPOINTS | Generating API endpoint files
+| 039 | API_ENDPOINTS_GENERATED | Generated API endpoints in: %s
+| 040 | COPYING_PROMETHEUS_METRICS | Copying Prometheus metrics to deployment directory
+| 041 | PROMETHEUS_METRICS_COPIED | Copied Prometheus metrics to: %s
+| 042 | COPYING_SUPPORT_FILES | Copying support files (CSS, JS)
+| 043 | SUPPORT_FILES_COPIED | Copied support files to: %s
+| 044 | KEY_CACHE_INITIALIZED | BenchmarkKeyCache: Initialized with %s configurations
+| 045 | QUARKUS_BENCHMARKS_STARTING | Quarkus JWT integration benchmarks starting - Service: %s, Keycloak: %s
+| 046 | PROCESSING_RESULTS_STARTING | QuarkusIntegrationRunner.processResults() - Starting with %s results
+| 047 | RESULTS_AVAILABLE | Results available at: %s
+| 048 | WRK_PROCESSING_START | Start processing WRK results
+| 049 | JFR_BENCHMARKS_STARTING | JFR-instrumented benchmarks starting - Key cache initialized
+| 050 | JFR_RECORDING_PATH | JFR recording will be saved to: %s
+| 051 | JFR_BENCHMARK_COMPLETED | JFR benchmark completed. To analyze variance:
+| 052 | JFR_VARIANCE_COMMAND | java -cp "target/classes:target/dependency/*" de.cuioss.sheriff.oauth.core.benchmark.jfr.JfrVarianceAnalyzer %s
+| 053 | ITERATION_WINDOWS_PARSED | Parsed %s iteration windows from %s
+| 054 | USING_PRECISE_TIMESTAMPS | Using precise timestamps for benchmark '%s': %s to %s
+| 055 | BENCHMARK_RUNNER_STARTING_WITH_DETAILS | Starting CUI benchmark runner - Type: %s, Output: %s
+| 056 | BENCHMARKS_COMPLETED_WITH_ARTIFACTS | Benchmarks completed successfully with %s results, artifacts in %s
+| 057 | PROMETHEUS_ENABLED | Prometheus metrics collection enabled - URL: %s
+| 058 | PROMETHEUS_DISABLED | Prometheus metrics collection disabled - Prometheus not available at: %s
+| 059 | COLLECTING_PROMETHEUS_METRICS | Collecting real-time metrics from Prometheus at: %s
+| 060 | COLLECTING_WRK_PROMETHEUS_METRICS | Collecting real-time metrics for WRK benchmark '%s' from Prometheus
+| 061 | PROMETHEUS_METRICS_SAVED | Prometheus metrics saved to: %s/%s%s
+| 062 | USING_SESSION_TIMESTAMPS | Using session timestamps for benchmark '%s': %s to %s
+| 063 | COLLECTING_BENCHMARK_METRICS | Collecting Prometheus metrics for benchmark '%s'
+| 064 | COLLECTING_REALTIME_METRICS | Collecting real-time metrics for benchmark '%s' from %s to %s
+| 065 | REALTIME_METRICS_EXPORTED | Exported real-time metrics for '%s' to: %s
+| 066 | HTTP_CLIENT_CREATED | Created Java HttpClient with version: %s, timeout: %ss
+| 067 | USING_HTTP_1_1 | Using HTTP/1.1 only (configured via -D%s=http1)
+| 068 | USING_HTTP_2 | Using HTTP/2 (default or -D%s=http2)
+| 069 | PROMETHEUS_CONNECTIVITY_ADVICE | Ensure Prometheus is running and accessible. You can verify with: curl %s/api/v1/query?query=up
+| 070 | USING_EXTERNAL_HISTORY_DIR | Using external history directory: %s
+| 071 | HISTORY_DIR_NOT_FOUND | History directory not found: %s
+| 072 | ARCHIVED_BENCHMARK_DATA | Archived benchmark data to %s
+| 073 | REMOVED_HISTORY_FILE | Removed old history file: %s
 |===
 
 == WARN Level Messages (100-199)
@@ -75,6 +108,27 @@ All messages follow the format: `Benchmarking-[identifier]: [message]`
 | 102 | FAILED_COPY_DATA | Failed to copy data file: %s
 | 103 | ISSUE_DURING_INDEX_GENERATION | Issue during %s
 | 104 | KEY_CACHE_MISS | BenchmarkKeyCache miss for count=%s. Generating keys during benchmark!
+| 105 | INVALID_METRICS_TYPE | Invalid metrics data type: expected TokenValidatorMonitor, got %s
+| 106 | TIMESTAMP_FILE_NOT_EXIST | Timestamp file does not exist: %s
+| 107 | FAILED_PARSE_TIMESTAMP_LINE | Failed to parse timestamp line: %s
+| 108 | FAILED_PARSE_TIMESTAMP_FILE | Failed to parse timestamp file, using session-wide timestamps: %s
+| 109 | NO_TIMESTAMP_DATA | No timestamp data found for benchmark '%s', using session timestamps
+| 110 | NO_MEASUREMENT_WINDOWS | No measurement windows found for benchmark '%s', using session timestamps
+| 111 | FAILED_QUERY_METRIC | Failed to query metric '%s': %s
+| 112 | OVERWRITING_START_TIME | Overwriting existing start time for benchmark: %s
+| 113 | INVALID_TIMESTAMPS | Invalid timestamps for benchmark '%s': start=%s, end=%s
+| 114 | FAILED_COLLECT_PROMETHEUS | Failed to collect Prometheus metrics: %s
+| 115 | SKIPPING_PROMETHEUS_COLLECTION | Skipping Prometheus metrics collection - Prometheus not available at URL: %s
+| 116 | MISSING_TIMESTAMPS_FOR_COLLECTION | Cannot collect metrics for benchmark '%s' - missing timestamps
+| 117 | NO_VALID_TIMESTAMPS | No valid timestamps found for benchmark '%s', skipping metrics collection. Available timestamps: %s
+| 118 | FAILED_COLLECT_BENCHMARK_METRICS | Failed to collect metrics for benchmark '%s': %s
+| 119 | FAILED_CREATE_TARGET_DIR | Failed to create target directory: %s
+| 120 | FAILED_READ_METRICS_FILE | Failed to read existing metrics file %s: %s
+| 121 | FAILED_DELETE_CORRUPTED_FILE | Failed to delete corrupted metrics file
+| 122 | UNKNOWN_RESULT_FORMAT | Unknown result format: %s, defaulting to JSON
+| 123 | UNKNOWN_TIME_UNIT | Unknown time unit '%s' in '%s', defaulting to seconds
+| 124 | TOKEN_POOL_EMPTY | Token pool is empty, fetching single token
+| 125 | ISSUE_PARSING_HISTORY_FILE | Issue during parsing history file: %s
 |===
 
 == ERROR Level Messages (200-299)
@@ -84,20 +138,24 @@ All messages follow the format: `Benchmarking-[identifier]: [message]`
 | ID | Constant | Message Template
 
 | 200 | EXPORT_FAILED | Failed to export benchmark metrics
-|===
-
-== DEBUG Level Messages (500-599)
-
-[cols="1,1,4"]
-|===
-| ID | Constant | Message Template
-
-| 500 | COPYING_HTML_FILES | Copying HTML files
-| 501 | CREATING_API_ENDPOINTS | Creating API endpoints
-| 502 | API_ENDPOINT_CREATED | Created API endpoint: %s
-| 503 | COPYING_BADGE_FILES | Copying badge files
-| 504 | COPYING_DATA_FILES | Copying data files
-| 505 | GENERATING_ADDITIONAL_PAGES | Generating additional pages
+| 201 | WRK_PROCESSOR_FAILED | Failed to execute WRK result processor
+| 202 | WRK_USAGE_ERROR | Usage: WrkResultPostProcessor <input-dir> [output-dir]
+| 203 | NO_WRK_FILES | No WRK output files found in: %s
+| 204 | WRK_DIR_NOT_EXIST | WRK output directory does not exist: %s
+| 205 | NO_BENCHMARK_DATA | No benchmark data extracted from WRK output files
+| 206 | NO_PROMETHEUS_METADATA | Cannot collect Prometheus metrics: no benchmark metadata available
+| 207 | NO_METADATA_FOR_BENCHMARK | No metadata found for benchmark: %s
+| 208 | FAILED_COPY_PROMETHEUS | Failed to copy Prometheus metrics file: %s
+| 209 | FAILED_COPY_PROMETHEUS_DIR | Failed to copy Prometheus metrics to deployment directory
+| 210 | MISSING_TIMESTAMPS | Missing start or end timestamp in result file: %s
+| 211 | FAILED_PARSE_METADATA | Failed to parse metadata from %s: %s
+| 212 | INCOMPLETE_METADATA | Incomplete metadata in file %s (name=%s, start=%s, end=%s)
+| 213 | FAILED_COLLECT_PROMETHEUS_BENCHMARK | Failed to collect Prometheus metrics for benchmark '%s' from URL: %s
+| 214 | PROMETHEUS_CONNECTIVITY_FAILED | Prometheus connectivity check failed at URL: %s - Error: %s (%s)
+| 215 | FAILED_COLLECT_REALTIME_PROMETHEUS | Failed to collect Prometheus metrics for benchmark '%s': %s
+| 216 | FAILED_FETCH_TOKEN | Failed to fetch token. Status: %s, Body: %s
+| 217 | FAILED_PARSE_WRK_FILE | Failed to parse WRK file: %s
+| 218 | JFR_VARIANCE_USAGE | Usage: JfrVarianceAnalyzer <path-to-jfr-file>
 |===
 
 == Usage
@@ -118,7 +176,6 @@ LOGGER.error(e, ERROR.EXPORT_FAILED.format());
 
 == Notes
 
-* DEBUG level messages do not use LogRecord - they use direct logging
 * Exception parameters come first in error logging calls
 * All parameter substitution uses '%s' format
 * The benchmarking library does not require LogAsserts testing coverage

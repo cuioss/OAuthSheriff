@@ -77,17 +77,16 @@ class MyQuarkusTest {
 
 === WeldJunit5
 
+The `weld-junit5` dependency is available for CDI-based unit testing. Tests use `@EnableTestLogger` for log verification and standard JUnit 5 patterns:
+
 [source,java]
 ----
 @EnableTestLogger
-@EnableAutoWeld
 class MyCdiTest {
-    @Inject
-    MyService service;
+    // Use direct instantiation or manual CDI setup with weld-junit5
+    // No @EnableAutoWeld - this project uses weld-junit5, not weld-junit5-auto
 }
 ----
-
-`@EnableAutoWeld` automatically discovers and registers beans based on CDI discovery rules, simplifying test setup compared to explicit `WeldInitiator` configuration.
 
 == Framework Selection
 
