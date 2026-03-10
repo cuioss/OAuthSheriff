@@ -298,7 +298,7 @@ ReportConfiguration.builder()
     .build();
 ----
 
-Note: `BenchmarkConfiguration` itself is a record, not a builder. Builder pattern used for `ReportConfiguration`.
+Note: `BenchmarkConfiguration` is a record with a nested `Builder` class. `ReportConfiguration` also uses the builder pattern.
 
 === Factory Pattern
 

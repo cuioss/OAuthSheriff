@@ -77,7 +77,7 @@ private BearerTokenResult tokenWithAllRequirements;
 [source,java]
 ----
 @Path("/api")
-@ApplicationScoped
+@RequestScoped
 public class MyEndpoint {
 
     @Inject

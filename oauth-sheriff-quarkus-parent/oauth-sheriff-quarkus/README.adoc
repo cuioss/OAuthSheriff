@@ -11,7 +11,7 @@ Runtime module for Quarkus integration providing JWT token validation with CDI i
 
 == Maven Coordinates
 
-For Maven dependency information, see xref:../README.adoc#maven-coordinates[Maven Coordinates] in the parent module documentation.
+For Maven dependency information, see xref:../README.adoc#_maven_coordinates[Maven Coordinates] in the parent module documentation.
 
 == Core Concepts
 
@@ -92,12 +92,11 @@ For comprehensive metrics configuration, Prometheus queries, alerting examples, 
 === Runtime Services
 
 ==== OAuthSheriffRecorder
-Quarkus build-time recorder for runtime initialization:
+Quarkus recorder placeholder for future runtime initialization:
 
 * link:src/main/java/de/cuioss/sheriff/oauth/quarkus/runtime/OAuthSheriffRecorder.java[OAuthSheriffRecorder]
-* Handles runtime configuration setup
-* Manages bean registration
-* Coordinates with deployment module
+* Currently empty — all components are managed by CDI
+* Available for future runtime initialization needs called from the deployment processor
 
 ==== OAuthSheriffDevUIRuntimeService
 Runtime service for DevUI integration:

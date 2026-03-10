@@ -117,7 +117,7 @@ target/benchmark-results/
 
 === Badge Types
 
-* **Performance Score** - Weighted composite score (0-100)
+* **Performance Score** - Weighted composite score (uncapped; higher is better)
 * **Trend** - Up/down/stable indicator with percentage change
 * **Last Run** - Timestamp of most recent benchmark
 * **WRK Performance** - WRK load testing specific score

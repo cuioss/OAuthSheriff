@@ -11,7 +11,7 @@ Deployment module for Quarkus integration providing build-time processing and De
 
 == Maven Coordinates
 
-For Maven dependency information, see xref:../README.adoc#maven-coordinates[Maven Coordinates] in the parent module documentation.
+For Maven dependency information, see xref:../README.adoc#_maven_coordinates[Maven Coordinates] in the parent module documentation.
 
 == Core Concepts
 
@@ -84,7 +84,7 @@ Access DevUI components during development:
 The deployment module automatically configures build-time settings. No additional configuration is required for basic usage.
 
 === Reflection Configuration
-Automatically registers these classes for reflection:
+Automatically registers classes for reflection across 5 build steps (36 classes total). Key classes include:
 
 **Classes with Methods and Constructors:**
 

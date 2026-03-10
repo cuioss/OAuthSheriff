@@ -42,7 +42,7 @@ The major changes in https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1
 
 OAuthSheriff already satisfies the OAuth 2.1 resource server requirements:
 
-* **Scope enforcement** - `scope` is mandatory for ACCESS_TOKEN type
+* **Scope enforcement** - `scope` claim accessible via `AccessTokenContent.getScopes()` for application-level validation; enforced declaratively via Quarkus `@BearerAuth`
 * **Audience validation** - Supported via `expected-audience` configuration; mandatory for ID tokens
 * **Token expiration check** - `exp` mandatory, with configurable clock skew tolerance
 * **Algorithm security** - Whitelisted RS/ES/PS/EdDSA families only; HMAC and "none" rejected per https://datatracker.ietf.org/doc/html/rfc8725[RFC 8725]

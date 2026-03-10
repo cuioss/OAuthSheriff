@@ -114,7 +114,7 @@ quarkus.native.additional-build-args=-O2,--enable-monitoring=jfr,heapdump
 
 [source,bash]
 ----
-# Build oauth-sheriff-core first
+# Build oauth-sheriff-core first (run from repository root)
 ./mvnw clean install -pl oauth-sheriff-core
 
 # Production build

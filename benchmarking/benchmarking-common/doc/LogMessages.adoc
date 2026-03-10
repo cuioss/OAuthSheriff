@@ -15,6 +15,7 @@ All messages follow the format: `Benchmarking-[identifier]: [message]`
 * 001-099: INFO messages
 * 100-199: WARN messages
 * 200-299: ERROR messages
+* 500-599: DEBUG messages
 
 == INFO Level Messages (001-099)
 

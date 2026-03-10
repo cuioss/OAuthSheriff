@@ -90,11 +90,10 @@ Results are generated in `target/benchmark-results/`:
 
 Composite metric combining:
 
-* **Throughput (57%)** - Operations per second
-* **Latency (40%)** - Response time (inverted)
-* **Error Resilience (3%)** - Error handling efficiency
+* **Throughput (50%)** - Operations per second normalized by 100
+* **Latency (50%)** - Response time (inverted)
 
-Score = (Throughput × 0.57) + (Latency_Inverted × 0.40) + (Error_Resilience × 0.03)
+Score = (Throughput / 100 × 0.5) + (100 / Latency_ms × 0.5)
 
 == Analysis
 
@@ -102,9 +101,9 @@ Score = (Throughput × 0.57) + (Latency_Inverted × 0.40) + (Error_Resilience ×
 
 [source,bash]
 ----
-# Serve results locally with web UI (note: serve-reports.sh serves benchmark-library results)
+# Serve results locally with web UI
 cd benchmarking/scripts
-./serve-reports.sh library  # Opens http://localhost:8080 (serves benchmark-library, not benchmark-core)
+./serve-reports.sh library  # Opens http://localhost:8080
 
 # Or analyze JSON directly
 jq '.[] | {benchmark: .benchmark, score: .primaryMetric.score, unit: .primaryMetric.scoreUnit}' \

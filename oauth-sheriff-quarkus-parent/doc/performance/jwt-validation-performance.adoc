@@ -114,7 +114,7 @@ No urgent algorithm migration required. Algorithm choice should be driven by sta
 cd oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
 ../../mvnw clean verify -Pintegration-tests
 
-# JMH microbenchmarks
+# JMH microbenchmarks (run from repository root)
 cd benchmarking/benchmark-core
 ../../mvnw clean verify -Pbenchmark
 

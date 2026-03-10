@@ -51,7 +51,7 @@ The well-known endpoint returns a JSON document with issuer metadata:
 WellKnownConfig wellKnownConfig = WellKnownConfig.builder()
     .wellKnownUrl(wellKnownUrl.toString())
     .parserConfig(ParserConfig.builder()
-        .maxPayloadSize(4096)  // Limits each decoded JWT part (header, payload)
+        .maxPayloadSize(4096)  // Limits parsed JSON payload size
         .build())
     .build();
 
