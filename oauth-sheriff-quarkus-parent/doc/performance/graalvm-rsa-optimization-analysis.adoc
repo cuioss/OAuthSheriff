@@ -39,7 +39,7 @@ NOTE: Low CPU% does not mean low wall-clock cost. The ablation study measures JW
 
 * **No JIT Compilation**: Static AOT compilation
 * **Predictable Performance**: No warmup period, consistent latency
-* BigInteger operations perform well; default JDK RSA provider achieves 68µs
+* Default JDK RSA provider achieves 68µs in JMH isolation; under concurrency (50 connections) the ablation study measures 1,060µs for JWT validation — see link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc#_root_cause_jwt_validation_under_concurrency[root cause analysis]
 
 === GraalVM 25 / Mandrel jdk-25 Improvements
 
@@ -54,7 +54,7 @@ NOTE: Low CPU% does not mean low wall-clock cost. The ablation study measures JW
 |===
 | Algorithm | Type | Measured Time | Assessment
 
-| RS256 | RSA 2048-bit | 68µs | Current default, measured
+| RS256 | RSA 2048-bit | 68µs (JMH) / 1,060µs (integration) | Current default
 | ES256 | ECDSA P-256 | — | Not benchmarked
 | Ed25519 | EdDSA Curve25519 | — | Not benchmarked
 |===
@@ -63,7 +63,7 @@ No alternative algorithm has been benchmarked. Algorithm choice should be driven
 
 == JCA Provider Landscape
 
-* **Default JDK** (Recommended): 68µs RSA, full native image support, automatic updates
+* **Default JDK** (Recommended): 68µs RSA in isolation (1,060µs under concurrency), full native image support, automatic updates
 * **BouncyCastle**: Only if specific algorithms needed; requires reflection configuration
 * **Conscrypt**: Not suitable for GraalVM native image (BoringSSL dependencies)
 * **Jipher**: No longer bundled with GraalVM 25; consider only for FIPS compliance

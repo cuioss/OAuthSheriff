@@ -71,7 +71,7 @@ See link:../../../benchmarking/doc/Analysis-03.2026-Micro.adoc[Microbenchmark An
 |===
 | Algorithm | Type | Security Level | Notes
 
-| RS256/384/512 | RSA | 2048-bit | 68µs — current default
+| RS256/384/512 | RSA | 2048-bit | 68µs JMH / 1,060µs integration — current default
 | ES256/384/512 | ECDSA | 256-384-bit curves | Not benchmarked
 | Ed25519/Ed448 | EdDSA | Curve25519/448 | Not benchmarked
 |===

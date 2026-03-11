@@ -45,7 +45,7 @@ native-image --gc=G1 YourApp
 
 WARNING: Jipher is **no longer bundled** with Oracle GraalVM 25. Must be downloaded separately.
 
-Relevant only for FIPS 140-2 compliance, not performance optimization (RSA already at 68µs).
+Relevant only for FIPS 140-2 compliance, not performance optimization (RSA at 68µs in isolation, 1,060µs under concurrency).
 
 === ML-Powered Optimization (GraalVM 25)
 
@@ -61,7 +61,7 @@ Automatically enabled with `-O2` and `-O3`. XGBoost-based static profiler provid
 
 | JWT Throughput | 25,178 ops/s | Exceeds target by 2.5x
 | JWT Avg Latency | 2.30ms | Exceeds target by 2.2x
-| RSA Verification | 68µs (P50) | 88% of library validation time
+| RSA Verification | 68µs JMH / 1,060µs integration | Dominant cost under concurrency
 | Startup Time | 0.172s | Exceeds target by 5.8x
 |===
 
