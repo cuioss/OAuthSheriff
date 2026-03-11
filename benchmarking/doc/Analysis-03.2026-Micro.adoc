@@ -157,7 +157,7 @@ Based on a dedicated JMH benchmark run (1,024 samples). Note: the test resource 
 
 === Library vs Integration Performance Gap
 
-**Observation:** Library micro-benchmarks achieve 159k ops/s while integration tests (WRK) show 18k ops/s.
+**Observation:** Library micro-benchmarks achieve 159k ops/s while integration tests (WRK) show 25k ops/s.
 
 **Gap Analysis (50 connections baseline):**
 
