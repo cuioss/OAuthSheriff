@@ -17,7 +17,7 @@ WRK stress testing (5 threads, 50-300 connections, 0% error rate) on native Quar
 
 == Configuration
 
-* **Tool**: WRK (native C HTTP benchmarking tool)
+* **Tool**: WRK (HTTP benchmarking tool with Lua scripting)
 * **Profile**: Stress (5 threads, variable connections)
 * **Duration**: 1 minute per benchmark
 * **Environment**: 10 CPU cores (M4), Docker with native executable
