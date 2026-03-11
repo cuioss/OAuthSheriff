@@ -211,7 +211,7 @@ services:
 
 == Non-CPU Overhead Analysis
 
-The 14x gap between JMH (77µs) and integration (1,087µs) cannot be explained by CPU time alone. JFR shows CUI library at only 0.3% of CPU samples, yet latency decomposition shows token validation at 57% of request time. This section analyzes non-CPU overhead.
+The ~14x gap between JMH (77µs) and integration JWT validation under concurrency (1,060µs, measured via ablation) cannot be explained by CPU time alone. JFR shows CUI library at only 0.3% of CPU samples, yet latency decomposition shows JWT validation at 46% of total request time. This section analyzes non-CPU overhead.
 
 === Thread Parking Analysis
 
@@ -228,7 +228,7 @@ JFR recorded **32,549 ThreadPark events** over the 240-second benchmark, indicat
 | JFR/scheduler threads | ~2,500 | Profiling and scheduling overhead
 |===
 
-These park events are **normal** for a reactive architecture under load — threads wait efficiently when no work is available. They do not directly explain the 14x gap.
+These park events are **normal** for a reactive architecture under load — threads wait efficiently when no work is available. They do not directly explain the ~14x gap.
 
 === Lock Contention Analysis
 
@@ -242,7 +242,7 @@ JFR recorded only **14 JavaMonitorEnter events** (10-14ms each) over 240 seconds
 | `java.lang.Object` (EPollSelectorImpl) | 8 | NIO selector interrupt clearing
 |===
 
-**Conclusion**: Lock contention is **not** the cause of the 14x gap. The 14 events over 240 seconds represent negligible overhead.
+**Conclusion**: Lock contention is **not** the cause of the ~14x gap. The 14 events over 240 seconds represent negligible overhead.
 
 === Garbage Collection Analysis
 
@@ -278,7 +278,7 @@ JFR recorded **1,312 GC events** during a 60-second benchmark (22 GCs/second):
 
 **Key observation**: The Serial GC in SubstrateVM runs frequently (22/s) to manage high allocation rate. Most pauses are 1-2ms (fast incremental GCs), but 127 events are >10ms stop-the-world pauses. This GC activity accounts for **~3.7% of wall-clock time** (2.2s / 60s).
 
-**Does GC explain the 14x gap?** No. At 22 GCs/second and ~21,000 requests/second, only ~1 in 950 requests encounters a GC pause. The 3.7% overhead is amortized — most individual requests complete without GC interference. GC contributes to tail latency (P99) but is not the primary cause of the 1.1ms median token validation cost.
+**Does GC explain the ~14x gap?** No. At 22 GCs/second and ~25,000 requests/second, only ~1 in 1,140 requests encounters a GC pause. The 3.7% overhead is amortized — most individual requests complete without GC interference. GC contributes to tail latency (P99) but is not the primary cause of the 1.06ms token validation cost under concurrency.
 
 === Memory Allocation Analysis
 
@@ -312,17 +312,17 @@ JFR recorded **45,048 ObjectAllocationSample events**. Top allocation types:
 
 === Why CPU% Doesn't Match Latency%
 
-The JFR data reveals the 14x gap is primarily due to:
+The JFR data reveals the ~14x gap is primarily due to concurrency effects, not CDI overhead (which is only 20µs per the ablation study):
 
-1. **CDI `Instance.get()` overhead** — The producer method creates a new `CreationalContextImpl` and resolves dependencies for each injection
-2. **InjectionPoint introspection** — CDI extracts `@BearerToken` annotation parameters per request
-3. **Object allocation** — Each validation creates new HashMaps, Sets, and result objects
-4. **Thread scheduling** — 50 concurrent connections cause frequent context switches (not visible in JFR as individual events)
-5. **Memory barriers** — Lock-free cache operations require memory ordering guarantees
+1. **Object allocation under concurrency** — Each validation creates new HashMaps, Sets, `AccessTokenContent`, and result objects (vs JMH reusing pre-parsed data)
+2. **Memory barriers** — Lock-free cache (`ConcurrentHashMap`) operations require memory ordering guarantees
+3. **Thread scheduling** — 50 concurrent connections cause frequent context switches (not visible in JFR as individual events)
+4. **CPU cache line invalidation** — Concurrent access to shared data structures invalidates L1/L2 cache
+5. **CDI `Instance.get()` overhead** — `CreationalContext` creation and `InjectionPoint` introspection add only 20µs (0.9%, measured via ablation)
 
 **These operations consume wall-clock time without proportionally consuming CPU cycles** — the CPU is often waiting on memory, cache coherence, or thread scheduling.
 
-NOTE: Despite 250 `CreationalContextImpl` allocations recorded in JFR, the measured CDI overhead via ablation is only 50µs (2.4%). The allocations are fast individually, and the real cost lies in JWT validation under concurrency (1,160µs, 55.8%).
+NOTE: Despite 250 `CreationalContextImpl` allocations recorded in JFR, the measured CDI overhead via ablation is only 20µs (0.9%). The allocations are fast individually, and the real cost lies in JWT validation under concurrency (1,060µs, 46.1%).
 
 === Access Log Filter Overhead
 
@@ -438,12 +438,12 @@ Each field requires **different authorization validation** via `InjectionPoint` 
 
 === Investigation Conclusion
 
-The 14x JMH-to-integration gap (77µs → 1,087µs) is **understood but not optimizable**:
+The ~14x JMH-to-integration gap (77µs → 1,060µs under concurrency) is **understood but not optimizable**:
 
-1. **Two contributing factors identified**: JWT validation under concurrency at 55.8% (1,160µs), and CDI `Instance.get()` with per-request `InjectionPoint` introspection at 2.4% (50µs)
+1. **Two contributing factors identified**: JWT validation under concurrency at 46.1% of total request time (1,060µs), and CDI `Instance.get()` with per-request `InjectionPoint` introspection at 0.9% (20µs)
 2. **Neither is optimizable**: Concurrency penalty is inherent to real workloads; CDI overhead is blocked by security requirements (different annotation parameters per injection point)
-3. **Split is measured**: JWT validation under concurrency dominates at 1,160µs, while CDI overhead is minimal at 50µs
-4. **Performance acceptable**: 23K ops/s at 1.9ms P50 exceeds targets (>10K ops/s, <5ms)
+3. **Split is measured**: JWT validation under concurrency dominates at 1,060µs, while CDI overhead is minimal at 20µs
+4. **Performance acceptable**: 25.2K ops/s at 2.30ms avg exceeds targets (>10K ops/s, <5ms)
 
 == Related Documents
 
