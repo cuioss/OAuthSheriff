@@ -26,10 +26,11 @@ JWT validation performance characteristics, baselines, and analysis for the CUI 
 
 | **JWT Validation** | 25,178 ops/s | 2.30ms | 11.52ms
 | **Health Check** | 98,211 ops/s | 0.78ms | 6.04ms
-| **JWT Library (JMH)** | 159,100 ops/s | 77µs (P50) | 163µs
 |===
 
-All measurements at 50 concurrent connections (optimal). See link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc[Integration Analysis] for connection sweep (50-300).
+All measurements on Mandrel native image at 50 concurrent connections (optimal). See link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc[Integration Analysis] for connection sweep (50-300).
+
+For comparison, the core library in JMH isolation (no HTTP stack, no concurrency) achieves 159,100 ops/s at 77µs P50. The gap is fully explained by the link:../../../benchmarking/doc/Analysis-03.2026-Latency-Decomposition.adoc[ablation study].
 
 == Latency Decomposition
 
@@ -51,11 +52,13 @@ From the link:../../../benchmarking/doc/Analysis-03.2026-Latency-Decomposition.a
 
 JWT validation under concurrency is the sole significant cost. The core library validates in 77µs isolation (JMH); under 50 concurrent connections the measured cost is 1,060µs — a ~14x increase. The exact causes of this concurrency multiplier are not individually measured. See link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc#_root_cause_jwt_validation_under_concurrency[root cause analysis].
 
-== JWT Library Performance (JMH Analysis)
+== JWT Validation Pipeline
+
+RSA signature verification dominates the validation pipeline. Under native image concurrency (50 connections), JWT validation costs **1,060µs** — 46.1% of total request time. In JMH isolation the pipeline breaks down as:
 
 [cols="2,2,2", options="header"]
 |===
-| Component | Time (P50) | Share of JWT Processing
+| Component | JMH Time (P50) | Share of Pipeline
 
 | RSA Signature Verification | 68µs | **88%**
 | Token Parsing | 4.3µs | 6%
@@ -63,7 +66,7 @@ JWT validation under concurrency is the sole significant cost. The core library 
 | Other | ~4.6µs | 6%
 |===
 
-See link:../../../benchmarking/doc/Analysis-03.2026-Micro.adoc[Microbenchmark Analysis] for full results.
+The ~14x gap between JMH isolation (77µs) and native integration (1,060µs) is measured but the individual causes are not decomposed. See link:../../../benchmarking/doc/Analysis-03.2026-Micro.adoc[Microbenchmark Analysis] and link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc#_root_cause_jwt_validation_under_concurrency[root cause analysis].
 
 == Algorithm Performance
 
@@ -71,7 +74,7 @@ See link:../../../benchmarking/doc/Analysis-03.2026-Micro.adoc[Microbenchmark An
 |===
 | Algorithm | Type | Security Level | Notes
 
-| RS256/384/512 | RSA | 2048-bit | 68µs JMH / 1,060µs integration — current default
+| RS256/384/512 | RSA | 2048-bit | 1,060µs under concurrency (68µs JMH) — current default
 | ES256/384/512 | ECDSA | 256-384-bit curves | Not benchmarked
 | Ed25519/Ed448 | EdDSA | Curve25519/448 | Not benchmarked
 |===
