@@ -8,46 +8,22 @@
 
 == Executive Summary
 
-JMH micro-benchmark testing of the core JWT validation library shows:
+JMH micro-benchmark testing of the core JWT validation library:
 
-* **Core Validation**: 159,100 ops/s (in-memory, no HTTP overhead)
-* **Error Handling (0% errors)**: 152,200 ops/s (validation succeeds)
-* **Error Handling (50% errors)**: 222,300 ops/s (fast-fail on invalid tokens)
-* **Validation Latency**: P50=77µs, P95=80µs, P99=163µs
-* **Signature Validation**: P50=68µs (dominant cost in validation pipeline)
-* **Library Performance**: ~6x faster than integration tests (159k vs 25k ops/s)
+* **Core Validation**: 159,100 ops/s, P50=77µs
+* **Signature validation** dominates at 68µs (88% of total)
+* **Fast-fail on invalid tokens**: 222,300 ops/s (+39%)
+* **Integration gap**: ~6x throughput difference vs WRK at 50 connections — explained by link:Analysis-03.2026-Latency-Decomposition.adoc[ablation study]
 
-== JMH Benchmark Configuration
-
-=== Test Environment
+== Configuration
 
 * **Tool**: JMH 1.37 (Java Microbenchmark Harness)
 * **JVM**: OpenJDK 21.0.7 (Temurin), aarch64 (Apple M4)
-* **Threads**: 100 concurrent threads
-* **Iterations**: 5 measurement + 3 warmup
-* **Duration**: 4 seconds per iteration
+* **Threads**: 100 concurrent
+* **Iterations**: 5 measurement + 3 warmup, 4 seconds each
 * **Mode**: Throughput (ops/s) and Average Time (µs/op)
 
-=== Benchmark Suite
-
-[cols="2,3", options="header"]
-|===
-|Benchmark
-|Description
-
-|SimpleCoreValidationBenchmark
-|Core JWT validation performance (throughput and latency)
-
-|SimpleErrorLoadBenchmark
-|Error handling with 0% and 50% invalid token rates
-
-|jwt-validation-metrics
-|Detailed breakdown of validation pipeline steps
-|===
-
-== Performance Results
-
-=== Throughput Benchmarks
+== Throughput Results
 
 [cols="2,2,2,2", options="header"]
 |===
@@ -77,22 +53,18 @@ JMH micro-benchmark testing of the core JWT validation library shows:
 |100 threads, concurrent
 |===
 
-**Key Findings:**
+Fast-fail on invalid tokens (50% error rate) improves throughput by 39% — invalid tokens fail at signature validation without full claims processing.
 
-* **Error handling improves throughput**: Fast-fail on invalid tokens (50% error rate) achieves 222k ops/s (+39% vs baseline)
-* **All-valid scenario**: 152k ops/s when all tokens are valid (-4% vs core validation)
-* **Latency consistency**: 648-657µs average time across different concurrency patterns
+== Validation Pipeline Breakdown
 
-=== Validation Pipeline Breakdown
-
-Based on a dedicated JMH benchmark run (1,024 samples). Note: the test resource file `jwt-validation-metrics.json` contains data from an earlier run with different values (e.g., Complete Validation P50=71µs, P99=2,251µs, Signature Validation P50=60µs). The numbers below reflect the most recent benchmark run used for this analysis:
+Based on a dedicated JMH run (1,024 samples):
 
 [cols="2,2,2,2", options="header"]
 |===
 |Step
-|P50 Latency
-|P95 Latency
-|P99 Latency
+|P50
+|P95
+|P99
 
 |**Complete Validation**
 |**77 µs**
@@ -145,119 +117,33 @@ Based on a dedicated JMH benchmark run (1,024 samples). Note: the test resource 
 |0.3 µs
 |===
 
-**Analysis:**
+**Signature validation** (RS256) accounts for 88% of validation time. Non-cryptographic operations add only ~9µs total.
 
-* **Signature validation dominates**: 68µs (88% of total 77µs) - cryptographic operations are the bottleneck
-* **Parsing overhead**: 4.3µs (6%) - JSON parsing and token extraction
-* **Cache efficiency**: 0.1µs - lock-free cache adds negligible overhead
-* **Claims validation**: 1.0µs - audience, expiration, issuer checks are fast
-* **Total overhead**: ~9µs for non-cryptographic operations (parsing, claims, cache, issuer resolution)
+NOTE: The test resource file `jwt-validation-metrics.json` contains data from an earlier run with different values. The numbers above reflect the most recent benchmark run.
 
-== Performance Analysis
+== Library vs Integration Gap
 
-=== Library vs Integration Performance Gap
-
-**Observation:** Library micro-benchmarks achieve 159k ops/s while integration tests (WRK) show 25k ops/s.
-
-**Gap Analysis (50 connections baseline):**
-
-[cols="2,3", options="header"]
+[cols="2,2,2", options="header"]
 |===
 |Metric
-|Measurement
-
-|Pure library (micro-benchmark)
-|159,100 ops/s, 77µs P50 latency
-
-|Integration (WRK, 50 conns baseline)
-|25,178 ops/s, 2.30ms avg latency
-
-|Throughput gap
-|~6x slower (134k ops/s difference)
-
-|Latency gap
-|~30x slower (2.22ms overhead, comparing JMH P50 vs WRK avg)
-
-|Integration overhead breakdown
-|Measured via ablation study — see link:Analysis-03.2026-Latency-Decomposition.adoc[Latency Decomposition]
-|===
-
-NOTE: At higher connection counts, latency increases due to connection queuing (e.g., 300 connections: 15.11ms avg). The 50-connection baseline is used here for a fair comparison with JMH, which runs without queuing effects.
-
-**Conclusion:** The core library validation is highly optimized at 159k ops/s with 77µs latency. Integration testing at 50 connections shows 25.2k ops/s and 2.30ms avg latency. A six-layer ablation study (link:Analysis-03.2026-Latency-Decomposition.adoc[Latency Decomposition]) decomposes the 2.30ms into: shared infrastructure 0.78ms (33.9%), JAX-RS POST routing 0.40ms (17.4%), Vert.x context resolution 0.06ms (2.6%), authorization parsing ~0ms, JWT validation under concurrency 1.06ms (46.1%), and CDI `Instance.get()` + `@Timed` overhead 0.02ms (0.9%).
-
-=== Bottleneck Identification
-
-**Primary Bottleneck: Cryptographic Signature Validation**
-
-* **Signature validation**: 68µs P50 (88% of validation time)
-* **Algorithm**: RS256 signature verification (asymmetric cryptography)
-* **Not optimizable**: Cryptographic operations are computationally intensive by design
-
-**Secondary Costs:**
-
-1. **Token parsing**: 4.3µs (JSON deserialization)
-2. **Object construction**: 2.8µs (AccessTokenContent building)
-3. **Claims validation**: 1.0µs (date checks, audience, issuer)
-4. **Cache operations**: 0.1µs (negligible with lock-free design)
-
-=== Error Handling Performance
-
-**Fast-Fail Optimization:**
-
-* **50% invalid tokens**: 222k ops/s (+39% throughput)
-* **Early rejection**: Invalid tokens fail at signature validation without full claims validation and token building
-* **Production benefit**: Real-world scenarios with invalid tokens see improved throughput
-
-**Error Distribution:**
-
-* Expired tokens: Detected in claims validation (1.0µs)
-* Invalid signatures: Fail at signature validation (68µs)
-* Malformed tokens: Fail at parsing (4.3µs)
-
-== Comparison: Micro vs Integration
-
-[cols="2,2,2,3", options="header"]
-|===
-|Metric
-|Micro (Library)
+|Micro (JMH)
 |Integration (WRK, 50 conns)
-|Difference
 
 |Throughput
 |159,100 ops/s
 |25,178 ops/s
-|**~6x faster** (library)
 
 |Latency
 |77 µs (P50)
 |2,300 µs (avg)
-|**~30x faster** (library)
 
-|Latency P99
+|P99
 |163 µs
 |11,520 µs
-|**~71x faster** (library)
-
-|Environment
-|In-memory JMH (100 threads)
-|HTTP/Docker/Quarkus (50 conns)
-|Network + framework overhead
 |===
 
-NOTE: The 50-connection baseline is used because JMH runs without connection queuing, making it a fair comparison. JMH P50 (77µs) represents single-operation latency; integration avg (2.30ms) includes all HTTP/framework overhead. At 300 connections, JWT avg rises to 15.11ms due to connection queuing, not additional per-request overhead.
-
-**Key Takeaway:** The core library is extremely fast (77µs P50). Integration overhead at 50 connections adds ~2.22ms (measured decomposition in link:Analysis-03.2026-Latency-Decomposition.adoc[Latency Decomposition]), of which JWT validation under concurrency accounts for 1,060µs (46.1%, measured) and CDI overhead only 20µs (0.9%, measured). This is acceptable for real-world HTTP-based microservices.
+The ~6x throughput gap and ~30x latency gap are fully explained by integration overhead. The link:Analysis-03.2026-Latency-Decomposition.adoc[ablation study] decomposes the 2.30ms into shared infrastructure (33.9%), JAX-RS routing (17.4%), and JWT validation under concurrency (46.1%).
 
 == Conclusion
 
-Comprehensive JMH micro-benchmark analysis reveals:
-
-* **Excellent library performance**: 159k ops/s with 77µs P50 latency demonstrates highly optimized JWT validation
-* **Signature validation dominates**: 88% of validation time (68µs) spent in cryptographic operations (expected and unavoidable)
-* **Minimal overhead**: Non-cryptographic operations (parsing, cache, claims) add only ~9µs (12% of total)
-* **Fast-fail optimization**: 50% invalid token rate improves throughput to 222k ops/s
-* **Integration reality check**: ~6x throughput gap (159k vs 25k ops/s) at 50 connections — integration overhead decomposed via ablation study with measured CDI vs validation split: JWT validation 1,060µs (46.1%), CDI overhead 20µs (0.9%) (link:Analysis-03.2026-Latency-Decomposition.adoc[Latency Decomposition])
-* **Production readiness**: Library meets performance requirements with sub-100µs validation latency
-
-**Recommendation:** Current library performance is excellent. Further optimization would require algorithmic changes to signature validation (e.g., EdDSA instead of RSA), which is outside the scope of this library.
+The core library is highly optimized at 77µs P50. The integration overhead is expected for HTTP-based microservices. Further library optimization would require algorithmic changes to signature validation (e.g., EdDSA instead of RSA).

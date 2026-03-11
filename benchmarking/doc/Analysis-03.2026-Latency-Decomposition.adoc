@@ -7,11 +7,9 @@
 
 Companion document to link:Analysis-03.2026-Integration.adoc[JWT Validation Performance Analysis].
 
-== Overview
+== Methodology
 
-A **mock JWT endpoint** (`/mock-jwt/validate`) was created to directly measure the latency decomposition. The mock endpoint replicates the JWT endpoint's full HTTP processing path — CDI injection, `HttpServletRequestResolver.resolveHeaderMap()`, `Authorization` header extraction, and `ValidationResponse` JSON serialization — but **skips the actual JWT library validation** (`tokenValidator.createAccessToken()`). This turns the inferred decomposition into a measured one.
-
-An **ablation study** further decomposes the gap between the health endpoint and mock JWT endpoint by progressively adding processing layers. Four additional endpoints isolate individual cost components:
+An ablation study decomposes the full JWT avg latency (2.30ms at 50 connections) by progressively adding processing layers. Each variant adds exactly one component, isolating its cost by comparison with the previous variant.
 
 [cols="1,2,3,3", options="header"]
 |===
@@ -25,42 +23,37 @@ An **ablation study** further decomposes the gap between the health endpoint and
 |SmallRye Health, minimal JSON
 |Shared infrastructure baseline
 
-|**A: Bare Baseline** (removed; benchmark data retained)
-|`POST /mock-jwt-bare/baseline`
-|Zero CDI injection, pre-built `ValidationResponse`
-|JAX-RS + `@RunOnVirtualThread` + Jackson — **without any CDI beans**
-
-|**B: JAX-RS Baseline** (new method)
+|**B: JAX-RS Baseline**
 |`POST /mock-jwt/baseline`
-|Same as A but in CDI-injected class
-|Confirms `@ApplicationScoped` injection has zero per-request cost (A vs B)
+|CDI-injected class, pre-built response
+|JAX-RS POST routing + Jackson (B minus Health)
 
-|**C: Header Only** (new method)
+|**C: Header Only**
 |`POST /mock-jwt/header-only`
-|Calls `resolveHeaderMap()`, returns pre-built response
-|**Vert.x context resolution cost** (C minus B)
+|Calls `resolveHeaderMap()`, pre-built response
+|Vert.x context resolution (C minus B)
 
 |Mock JWT (existing)
 |`POST /mock-jwt/validate`
-|resolveHeaderMap() + header parsing + HashMap construction
-|**Authorization parsing + HashMap allocation** (Mock minus C)
+|resolveHeaderMap() + header parsing + HashMap
+|Authorization parsing (Mock minus C)
 
-|**D: Direct Validation** (new method)
+|**D: Direct Validation**
 |`POST /mock-jwt/direct-validate`
-|Calls `createAccessToken()` directly — no CDI `Instance.get()`, no `@Timed`
-|**JWT validation under concurrency** (D minus Mock JWT) vs **CDI overhead** (JWT minus D)
+|Calls `createAccessToken()` directly, no CDI proxy
+|JWT validation under concurrency (D minus Mock)
 
 |JWT (existing)
 |`POST /jwt/validate`
-|Full JWT validation
-|CDI `Instance.get()` + `@Timed` overhead (JWT minus D)
+|Full JWT validation via CDI `Instance.get()`
+|CDI proxy overhead (JWT minus D)
 |===
 
-All variants use **POST with Authorization header** (same WRK Lua script pattern) so differences are purely server-side.
+All variants use POST with Authorization header (same WRK Lua script) so differences are purely server-side.
 
-== Ablation Study Results (50 connections, 5 threads, 60s measurement)
+NOTE: A historical Variant A (bare JAX-RS without CDI) confirmed that `@ApplicationScoped` injection has zero per-request cost. It was removed after serving its purpose.
 
-Results from Maven-managed benchmark runs (`mvnw verify -Pbenchmark`), with fresh tokens fetched per benchmark:
+== Results (50 connections, 5 threads, 60s)
 
 [cols="2,2,2,2", options="header"]
 |===
@@ -69,116 +62,86 @@ Results from Maven-managed benchmark runs (`mvnw verify -Pbenchmark`), with fres
 |P99 (ms)
 |Throughput
 
-|Health (`/q/health/live`)
+|Health
 |0.78
 |6.04
 |98,211 ops/s
 
-|**B: JAX-RS Baseline** (`/mock-jwt/baseline`)
-|**1.18**
-|**7.90**
-|**57,054 ops/s**
+|B: JAX-RS Baseline
+|1.18
+|7.90
+|57,054 ops/s
 
-|**C: Header Only** (`/mock-jwt/header-only`)
-|**1.24**
-|**8.00**
-|**53,845 ops/s**
+|C: Header Only
+|1.24
+|8.00
+|53,845 ops/s
 
-|**Mock JWT** (`/mock-jwt/validate`)
-|**1.22**
-|**8.01**
-|**54,748 ops/s**
+|Mock JWT
+|1.22
+|8.01
+|54,748 ops/s
 
-|**D: Direct Validation** (`/mock-jwt/direct-validate`)
-|**2.28**
-|**11.10**
-|**24,822 ops/s**
+|D: Direct Validation
+|2.28
+|11.10
+|24,822 ops/s
 
-|JWT (`/jwt/validate`)
+|JWT
 |2.30
 |11.52
 |25,178 ops/s
 |===
 
-NOTE: All variants benchmarked in a Maven-managed sequential run. Previous Variant A (Bare Baseline) data confirmed that `@ApplicationScoped` injection has zero per-request cost.
-
 == Six-Layer Decomposition
-
-The ablation study decomposes the full JWT avg latency (2.30ms) into six measured layers. Each layer isolates a specific processing cost by comparing adjacent ablation variants. Variant D (Direct Validation) splits the "CDI + JWT validation" cost into two independently measured sub-layers.
 
 [cols="3,2,2,2", options="header"]
 |===
 |Layer
 |Latency (avg)
-|Percentage
+|% of total
 |How Measured
 
-|**1. Shared infrastructure** (Docker, TLS, HTTP/2, Quarkus GET routing)
+|**1. Shared infrastructure** (Docker, TLS, HTTP/2, Quarkus routing)
 |0.78ms
 |33.9%
 |Health endpoint
 
-|**2. JAX-RS POST routing + `@RunOnVirtualThread` + Jackson serialization**
+|**2. JAX-RS POST routing + Jackson serialization**
 |0.40ms
 |17.4%
 |B minus Health (1.18 − 0.78)
 
-|**3. CDI `@ApplicationScoped` injection overhead**
-|~0ms
-|~0%
-|A vs B comparison (historical)
-
-|**4. Vert.x context resolution** (`resolveHeaderMap()`)
+|**3. Vert.x context resolution** (`resolveHeaderMap()`)
 |0.06ms
 |2.6%
 |C minus B (1.24 − 1.18)
 
-|**5. Authorization parsing + HashMap construction**
+|**4. Authorization parsing + HashMap construction**
 |~0ms
 |~0%
-|Mock JWT minus C (1.22 − 1.24, within noise)
+|Mock minus C (within noise)
 
-|**6a. JWT validation under concurrency** (`createAccessToken()`)
+|**5. JWT validation under concurrency** (`createAccessToken()`)
 |1.06ms
-|46.1%
-|D minus Mock JWT (2.28 − 1.22)
+|**46.1%**
+|D minus Mock (2.28 − 1.22)
 
-|**6b. CDI `Instance.get()` + `@Timed`**
-|0.02ms
-|0.9%
-|JWT minus D (2.30 − 2.28)
+|**6. CDI proxy + `@Timed`**
+|~0ms
+|~0%
+|JWT minus D (within noise)
 |===
 
-**Total JWT avg**: 2.30ms = 0.78 + 0.40 + 0 + 0.06 + 0 + 1.06 + 0.02 ≈ 2.32ms (0.02ms overshoot due to measurement noise; percentages computed against measured 2.30ms)
+Total: 0.78 + 0.40 + 0.06 + 0 + 1.06 + ~0 ≈ 2.30ms.
 
-=== Key Findings
-
-**JAX-RS POST routing is a significant cost component.** The 0.40ms cost of JAX-RS POST routing + `@RunOnVirtualThread` dispatch + Jackson serialization accounts for 17.4% of the total JWT avg latency. This is expected — POST requests with JSON serialization of a `ValidationResponse` record require more processing than the SmallRye Health GET endpoint.
-
-**CDI `@ApplicationScoped` injection has zero per-request cost.** Historical Variant A comparison confirmed `@ApplicationScoped` beans are resolved at startup, not per request.
-
-**Vert.x context resolution is minimal.** The 0.06ms cost of `resolveHeaderMap()` accounts for 2.6% of total latency. Authorization parsing adds no measurable overhead beyond this.
-
-**JWT validation under concurrency is the dominant cost at 46.1% (1,060µs) — measured, not estimated.** The Direct Validation variant (D) calls `createAccessToken()` directly, bypassing CDI `Instance.get()` and `@Timed` instrumentation. The 1.06ms gap between D and Mock JWT isolates the pure JWT validation cost under 50 concurrent connections — ~14x slower than the 77µs JMH baseline due to cache contention, memory barriers, and real object allocation under concurrency.
-
-**CDI `Instance.get()` + `@Timed` overhead is only 20µs (0.9%).** The 0.02ms gap between the full JWT endpoint and variant D measures the actual cost of CDI proxy resolution (`CreationalContext`, `InjectionPoint` introspection) plus Micrometer `@Timed` instrumentation. This is negligible compared to the JWT validation itself.
-
-=== Ablation Variant Descriptions
-
-* **A: Bare Baseline** (`/mock-jwt-bare/baseline`) — A separate JAX-RS class with zero CDI constructor injection. Returned a pre-built `ValidationResponse`. Isolated JAX-RS + `@RunOnVirtualThread` + Jackson without any CDI beans.
-* **B: JAX-RS Baseline** (`/mock-jwt/baseline`) — Same behavior as A, but in the CDI-injected `MockJwtValidationEndpoint` class. Comparing A vs B confirms that `@ApplicationScoped` constructor injection has zero per-request cost.
-* **C: Header Only** (`/mock-jwt/header-only`) — Calls `resolveHeaderMap()` but does not parse headers or construct a HashMap. Returns a pre-built response. The difference C minus B isolates the Vert.x context resolution cost.
-* **D: Direct Validation** (`/mock-jwt/direct-validate`) — Calls `createAccessToken()` directly on the injected `TokenValidator`, bypassing CDI `Instance.get()` proxy resolution and `@Timed` instrumentation. The difference D minus Mock JWT isolates the pure JWT validation cost under concurrency, while JWT minus D isolates the CDI overhead.
-
-=== P99 Decomposition
-
-The P99 latencies reveal how each layer behaves under tail-latency pressure:
+== P99 Decomposition
 
 [cols="2,2,2", options="header"]
 |===
 |Variant
 |P99 (ms)
-|P99 Delta (vs previous variant)
+|P99 Delta
 
 |Health
 |6.04
@@ -186,44 +149,29 @@ The P99 latencies reveal how each layer behaves under tail-latency pressure:
 
 |B: Baseline
 |7.90
-|1.86ms
+|+1.86ms
 
 |C: Header-only
 |8.00
-|0.10ms (within noise)
+|+0.10ms (noise)
 
 |Mock JWT
 |8.01
-|0.01ms (within noise)
+|+0.01ms (noise)
 
-|**D: Direct Validation**
-|**11.10**
-|**3.09ms**
+|D: Direct Validation
+|11.10
+|**+3.09ms**
 
 |JWT
 |11.52
-|0.42ms (negligible CDI P99 cost)
+|+0.42ms (noise)
 |===
 
-**Key P99 observations:**
+JWT validation is also the dominant source of P99 tail latency (+3.09ms). The CDI layer adds no measurable tail latency.
 
-* **JWT validation dominates tail latency.** The P99 jump from Mock JWT (8.01ms) to Direct Validation (11.10ms) is 3.09ms — the single largest P99 delta, confirming that `createAccessToken()` under contention is the primary source of tail latency.
-* **CDI overhead is negligible at P99.** The full JWT endpoint (11.52ms) and Direct Validation (11.10ms) have nearly identical P99 values, confirming CDI `Instance.get()` does not add tail latency at 50 connections.
-* **Ablation variants cluster tightly.** Baseline (7.90ms), Header-Only (8.00ms), and Mock JWT (8.01ms) P99 values are within ~0.1ms of each other, confirming negligible per-layer P99 contribution.
+== Key Findings
 
-== JMH vs Integration Validation Cost
-
-The JMH micro-benchmark measures isolated JWT library validation at 0.077ms (77µs). The ablation study measures the actual JWT validation cost under concurrency at 1.06ms (variant D minus Mock JWT) — **13.8x more** than the isolated library. This gap decomposes into two independently measured factors:
-
-**Primary factor (46.1%, measured): JWT validation under concurrency = 1,060µs**
-
-* **`tokenValidator.createAccessToken()` under concurrency** — 50 concurrent connections competing for the lock-free cache, CPU cache line invalidation, memory barriers
-* **`AccessTokenContent` construction** — real object allocation from parsed claims (vs JMH reusing pre-parsed data)
-* 13.8x concurrency multiplier over the 77µs JMH baseline
-
-**Secondary factor (0.9%, measured): CDI `Instance.get()` + `@Timed` = 20µs**
-
-* **CDI `Instance<BearerTokenResult>` proxy resolution** — CDI creates `CreationalContext` and invokes the producer per request
-* **`InjectionPoint` metadata extraction** — CDI inspects `@BearerToken` annotation parameters
-* **`@Timed` micrometer instrumentation** — metrics recording overhead on every validation
-* At 20µs, CDI overhead is negligible relative to the 1,060µs JWT validation cost
+* **JWT validation under concurrency is the sole significant cost** at 46.1% (1,060µs) of request time. The core library validates in 77µs isolation (link:Analysis-03.2026-Micro.adoc[micro-benchmark]); the ~14x concurrency multiplier comes from cache contention, memory barriers, and real object allocation under 50 concurrent connections.
+* **Shared infrastructure + JAX-RS routing** account for 51.3% — expected overhead for HTTP-based microservices.
+* **All other layers are noise**: Vert.x resolution (0.06ms), authorization parsing (~0ms), and CDI proxy (~0ms) are individually negligible.

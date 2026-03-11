@@ -3,30 +3,16 @@
 :toc-placement: preamble
 :toclevels: 3
 
-== Executive Summary
-
-JFR (Java Flight Recorder) profiling of the OAuth Sheriff integration tests under load provides CPU hotspot analysis for the JWT validation endpoint.
-
-=== Recording Configuration
+== Recording Configuration
 
 * **Platform**: Apple M4, 10 CPU cores
 * **Runtime**: Mandrel jdk-25 native image
 * **Framework**: Quarkus 3.27.2 (LTS)
-* **JFR Settings**: `profile` preset, 240 seconds duration
-* **Load**: WRK benchmark with 50 concurrent connections
-
-=== Recording Statistics
-
-[source]
-----
-Recording Duration: 240 seconds
-Total Execution Samples: 48,027
-Unique Hot Methods: 3,181
-----
+* **JFR Settings**: `profile` preset, 240 seconds
+* **Load**: WRK, 50 concurrent connections
+* **Samples**: 48,027 execution samples, 3,181 unique hot methods
 
 == CPU Hotspot Analysis
-
-The following table shows methods at the **top of the call stack** when execution samples were taken. These are the methods actively consuming CPU.
 
 === Top 15 Hot Methods
 
@@ -90,7 +76,7 @@ The following table shows methods at the **top of the call stack** when executio
 | CUI Sheriff OAuth
 | ~160
 | 0.3%
-| See detailed breakdown below
+| See below
 
 | BigInteger (RSA)
 | 46
@@ -98,9 +84,9 @@ The following table shows methods at the **top of the call stack** when executio
 | addOne (31), mulsub (5), montReduce (3), other (7)
 |===
 
-== CUI Sheriff OAuth Library Analysis
+TLS encryption (18.7%) is the single largest CPU consumer — shared infrastructure cost, not JWT-specific.
 
-Methods from `de.cuioss.sheriff.oauth` at top of call stack:
+== CUI Sheriff OAuth Library
 
 [cols="3,1", options="header"]
 |===
@@ -120,84 +106,111 @@ Methods from `de.cuioss.sheriff.oauth` at top of call stack:
 | **Total** | **~160**
 |===
 
-Key observations:
+`CustomAccessLogFilter` and logging account for ~50% of CUI library samples — but that is 50% of only 0.3% total CPU. `TokenValidator.createAccessToken()` appears only 1 time in samples.
 
-* **Logging dominates**: `CustomAccessLogFilter` and logging utilities account for ~50% of CUI library samples
-* **Token validation minimal**: `TokenValidator.createAccessToken()` appears only 1 time
-* **Token content access**: `TokenContent.getClaimOption()` at 9 samples is the most frequent token operation
+== Garbage Collection Analysis
 
-== BigInteger / RSA Analysis
-
-RSA signature verification uses BigInteger for modular exponentiation:
-
-[cols="2,1,1", options="header"]
+[cols="2,2", options="header"]
 |===
-| Method | Samples | %
+| Metric | Value
 
-| `BigInteger.addOne()` | 31 | 0.065%
-| `MutableBigInteger.mulsub()` | 5 | 0.010%
-| `BigInteger.implMulAddCheck()` | 4 | 0.008%
-| `BigInteger.montReduce()` | 3 | 0.006%
-| `MutableBigInteger.divideMagnitude()` | 1 | 0.002%
-| `BigInteger.subN()` | 1 | 0.002%
-| `BigInteger.implMontgomerySquare()` | 1 | 0.002%
-| **Total** | **46** | **0.096%**
+| GC events (60s) | 1,312
+| Total pause time | 2,223 ms (3.7% wall-clock)
+| Average pause | 1.69 ms
+| Frequency | ~22 GCs/second
 |===
 
-At 46 samples out of 48,027 (0.1%), BigInteger operations represent minimal CPU usage.
+**Pause distribution:** 89% at 1-2ms, 1% at 2-5ms, 10% at >10ms.
 
-== TLS/HTTPS Encryption
+**Heap:** sawtooth pattern, 10-100 MB (avg 45 MB).
 
-TLS encryption for HTTPS is the largest single CPU consumer:
+At ~25K req/s, only 1 in 1,140 requests encounters a GC pause. GC contributes to P99 tail latency but not median latency.
 
-[cols="2,1,1,2", options="header"]
+== Lock Contention
+
+Only **14 JavaMonitorEnter events** over 240 seconds: `Http1xServerConnection` (6) and `EPollSelectorImpl` (8). Negligible.
+
+== Memory Allocation
+
+Top allocation types from 45,048 `ObjectAllocationSample` events:
+
+[cols="2,1,2", options="header"]
 |===
-| Method | Samples | % | Purpose
+| Object Class | Samples | Purpose
 
-| `GHASH.blockMult()` | 5,126 | 10.68% | GCM authentication tag
-| `AESCrypt.implEncryptBlock()` | 2,871 | 5.98% | AES block encryption
-| `CounterMode.implCrypt()` | 973 | 2.03% | CTR mode processing
-| **Total** | **8,970** | **18.7%** |
+| `byte[]` | 12,216 | I/O buffers, serialization
+| `Object[]` | 2,607 | Array allocations
+| `long[]` | 2,482 | Primitive arrays
+| `HashMap$Node` | 2,040 | Map entries (headers, claims)
+| `FrameInfoQueryResult` | 1,655 | SubstrateVM stack traces (JFR overhead)
+| `HashMap$Node[]` | 1,064 | Map backing arrays
+| `String` | 1,042 | String allocations
+| `HashMap` | 811 | New HashMap instances
+| `ArrayList$Itr` | 808 | Iterator allocations
+| `JavaMonitor` | 766 | SubstrateVM monitor objects
+| `ArrayList` | 749 | List allocations
+| `StringBuilder` | 708 | String building
+| `HeadersMultiMap$MapEntry` | 463 | Vert.x HTTP headers
+| `CreationalContextImpl` | 250 | CDI bean creation contexts
 |===
 
-This is the cost of HTTPS transport security, not specific to JWT validation.
+== Why CPU% Doesn't Match Latency%
 
-== Thread Activity
+JFR shows CUI library at 0.3% of CPU samples, yet the ablation study measures JWT validation at 46% of request time. The explanation: concurrency effects consume wall-clock time without proportionally consuming CPU cycles.
 
-Threads observed in execution samples:
+* **Object allocation under concurrency** — each validation creates new HashMaps, Sets, `AccessTokenContent` (vs JMH reusing pre-parsed data)
+* **Memory barriers** — lock-free cache (`ConcurrentHashMap`) requires ordering guarantees
+* **Thread scheduling** — 50 concurrent connections cause context switches (not visible as individual JFR events)
+* **CPU cache line invalidation** — concurrent access to shared structures invalidates L1/L2 cache
 
-* `vert.x-eventloop-thread-*` - HTTP request handling
-* `vert.x-internal-blocking-*` - Blocking operations
-* `executor-thread-*` - Worker pool
-* `JFR recorder` / `JFR Periodic Tasks` - Profiling overhead
-* `HttpClient-*-SelectorManager` - Outbound HTTP (Keycloak JWKS)
+== Access Log Filter
 
-== JFR Analysis Commands
+The `CustomAccessLogFilter` runs on all JAX-RS endpoints. Measured impact (filter disabled):
 
-Commands used to extract this data:
+* Health P50: 0.510ms → 0.417ms (-0.093ms)
+* JWT P50: 1.91ms → 1.96ms (within variance)
 
-[source,bash]
+The filter does not explain the JWT-health gap. It can be disabled for benchmark isolation: `cui.http.access-log.filter.enabled=false`.
+
+[[_cdi_producer_chain_research_findings]]
+== CDI Producer Chain Research
+
+This section documents why the CDI `Instance.get()` overhead cannot be reduced.
+
+=== What `Instance.get()` Does
+
+Each call (from Quarkus ArC source):
+
+1. Creates child `CreationalContext`
+2. Constructs `InjectionPointImpl` with type, qualifiers, annotations
+3. Sets `InjectionPoint` via `InjectionPointProvider.setCurrent()`
+4. Creates bean instance (`@Dependent` scope)
+5. Cleans up in try-finally
+
+JFR confirms: 250 `CreationalContextImpl` allocations during benchmark. The ablation study measures the total cost at ~20µs — fast individually.
+
+=== Why `@WithCaching` Cannot Be Applied
+
+Quarkus ArC's `@WithCaching` caches `Instance.get()` results. The `JwtValidationEndpoint` uses 5 fields with different `@BearerToken` parameters:
+
+[source,java]
 ----
-# Recording summary
-jfr summary jwt-profile.jfr
-
-# Top hot methods (top of stack)
-jfr print --events ExecutionSample jwt-profile.jfr | \
-  grep -A1 "stackTrace = \[" | grep -v "stackTrace" | \
-  sed 's/^[[:space:]]*//' | sort | uniq -c | sort -rn | head -50
-
-# BigInteger samples
-jfr print --events ExecutionSample jwt-profile.jfr | \
-  grep -A1 "stackTrace = \[" | grep "BigInteger" | sort | uniq -c
-
-# CUI library samples
-jfr print --events ExecutionSample jwt-profile.jfr | \
-  grep -A1 "stackTrace = \[" | grep "de.cuioss" | sort | uniq -c | sort -rn
+@BearerToken Instance<BearerTokenResult> basicToken;
+@BearerToken(requiredScopes = {"read"}) Instance<BearerTokenResult> tokenWithScopes;
+@BearerToken(requiredRoles = {"user"}) Instance<BearerTokenResult> tokenWithRoles;
+@BearerToken(requiredGroups = {"test-group"}) Instance<BearerTokenResult> tokenWithGroups;
+@BearerToken(requiredScopes = {"read"}, requiredRoles = {"user"}, ...) Instance<BearerTokenResult> tokenWithAll;
 ----
+
+Caching would return `basicToken`'s result for all fields — a security bypass. The `@Dependent` scope with per-request `InjectionPoint` introspection is required for correct authorization.
+
+=== Memory Leak Risk
+
+`Instance.get()` for `@Dependent` beans in `@ApplicationScoped` holders accumulates dependent instances for the application lifetime. Mitigate with `Instance.Handle` or `instance.destroy()`.
 
 == Container Configuration
 
-JFR output requires a volume mount due to read-only container filesystem:
+JFR output requires a volume mount:
 
 [source,yaml]
 ----
@@ -209,245 +222,26 @@ services:
       - ./target/jfr-output:/tmp/jfr-output:rw
 ----
 
-== Non-CPU Overhead Analysis
+== JFR Analysis Commands
 
-The ~14x gap between JMH (77µs) and integration JWT validation under concurrency (1,060µs, measured via ablation) cannot be explained by CPU time alone. JFR shows CUI library at only 0.3% of CPU samples, yet latency decomposition shows JWT validation at 46% of total request time. This section analyzes non-CPU overhead.
-
-=== Thread Parking Analysis
-
-JFR recorded **32,549 ThreadPark events** over the 240-second benchmark, indicating significant wait time:
-
-[cols="2,1,2", options="header"]
-|===
-| Thread Type | Count | Purpose
-
-| `executor-thread-*` | ~15,000 | Worker pool threads waiting for tasks
-| `vert.x-eventloop-thread-*` | ~8,000 | Event loop waiting for I/O
-| `HttpClient-*-Worker` | ~4,000 | HTTP client connection pool
-| `ForkJoinPool.commonPool-*` | ~3,000 | Async completion handlers
-| JFR/scheduler threads | ~2,500 | Profiling and scheduling overhead
-|===
-
-These park events are **normal** for a reactive architecture under load — threads wait efficiently when no work is available. They do not directly explain the ~14x gap.
-
-=== Lock Contention Analysis
-
-JFR recorded only **14 JavaMonitorEnter events** (10-14ms each) over 240 seconds:
-
-[cols="2,1,2", options="header"]
-|===
-| Monitor Class | Events | Context
-
-| `Http1xServerConnection` | 6 | Vert.x HTTP/1.x connection write queue
-| `java.lang.Object` (EPollSelectorImpl) | 8 | NIO selector interrupt clearing
-|===
-
-**Conclusion**: Lock contention is **not** the cause of the ~14x gap. The 14 events over 240 seconds represent negligible overhead.
-
-=== Garbage Collection Analysis
-
-JFR recorded **1,312 GC events** during a 60-second benchmark (22 GCs/second):
-
-[cols="2,2", options="header"]
-|===
-| Metric | Value
-
-| Total GC events | 1,312
-| Total GC pause time | 2,223 ms (2.2 seconds)
-| Average pause | 1.69 ms
-| GC frequency | ~22 GCs/second
-|===
-
-**Pause distribution:**
-
-[cols="2,1,2", options="header"]
-|===
-| Pause Duration | Events | Percentage
-
-| < 1ms | 0 | 0%
-| 1-2ms | 1,174 | 89%
-| 2-5ms | 11 | 1%
-| > 10ms | 127 | 10%
-|===
-
-**Heap usage (sawtooth pattern):**
-
-* Minimum: 10 MB (after GC)
-* Maximum: 100 MB (before GC)
-* Average: 45 MB
-
-**Key observation**: The Serial GC in SubstrateVM runs frequently (22/s) to manage high allocation rate. Most pauses are 1-2ms (fast incremental GCs), but 127 events are >10ms stop-the-world pauses. This GC activity accounts for **~3.7% of wall-clock time** (2.2s / 60s).
-
-**Does GC explain the ~14x gap?** No. At 22 GCs/second and ~25,000 requests/second, only ~1 in 1,140 requests encounters a GC pause. The 3.7% overhead is amortized — most individual requests complete without GC interference. GC contributes to tail latency (P99) but is not the primary cause of the 1.06ms token validation cost under concurrency.
-
-=== Memory Allocation Analysis
-
-JFR recorded **45,048 ObjectAllocationSample events**. Top allocation types:
-
-[cols="2,1,2", options="header"]
-|===
-| Object Class | Samples | Purpose
-
-| `byte[]` | 12,216 | Buffers for I/O, serialization
-| `Object[]` | 2,607 | Array allocations
-| `long[]` | 2,482 | Primitive arrays (timestamps, etc.)
-| `HashMap$Node` | 2,040 | Map entries (headers, claims)
-| `FrameInfoQueryResult` | 1,655 | SubstrateVM stack traces (JFR)
-| `HashMap$Node[]` | 1,064 | Map backing arrays
-| `String` | 1,042 | String allocations
-| `HashMap` | 811 | New HashMap instances
-| `ArrayList$Itr` | 808 | Iterator allocations
-| **`JavaMonitor`** | **766** | Monitor objects for synchronization
-| `ArrayList` | 749 | List allocations
-| `StringBuilder` | 708 | String building
-| `HeadersMultiMap$MapEntry` | 463 | Vert.x HTTP headers
-| **`CreationalContextImpl`** | **250** | CDI bean creation contexts
-|===
-
-**Key observations**:
-
-1. **CDI CreationalContextImpl (250 samples)** — Each `Instance<BearerTokenResult>.get()` call creates a CDI creational context
-2. **JavaMonitor allocations (766 samples)** — SubstrateVM allocates monitor objects for synchronized operations
-3. **HashMap allocations (811 + 2,040 + 1,064)** — Significant overhead from header maps and claim maps
-
-=== Why CPU% Doesn't Match Latency%
-
-The JFR data reveals the ~14x gap is primarily due to concurrency effects, not CDI overhead (which is only 20µs per the ablation study):
-
-1. **Object allocation under concurrency** — Each validation creates new HashMaps, Sets, `AccessTokenContent`, and result objects (vs JMH reusing pre-parsed data)
-2. **Memory barriers** — Lock-free cache (`ConcurrentHashMap`) operations require memory ordering guarantees
-3. **Thread scheduling** — 50 concurrent connections cause frequent context switches (not visible in JFR as individual events)
-4. **CPU cache line invalidation** — Concurrent access to shared data structures invalidates L1/L2 cache
-5. **CDI `Instance.get()` overhead** — `CreationalContext` creation and `InjectionPoint` introspection add only 20µs (0.9%, measured via ablation)
-
-**These operations consume wall-clock time without proportionally consuming CPU cycles** — the CPU is often waiting on memory, cache coherence, or thread scheduling.
-
-NOTE: Despite 250 `CreationalContextImpl` allocations recorded in JFR, the measured CDI overhead via ablation is only 20µs (0.9%). The allocations are fast individually, and the real cost lies in JWT validation under concurrency (1,060µs, 46.1%).
-
-=== Access Log Filter Overhead
-
-The `CustomAccessLogFilter` is registered via `@Provider` and runs on **all JAX-RS endpoints**, including both health and JWT endpoints. JFR shows ~50% of CUI library CPU samples in the filter.
-
-**Measured Impact (Filter Disabled Benchmark):**
-
-[cols="2,2,2,2", options="header"]
-|===
-| Endpoint | Filter Enabled | Filter Disabled | Difference
-
-| Health P50
-| 0.510ms
-| 0.417ms
-| **-0.093ms (18%)**
-
-| JWT P50
-| 1.91ms
-| 1.96ms
-| +0.05ms (within variance)
-
-| JWT/Health ratio
-| 4.55x
-| 4.70x
-| ~same
-|===
-
-**Critical findings:**
-
-1. **Filter overhead is ~0.1ms per request** — visible on the health endpoint (0.510ms → 0.417ms)
-2. **Filter does NOT explain JWT-health gap** — JWT stayed at ~1.96ms, health improved to 0.417ms
-3. **JWT validation (1.1ms) dominates** — filter overhead (0.1ms) is negligible in comparison
-4. **50% CUI library CPU in filter is misleading** — that's 50% of only 0.3% total CPU
-
-The filter is configured with `min-status-code=400` (the default), so it only **logs** client and server errors but still **executes** `shouldLog()` and `isPathIncluded()` on every response. These methods create `Path.of(path)` objects per request.
-
-For benchmark isolation, the filter can be disabled:
-[source,properties]
+[source,bash]
 ----
-cui.http.access-log.filter.enabled=false
+jfr summary jwt-profile.jfr
+
+jfr print --events ExecutionSample jwt-profile.jfr | \
+  grep -A1 "stackTrace = \[" | grep -v "stackTrace" | \
+  sed 's/^[[:space:]]*//' | sort | uniq -c | sort -rn | head -50
+
+jfr print --events ExecutionSample jwt-profile.jfr | \
+  grep -A1 "stackTrace = \[" | grep "BigInteger" | sort | uniq -c
+
+jfr print --events ExecutionSample jwt-profile.jfr | \
+  grep -A1 "stackTrace = \[" | grep "de.cuioss" | sort | uniq -c | sort -rn
 ----
-
-=== CDI Producer Scope Analysis
-
-The `BearerTokenProducer.produceBearerTokenResult()` method is implicitly `@Dependent` scoped (no explicit scope annotation on producer method). This means:
-
-* A new `BearerTokenResult` is created for **every** `Instance.get()` call
-* Each creation involves `InjectionPoint` introspection to extract annotation parameters
-* Three `Set.copyOf(List.of(...))` allocations occur per request for scopes/roles/groups
-
-**Optimization consideration**: If the producer were `@RequestScoped`, the result would be cached for the duration of a request, eliminating redundant validation if `Instance.get()` is called multiple times. However, the current endpoint design calls it only once per request, so the benefit would be minimal unless the usage pattern changes.
-
-== CDI Producer Chain Research Findings
-
-This section documents research into the 1.087ms combined cost of CDI `Instance.get()` overhead and JWT validation under concurrency, and why neither component can be reduced without API changes.
-
-=== Quarkus @WithCaching Annotation
-
-Quarkus ArC provides `@io.quarkus.arc.WithCaching` specifically to address `Instance.get()` performance:
-
-[quote, Quarkus CDI Reference]
-When applied to an injected Instance, the result of `Instance#get()` is *cached on the first call*, and the same value is returned for all subsequent calls, *even for @Dependent beans*.
-
-**Source**: https://quarkus.io/guides/cdi-reference
-
-=== What Instance.get() Does Internally
-
-Each uncached `Instance.get()` call performs (from ArC source code analysis):
-
-1. Creates a **child CreationalContext** (`this.creationalContext.child(bean)`)
-2. Constructs **InjectionPointImpl** with type, qualifiers, annotations, member info
-3. Sets InjectionPoint via `InjectionPointProvider.setCurrent()`
-4. Creates bean instance (for @Dependent scope)
-5. Cleans up InjectionPoint in try-finally
-
-**Source**: https://github.com/quarkusio/quarkus/blob/main/independent-projects/arc/runtime/src/main/java/io/quarkus/arc/impl/InstanceImpl.java
-
-This overhead is confirmed by JFR allocation samples showing 250 `CreationalContextImpl` allocations during the benchmark.
-
-=== Memory Leak Risk with @Dependent
-
-**CRITICAL**: Instances from `Instance.get()` for `@Dependent` beans are never GC'd when the holding bean is `@ApplicationScoped`:
-
-[quote, Quarkus Issue #5209]
-Instances obtained from Instance.get() are *dependent objects of the Instance itself*. For @ApplicationScoped beans holding an Instance, dependent instances accumulate for the application's lifetime.
-
-**Mitigation**: Use `Instance.Handle` with try-with-resources or call `instance.destroy(myInstance)`.
-
-**Sources**:
-
-* https://github.com/quarkusio/quarkus/issues/5209
-* https://rmannibucau.wordpress.com/2015/03/02/cdi-and-instance-3-pitfalls-you-need-to-know/
-
-=== Why @WithCaching Cannot Be Applied
-
-The `JwtValidationEndpoint` uses **5 different Instance fields** with different `@BearerToken` annotation parameters:
-
-[source,java]
-----
-@BearerToken Instance<BearerTokenResult> basicToken;
-@BearerToken(requiredScopes = {"read"}) Instance<BearerTokenResult> tokenWithScopes;
-@BearerToken(requiredRoles = {"user"}) Instance<BearerTokenResult> tokenWithRoles;
-@BearerToken(requiredGroups = {"test-group"}) Instance<BearerTokenResult> tokenWithGroups;
-@BearerToken(requiredScopes = {"read"}, requiredRoles = {"user"}, ...) Instance<BearerTokenResult> tokenWithAll;
-----
-
-Each field requires **different authorization validation** via `InjectionPoint` introspection. Applying `@WithCaching` would:
-
-* Return the `basicToken` result when `tokenWithScopes` is requested → **security bypass**
-* Skip scope/role/group validation entirely
-
-**Conclusion**: The design requires per-request `InjectionPoint` introspection to extract annotation parameters, making `@WithCaching` inapplicable for security reasons. This is the same constraint that blocked `@RequestScoped` refactoring.
-
-=== Investigation Conclusion
-
-The ~14x JMH-to-integration gap (77µs → 1,060µs under concurrency) is **understood but not optimizable**:
-
-1. **Two contributing factors identified**: JWT validation under concurrency at 46.1% of total request time (1,060µs), and CDI `Instance.get()` with per-request `InjectionPoint` introspection at 0.9% (20µs)
-2. **Neither is optimizable**: Concurrency penalty is inherent to real workloads; CDI overhead is blocked by security requirements (different annotation parameters per injection point)
-3. **Split is measured**: JWT validation under concurrency dominates at 1,060µs, while CDI overhead is minimal at 20µs
-4. **Performance acceptable**: 25.2K ops/s at 2.30ms avg exceeds targets (>10K ops/s, <5ms)
 
 == Related Documents
 
-* link:Analysis-03.2026-Integration.adoc[Integration Benchmark Analysis] - Throughput and latency measurements
-* link:Analysis-03.2026-Latency-Decomposition.adoc[Latency Decomposition] - Ablation study results
-* link:Analysis-03.2026-Micro.adoc[Microbenchmark Analysis] - JMH component-level timings
-* link:../../oauth-sheriff-quarkus-parent/doc/performance/jfr-profiling-guide.adoc[JFR Profiling Guide] - Setup instructions
+* link:Analysis-03.2026-Integration.adoc[Integration Benchmark Analysis] — throughput, latency, connection sweep
+* link:Analysis-03.2026-Latency-Decomposition.adoc[Latency Decomposition] — ablation study
+* link:Analysis-03.2026-Micro.adoc[Microbenchmark Analysis] — JMH library timings
+* link:../../oauth-sheriff-quarkus-parent/doc/performance/jfr-profiling-guide.adoc[JFR Profiling Guide] — setup instructions
