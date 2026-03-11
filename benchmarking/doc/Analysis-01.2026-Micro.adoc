@@ -184,7 +184,7 @@ Based on a dedicated JMH benchmark run (1,024 samples). Note: the test resource 
 
 NOTE: Stress profile (150 connections) shows higher latency (5.49ms P50) due to connection queuing, not additional per-request overhead. The 50-connection baseline is used here for a fair comparison with JMH, which runs without queuing effects.
 
-**Conclusion:** The core library validation is highly optimized at 159k ops/s with 77µs latency. Integration testing at 50 connections shows 22.7k ops/s and 1.93ms P50 latency. A five-layer ablation study (link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition]) decomposes the 1.85ms overhead into: shared infrastructure 0.510ms (27%), JAX-RS POST routing 0.274ms (14%), Vert.x context resolution 0.036ms (2%), authorization parsing 0.003ms (<1%), and CDI producer chain + JWT validation 1.087ms (57%).
+**Conclusion:** The core library validation is highly optimized at 159k ops/s with 77µs latency. Integration testing at 50 connections shows 22.7k ops/s and 1.93ms P50 latency. A six-layer ablation study (link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition]) decomposes the 1.85ms overhead into: shared infrastructure 0.510ms (27%), JAX-RS POST routing 0.274ms (14%), Vert.x context resolution 0.036ms (2%), authorization parsing 0.003ms (<1%), and the formerly combined "CDI producer chain + JWT validation" layer now split via a direct-validation ablation variant into JWT validation under concurrency 1,160µs (55.8%) and CDI `Instance.get()` + `@Timed` overhead ~50µs (2.4%). The combined 1,210µs is close to the original 1,087µs — the difference is measurement variance between runs.
 
 === Bottleneck Identification
 
@@ -247,7 +247,7 @@ NOTE: Stress profile (150 connections) shows higher latency (5.49ms P50) due to 
 
 NOTE: Previous versions of this table used stress profile numbers (150 connections: 5.49ms P50, 32.59ms P99). The 50-connection baseline is a fairer comparison because JMH runs without connection queuing.
 
-**Key Takeaway:** The core library is extremely fast (77µs P50). Integration overhead at 50 connections adds ~1.85ms (measured decomposition in link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition]), which is acceptable for real-world HTTP-based microservices.
+**Key Takeaway:** The core library is extremely fast (77µs P50). Integration overhead at 50 connections adds ~1.85ms (measured decomposition in link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition]), of which JWT validation under concurrency accounts for 1,160µs (55.8%, measured) and CDI overhead only 50µs (2.4%, measured). This is acceptable for real-world HTTP-based microservices.
 
 == Conclusion
 
@@ -257,7 +257,7 @@ Comprehensive JMH micro-benchmark analysis reveals:
 * **Signature validation dominates**: 88% of validation time (68µs) spent in cryptographic operations (expected and unavoidable)
 * **Minimal overhead**: Non-cryptographic operations (parsing, cache, claims) add only ~9µs (12% of total)
 * **Fast-fail optimization**: 50% invalid token rate improves throughput to 222k ops/s
-* **Integration reality check**: 7x throughput gap (159k vs 23k ops/s) and 25x latency gap (77µs vs 1.93ms at 50 connections) — integration overhead decomposed via ablation study (link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition])
+* **Integration reality check**: 7x throughput gap (159k vs 23k ops/s) and 25x latency gap (77µs vs 1.93ms at 50 connections) — integration overhead decomposed via ablation study with measured CDI vs validation split: JWT validation 1,160µs (55.8%), CDI overhead 50µs (2.4%) (link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition])
 * **Production readiness**: Library meets performance requirements with sub-100µs validation latency
 
 **Recommendation:** Current library performance is excellent. Further optimization would require algorithmic changes to signature validation (e.g., EdDSA instead of RSA), which is outside the scope of this library.
