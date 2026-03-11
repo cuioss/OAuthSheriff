@@ -146,4 +146,4 @@ The ~6x throughput gap and ~30x latency gap are fully explained by integration o
 
 == Conclusion
 
-The core library is highly optimized at 77µs P50. The integration overhead is expected for HTTP-based microservices. Further library optimization would require algorithmic changes to signature validation (e.g., EdDSA instead of RSA).
+The core library is highly optimized at 77µs P50. The integration overhead is expected for HTTP-based microservices. Signature validation (RS256) dominates at 88% — this is the primary candidate for optimization, but no alternative has been benchmarked.

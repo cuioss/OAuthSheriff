@@ -156,12 +156,7 @@ Top allocation types from 45,048 `ObjectAllocationSample` events:
 
 == Why CPU% Doesn't Match Latency%
 
-JFR shows CUI library at 0.3% of CPU samples, yet the ablation study measures JWT validation at 46% of request time. The explanation: concurrency effects consume wall-clock time without proportionally consuming CPU cycles.
-
-* **Object allocation under concurrency** — each validation creates new HashMaps, Sets, `AccessTokenContent` (vs JMH reusing pre-parsed data)
-* **Memory barriers** — lock-free cache (`ConcurrentHashMap`) requires ordering guarantees
-* **Thread scheduling** — 50 concurrent connections cause context switches (not visible as individual JFR events)
-* **CPU cache line invalidation** — concurrent access to shared structures invalidates L1/L2 cache
+JFR shows CUI library at 0.3% of CPU samples, yet the ablation study measures JWT validation at 46% of request time. **The exact cause of this discrepancy is unknown.** The low CPU% with high wall-clock cost suggests the time is spent on operations not visible in CPU sampling (e.g., memory stalls, scheduling, cache coherence), but this has not been individually measured.
 
 == Access Log Filter
 

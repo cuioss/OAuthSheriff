@@ -172,6 +172,6 @@ JWT validation is also the dominant source of P99 tail latency (+3.09ms). The CD
 
 == Key Findings
 
-* **JWT validation under concurrency is the sole significant cost** at 46.1% (1,060µs) of request time. The core library validates in 77µs isolation (link:Analysis-03.2026-Micro.adoc[micro-benchmark]); the ~14x concurrency multiplier comes from cache contention, memory barriers, and real object allocation under 50 concurrent connections.
+* **JWT validation under concurrency is the sole significant cost** at 46.1% (1,060µs) of request time. The core library validates in 77µs isolation (link:Analysis-03.2026-Micro.adoc[micro-benchmark]). The exact causes of the ~14x concurrency multiplier are not individually measured — see link:Analysis-03.2026-Integration.adoc#_root_cause_jwt_validation_under_concurrency[root cause analysis].
 * **Shared infrastructure + JAX-RS routing** account for 51.3% — expected overhead for HTTP-based microservices.
 * **All other layers are noise**: Vert.x resolution (0.06ms), authorization parsing (~0ms), and CDI proxy (~0ms) are individually negligible.

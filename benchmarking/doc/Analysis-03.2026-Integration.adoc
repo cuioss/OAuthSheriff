@@ -295,7 +295,7 @@ NOTE: Thread count and CPU data from JFR profiling. Throughput from benchmark sw
 |296
 |===
 
-JWT is ~4.6x less CPU-efficient, attributable to cryptographic signature verification and complex JSON response serialization.
+JWT is ~4.6x less CPU-efficient. The ablation study identifies JWT validation as the dominant cost; the exact CPU-level breakdown between cryptographic operations, object allocation, and serialization is not individually measured at integration level.
 
 == Aspects Evaluated but Ruled Out
 
@@ -334,14 +334,14 @@ Not feasible — multiple injection points use different `@BearerToken` paramete
 
 After ruling out all framework-level factors, the dominant cost is **JWT cryptographic validation under concurrency**.
 
-The core library validates in 77µs (link:Analysis-03.2026-Micro.adoc[JMH micro-benchmark]). Under 50 concurrent connections, the measured cost is 1,060µs (link:Analysis-03.2026-Latency-Decomposition.adoc[ablation study]: Direct Validation minus Mock JWT). The ~14x increase is due to CPU cache line invalidation, memory barriers in `ConcurrentHashMap`, real object allocation (`AccessTokenContent`, claim maps), and thread scheduling under contention.
+The core library validates in 77µs (link:Analysis-03.2026-Micro.adoc[JMH micro-benchmark]). Under 50 concurrent connections, the measured cost is 1,060µs (link:Analysis-03.2026-Latency-Decomposition.adoc[ablation study]: Direct Validation minus Mock JWT) — a ~14x increase. **The exact causes of this concurrency multiplier are not individually measured.** JFR shows minimal lock contention (14 events in 240s) and low CPU% for the library (0.3%), which rules out CPU-bound bottlenecks but does not pinpoint the wall-clock cost.
 
-This is **inherent to concurrent workloads** and cannot be optimized without algorithmic changes (e.g., EdDSA instead of RSA). The lock-free cache design is already optimal (14 lock events over 240 seconds).
+The lock-free cache design is already optimal (14 lock events over 240 seconds). No further optimization path has been identified within the current architecture.
 
 == Conclusion
 
 * **25.2K ops/s** at 50 connections exceeds the 10K target by 2.5x
 * **2.30ms avg** latency well under the 5ms target
 * **JWT validation under concurrency** (1,060µs, 46.1% of request time) is the sole significant cost — all framework overhead is negligible
-* **No optimization path** without changing cryptographic algorithms
+* **No optimization path identified** within the current architecture
 * **Stable scaling** through 300 connections with no anomalous behavior
