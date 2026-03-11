@@ -7,8 +7,8 @@
 
 == Executive Summary
 
-**Analysis Date**: January 2026 +
-**Primary Finding**: RSA signature verification performs excellently at 68us, accounting for only 0.1% of CPU samples.
+**Analysis Date**: March 2026 +
+**Primary Finding**: RSA signature verification at 68µs (P50) accounts for 88% of the 77µs library validation time but only 0.1% of CPU samples under integration load.
 
 == RSA Performance
 
@@ -16,34 +16,30 @@
 
 [cols="2,2,2", options="header"]
 |===
-| Operation | Time | Notes
+| Operation | Time (P50) | Notes
 
-| RS256 Signature Verification | 68us | Default JDK provider
-| Full JWT Parsing + Verification | 77us | Includes JSON parsing
-| Token Cache Lookup | 0.1us | Lock-free concurrent cache
+| RS256 Signature Verification | 68µs | Default JDK provider
+| Full JWT Parsing + Verification | 77µs | Includes JSON parsing
+| Token Cache Lookup | 0.1µs | Lock-free concurrent cache
 |===
+
+See link:../../../benchmarking/doc/Analysis-03.2026-Micro.adoc[Microbenchmark Analysis] for full pipeline breakdown.
 
 === JFR CPU Profiling
 
-48,027 execution samples under load (top-of-stack):
+From link:../../../benchmarking/doc/Analysis-03.2026-JFR-Profiling.adoc[JFR Profiling Analysis] (48,027 execution samples under load):
 
-[cols="2,1,1", options="header"]
-|===
-| Component | Samples | Percentage
+* **TLS Encryption**: 18.7% of CPU — shared infrastructure cost, not JWT-specific
+* **CUI Sheriff OAuth Library**: 0.3% of CPU
+* **BigInteger (RSA)**: 0.1% of CPU (46 samples)
 
-| TLS Encryption (GHASH, AES, CounterMode) | 8,970 | **18.7%**
-| Network I/O (Socket read/write) | 4,369 | 9.1%
-| JVM/GC Overhead | ~3,000 | 6.3%
-| Vert.x/Netty Buffer Operations | 1,656 | 3.5%
-| CUI Sheriff OAuth Library | ~150 | **0.3%**
-| BigInteger (RSA) | 46 | **0.1%**
-|===
+NOTE: Low CPU% does not mean low wall-clock cost. The ablation study measures JWT validation at 46.1% of request time (1,060µs). The CPU/latency mismatch is documented but **the exact cause is unknown**. See link:../../../benchmarking/doc/Analysis-03.2026-JFR-Profiling.adoc#_why_cpu_doesnt_match_latency[JFR analysis].
 
 == GraalVM Native Image Characteristics
 
 * **No JIT Compilation**: Static AOT compilation
 * **Predictable Performance**: No warmup period, consistent latency
-* BigInteger operations perform well; default JDK RSA provider achieves 68us
+* BigInteger operations perform well; default JDK RSA provider achieves 68µs
 
 === GraalVM 25 / Mandrel jdk-25 Improvements
 
@@ -58,16 +54,16 @@
 |===
 | Algorithm | Type | Measured Time | Assessment
 
-| RS256 | RSA 2048-bit | 68us | Current default, excellent
-| ES256 | ECDSA P-256 | ~20-40us (est.) | Faster, marginal benefit
-| Ed25519 | EdDSA Curve25519 | ~10-20us (est.) | Fastest, smaller signatures
+| RS256 | RSA 2048-bit | 68µs | Current default, measured
+| ES256 | ECDSA P-256 | — | Not benchmarked
+| Ed25519 | EdDSA Curve25519 | — | Not benchmarked
 |===
 
-With RSA at 68us (3.5% of 1.91ms total latency), algorithm migration provides marginal improvement. Decision should be driven by standards compliance, key management, and token size rather than performance.
+No alternative algorithm has been benchmarked. Algorithm choice should be driven by standards compliance, key management, and token size rather than performance.
 
 == JCA Provider Landscape
 
-* **Default JDK** (Recommended): 68us RSA, full native image support, automatic updates
+* **Default JDK** (Recommended): 68µs RSA, full native image support, automatic updates
 * **BouncyCastle**: Only if specific algorithms needed; requires reflection configuration
 * **Conscrypt**: Not suitable for GraalVM native image (BoringSSL dependencies)
 * **Jipher**: No longer bundled with GraalVM 25; consider only for FIPS compliance
@@ -83,5 +79,3 @@ native-image --enable-monitoring=jcmd,jfr,heapdump YourApp
 jcmd <pid> JFR.start duration=60s filename=profile.jfr
 jcmd <pid> JFR.dump filename=profile.jfr
 ----
-
-Key metrics: RSA verification time (~68us), BigInteger CPU percentage (~0.1%), TLS overhead (~18.7%).

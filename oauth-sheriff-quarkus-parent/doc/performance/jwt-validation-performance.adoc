@@ -9,69 +9,74 @@
 
 JWT validation performance characteristics, baselines, and analysis for the CUI OAuth Sheriff Quarkus integration.
 
-== Performance Baselines (January 2026)
+== Performance Baselines (March 2026)
 
 === System Configuration
 
 * **Platform**: Apple M4, 10 CPU cores, 32 GB RAM
 * **Runtime**: Mandrel jdk-25 native image
-* **Framework**: Quarkus 3.32.1
+* **Framework**: Quarkus 3.27.2 (LTS)
 * **Container**: Docker with Keycloak for token issuance
 
 === Current Performance Summary
 
 [cols="3,2,2,2", options="header"]
 |===
-| Endpoint | Throughput | P50 Latency | P99 Latency
+| Endpoint | Throughput | Avg Latency | P99 Latency
 
-| **JWT Validation** | 22,700-24,300 ops/s | 1.91ms | 4.78ms
-| **Health Check** | 64,900-89,900 ops/s | 0.426-0.510ms | 1.37ms
-| **JWT Library (JMH)** | 159,100 ops/s | 77us | N/A
+| **JWT Validation** | 25,178 ops/s | 2.30ms | 11.52ms
+| **Health Check** | 98,211 ops/s | 0.78ms | 6.04ms
+| **JWT Library (JMH)** | 159,100 ops/s | 77µs (P50) | 163µs
 |===
 
-JWT validation throughput remains stable at 22.7-24.3K ops/s across 50-300 concurrent connections with a constant JWT/Health P50 ratio of 4.55x (SD 0.09).
+All measurements at 50 concurrent connections (optimal). See link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc[Integration Analysis] for connection sweep (50-300).
 
 == Latency Decomposition
 
-[cols="2,2,2", options="header"]
+From the link:../../../benchmarking/doc/Analysis-03.2026-Latency-Decomposition.adoc[ablation study]:
+
+[cols="3,2,2", options="header"]
 |===
-| Component | Latency (P50) | Percentage
+| Layer | Latency (avg) | % of total
 
-| Shared Infrastructure (Docker, TLS, HTTP/2, Quarkus routing) | 0.510ms | 27%
-| Framework Overhead (POST, JAX-RS, Jackson) | 0.313ms | 16%
-| **Token Validation** (CDI producer + JWT validation) | **1.087ms** | **57%**
+| Shared infrastructure (Docker, TLS, HTTP/2, Quarkus routing) | 0.78ms | 33.9%
+| JAX-RS POST routing + Jackson serialization | 0.40ms | 17.4%
+| Vert.x context resolution | 0.06ms | 2.6%
+| Authorization parsing + HashMap construction | ~0ms | ~0%
+| **JWT validation under concurrency** | **1.06ms** | **46.1%**
+| CDI proxy + `@Timed` | ~0ms | ~0%
 |===
 
-**Total**: 0.510 + 0.313 + 1.087 = **1.91ms** (JWT P50 at 50 connections)
+**Total**: 0.78 + 0.40 + 0.06 + 0 + 1.06 + ~0 ≈ **2.30ms**
 
-A mock JWT endpoint isolates the token validation cost at 1.087ms. The 14x gap between library (77us JMH) and integration (1.087ms) is caused by CDI `Instance.get()` resolution, InjectionPoint introspection, `@Timed` instrumentation, and object allocation. This overhead is **inherent to the security design** -- per-request authorization with different requirements per injection point. `@WithCaching` would cause a security bypass.
+JWT validation under concurrency is the sole significant cost. The core library validates in 77µs isolation (JMH); under 50 concurrent connections the measured cost is 1,060µs — a ~14x increase. The exact causes of this concurrency multiplier are not individually measured. See link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc#_root_cause_jwt_validation_under_concurrency[root cause analysis].
 
 == JWT Library Performance (JMH Analysis)
 
 [cols="2,2,2", options="header"]
 |===
-| Component | Time | Share of JWT Processing
+| Component | Time (P50) | Share of JWT Processing
 
-| RSA Signature Verification | 68us | **88%**
-| Token Parsing | 4.3us | 6%
-| Cache Operations | 0.1us | <1%
-| Other | ~4.6us | 6%
+| RSA Signature Verification | 68µs | **88%**
+| Token Parsing | 4.3µs | 6%
+| Cache Operations | 0.1µs | <1%
+| Other | ~4.6µs | 6%
 |===
 
-RSA at 68us is NOT a bottleneck. JFR confirms BigInteger.modPow() accounts for only 0.1% of CPU samples.
+See link:../../../benchmarking/doc/Analysis-03.2026-Micro.adoc[Microbenchmark Analysis] for full results.
 
-== Algorithm Performance Characteristics
+== Algorithm Performance
 
 [cols="2,2,2,3", options="header"]
 |===
-| Algorithm | Type | Security Level | Performance Notes
+| Algorithm | Type | Security Level | Notes
 
-| RS256/384/512 | RSA | 2048-bit | 68us - Current default, excellent
-| ES256/384/512 | ECDSA | 256-384-bit curves | Expected faster, marginal benefit
-| Ed25519/Ed448 | EdDSA | Curve25519/448 | Fastest, smaller signatures
+| RS256/384/512 | RSA | 2048-bit | 68µs — current default
+| ES256/384/512 | ECDSA | 256-384-bit curves | Not benchmarked
+| Ed25519/Ed448 | EdDSA | Curve25519/448 | Not benchmarked
 |===
 
-No urgent algorithm migration required. Algorithm choice should be driven by standards compliance, token size, and key management.
+No alternative algorithm has been benchmarked. Algorithm choice should be driven by standards compliance, token size, and key management.
 
 == Native Image Performance
 
@@ -86,22 +91,15 @@ No urgent algorithm migration required. Algorithm choice should be driven by sta
 | Build Time | ~4m 30s | With Mandrel jdk-25 container build
 |===
 
-=== GraalVM/Mandrel 25 Features
-
-* **WP-SCCP**: Whole-Program Sparse Conditional Constant Propagation (default)
-* **ML Profile Inference**: 1-3% boost via GraalNN
-* **JCMD Support**: Runtime diagnostics for native images
-* **JFR Improvements**: New `jdk.ObjectAllocationSample` event
-
 == Performance Targets
 
 [cols="2,2,2,2", options="header"]
 |===
 | Metric | Target | Actual | Status
 
-| JWT Throughput | >10,000 ops/s | 22,700+ ops/s | Exceeds 2.3x
-| JWT P50 Latency | <5ms | 1.91ms | Exceeds 2.6x
-| Health Baseline | >50,000 ops/s | 64,900+ ops/s | Exceeds 1.3x
+| JWT Throughput | >10,000 ops/s | 25,178 ops/s | Exceeds 2.5x
+| JWT Avg Latency | <5ms | 2.30ms | Exceeds 2.2x
+| Health Baseline | >50,000 ops/s | 98,211 ops/s | Exceeds 2.0x
 | Memory Usage | <90% of 512MB | ~128MB peak | 25% utilization
 | Startup Time | <1s | 0.172s | Exceeds 5.8x
 |===

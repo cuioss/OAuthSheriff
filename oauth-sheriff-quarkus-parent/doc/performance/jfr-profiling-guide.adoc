@@ -96,23 +96,9 @@ jfr print --events ExecutionSample jwt-profile.jfr | head -200
 jfr print --events ExecutionSample jwt-profile.jfr | grep -i BigInteger | wc -l
 ----
 
-=== CPU Hotspot Analysis (January 2026)
+For detailed CPU hotspot data and profiling results, see link:../../../benchmarking/doc/Analysis-03.2026-JFR-Profiling.adoc[JFR Profiling Analysis].
 
-48,027 execution samples (top-of-stack):
-
-[cols="2,1,1", options="header"]
-|===
-| Component | Samples | Percentage
-
-| TLS Encryption (GHASH, AES, CounterMode) | 8,970 | **18.7%**
-| Network I/O (Socket read/write) | 4,369 | 9.1%
-| JVM/GC Overhead | ~3,000 | 6.3%
-| Vert.x/Netty Buffer Operations | 1,656 | 3.5%
-| CUI Sheriff OAuth Library | ~150 | **0.3%**
-| BigInteger (RSA) | 46 | **0.1%**
-|===
-
-Key findings: TLS encryption is the largest CPU consumer (18.7%). RSA/BigInteger is minimal (0.1%). OAuth library overhead is 0.3%.
+NOTE: JFR CPU sampling shows the OAuth library at 0.3% of samples, while the ablation study measures JWT validation at 46.1% of wall-clock time. CPU% and latency% are different metrics — low CPU% does not imply low wall-clock cost. See the link:../../../benchmarking/doc/Analysis-03.2026-JFR-Profiling.adoc#_why_cpu_doesnt_match_latency[CPU/latency mismatch analysis].
 
 == JFR Events Reference
 

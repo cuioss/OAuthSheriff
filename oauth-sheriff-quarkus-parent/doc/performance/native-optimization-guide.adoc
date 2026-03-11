@@ -51,8 +51,6 @@ native-image --gc=G1 YourApp
 
 === Virtual Threads
 
-Verified 24-30% improvement:
-
 [source,properties]
 ----
 quarkus.virtual-threads.name-prefix=jwt-validation
@@ -130,7 +128,7 @@ docker compose -f docker-compose.yml -f docker-compose.jfr.yml up -d
 
 == Runtime Verification
 
-**Key Performance Indicators** (January 2026):
+**Key Performance Indicators** (March 2026):
 
 * **Distroless Production Image**: ~104MB, 0.172s startup
 * **UBI-based Profiling Image**: ~187MB, ~0.2s startup
