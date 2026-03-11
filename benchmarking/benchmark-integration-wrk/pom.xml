@@ -227,9 +227,10 @@
                         </configuration>
                     </execution>
 
-                    <!-- Run WRK Mock JWT benchmark -->
+                    <!-- Run all ablation benchmarks (mock-jwt, direct-validation, baseline, header-only) -->
+                    <!-- Uses a dispatcher script to avoid duplicating Maven config per variant -->
                     <execution>
-                        <id>run-wrk-mock-jwt-benchmark</id>
+                        <id>run-wrk-ablation-benchmarks</id>
                         <phase>integration-test</phase>
                         <goals>
                             <goal>exec</goal>
@@ -238,106 +239,10 @@
                             <skip>${skip.benchmark}</skip>
                             <executable>bash</executable>
                             <arguments>
-                                <argument>${wrk.script.dir}/mock_jwt_benchmark.sh</argument>
+                                <argument>${wrk.script.dir}/ablation_benchmark_dispatcher.sh</argument>
                             </arguments>
-                            <outputFile>${wrk.output.dir}/wrk-mock-jwt-results.txt</outputFile>
-                            <timeout>240000</timeout>
-                            <environmentVariables>
-                                <KEYCLOAK_URL>${keycloak.url}</KEYCLOAK_URL>
-                                <REALM>benchmark</REALM>
-                                <CLIENT_ID>benchmark-client</CLIENT_ID>
-                                <CLIENT_SECRET>benchmark-secret</CLIENT_SECRET>
-                                <USERNAME>benchmark-user</USERNAME>
-                                <PASSWORD>benchmark-password</PASSWORD>
-                                <TOKEN_COUNT>${wrk.jwt.token_count}</TOKEN_COUNT>
-                                <WRK_THREADS>${wrk.threads}</WRK_THREADS>
-                                <WRK_CONNECTIONS>${wrk.connections}</WRK_CONNECTIONS>
-                                <WRK_DURATION>${wrk.duration}</WRK_DURATION>
-                                <WRK_TIMEOUT>${wrk.timeout}</WRK_TIMEOUT>
-                                <COMPOSE_DIR>${integration.compose.dir}</COMPOSE_DIR>
-                            </environmentVariables>
-                        </configuration>
-                    </execution>
-
-                    <!-- Run WRK Direct Validation benchmark -->
-                    <execution>
-                        <id>run-wrk-direct-validation-benchmark</id>
-                        <phase>integration-test</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skip.benchmark}</skip>
-                            <executable>bash</executable>
-                            <arguments>
-                                <argument>${wrk.script.dir}/direct_validation_benchmark.sh</argument>
-                            </arguments>
-                            <outputFile>${wrk.output.dir}/wrk-direct-validation-results.txt</outputFile>
-                            <timeout>240000</timeout>
-                            <environmentVariables>
-                                <KEYCLOAK_URL>${keycloak.url}</KEYCLOAK_URL>
-                                <REALM>benchmark</REALM>
-                                <CLIENT_ID>benchmark-client</CLIENT_ID>
-                                <CLIENT_SECRET>benchmark-secret</CLIENT_SECRET>
-                                <USERNAME>benchmark-user</USERNAME>
-                                <PASSWORD>benchmark-password</PASSWORD>
-                                <TOKEN_COUNT>${wrk.jwt.token_count}</TOKEN_COUNT>
-                                <WRK_THREADS>${wrk.threads}</WRK_THREADS>
-                                <WRK_CONNECTIONS>${wrk.connections}</WRK_CONNECTIONS>
-                                <WRK_DURATION>${wrk.duration}</WRK_DURATION>
-                                <WRK_TIMEOUT>${wrk.timeout}</WRK_TIMEOUT>
-                                <COMPOSE_DIR>${integration.compose.dir}</COMPOSE_DIR>
-                            </environmentVariables>
-                        </configuration>
-                    </execution>
-
-                    <!-- Run WRK Ablation Baseline benchmark -->
-                    <execution>
-                        <id>run-wrk-ablation-baseline-benchmark</id>
-                        <phase>integration-test</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skip.benchmark}</skip>
-                            <executable>bash</executable>
-                            <arguments>
-                                <argument>${wrk.script.dir}/ablation_baseline_benchmark.sh</argument>
-                            </arguments>
-                            <outputFile>${wrk.output.dir}/wrk-ablation-baseline-results.txt</outputFile>
-                            <timeout>240000</timeout>
-                            <environmentVariables>
-                                <KEYCLOAK_URL>${keycloak.url}</KEYCLOAK_URL>
-                                <REALM>benchmark</REALM>
-                                <CLIENT_ID>benchmark-client</CLIENT_ID>
-                                <CLIENT_SECRET>benchmark-secret</CLIENT_SECRET>
-                                <USERNAME>benchmark-user</USERNAME>
-                                <PASSWORD>benchmark-password</PASSWORD>
-                                <TOKEN_COUNT>${wrk.jwt.token_count}</TOKEN_COUNT>
-                                <WRK_THREADS>${wrk.threads}</WRK_THREADS>
-                                <WRK_CONNECTIONS>${wrk.connections}</WRK_CONNECTIONS>
-                                <WRK_DURATION>${wrk.duration}</WRK_DURATION>
-                                <WRK_TIMEOUT>${wrk.timeout}</WRK_TIMEOUT>
-                                <COMPOSE_DIR>${integration.compose.dir}</COMPOSE_DIR>
-                            </environmentVariables>
-                        </configuration>
-                    </execution>
-
-                    <!-- Run WRK Ablation Header-Only benchmark -->
-                    <execution>
-                        <id>run-wrk-ablation-header-only-benchmark</id>
-                        <phase>integration-test</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skip.benchmark}</skip>
-                            <executable>bash</executable>
-                            <arguments>
-                                <argument>${wrk.script.dir}/ablation_header_only_benchmark.sh</argument>
-                            </arguments>
-                            <outputFile>${wrk.output.dir}/wrk-ablation-header-only-results.txt</outputFile>
-                            <timeout>240000</timeout>
+                            <outputFile>${wrk.output.dir}/wrk-ablation-results.txt</outputFile>
+                            <timeout>960000</timeout> <!-- 16 min timeout for 4 x 60s benchmarks -->
                             <environmentVariables>
                                 <KEYCLOAK_URL>${keycloak.url}</KEYCLOAK_URL>
                                 <REALM>benchmark</REALM>
