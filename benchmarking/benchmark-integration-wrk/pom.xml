@@ -559,7 +559,7 @@
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
                         <executions>
-                            <!-- Build integration tests with JFR profile -->
+                            <!-- Build integration tests with JFR profile (container build for native-image) -->
                             <execution>
                                 <id>maven-build-jfr-integration-tests</id>
                                 <phase>pre-integration-test</phase>
@@ -570,10 +570,11 @@
                                     <skip>${skip.container.lifecycle}</skip>
                                     <executable>../../mvnw</executable>
                                     <arguments>
-                                        <argument>clean</argument>
-                                        <argument>package</argument>
+                                        <argument>compile</argument>
+                                        <argument>quarkus:build</argument>
                                         <argument>-Pjfr</argument>
                                         <argument>-DskipTests</argument>
+                                        <argument>-Dquarkus.native.container-build=true</argument>
                                     </arguments>
                                     <workingDirectory>${project.basedir}/../../oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests</workingDirectory>
                                 </configuration>
@@ -724,7 +725,7 @@
                                     <executable>bash</executable>
                                     <arguments>
                                         <argument>-c</argument>
-                                        <argument>cp -v ${project.basedir}/../../oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/jfr-output/*.jfr ${jfr.output.dir}/ 2>/dev/null || echo "No JFR files found to copy"</argument>
+                                        <argument>mkdir -p ${jfr.output.dir} &amp;&amp; cp -v ${project.basedir}/../../oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/jfr-output/*.jfr ${jfr.output.dir}/ 2>/dev/null || echo "No JFR files found to copy"</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
