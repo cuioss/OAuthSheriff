@@ -46,6 +46,9 @@
         <!-- Benchmark history directory for trend analysis -->
         <benchmark.history.dir>${wrk.results.dir}/history</benchmark.history.dir>
         <wrk.jwt.token_count>100</wrk.jwt.token_count>
+
+        <!-- Skip JFR benchmarks by default (enable with -Pbenchmark-jfr) -->
+        <skip.jfr.benchmark>true</skip.jfr.benchmark>
     </properties>
 
     <dependencies>
@@ -220,6 +223,134 @@
                                 <!-- Docker compose directory -->
                                 <COMPOSE_DIR>${integration.compose.dir}</COMPOSE_DIR>
                                 <!-- Service URL and network topology managed by docker-compose.yml -->
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
+
+                    <!-- Run WRK Mock JWT benchmark -->
+                    <execution>
+                        <id>run-wrk-mock-jwt-benchmark</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skip.benchmark}</skip>
+                            <executable>bash</executable>
+                            <arguments>
+                                <argument>${wrk.script.dir}/mock_jwt_benchmark.sh</argument>
+                            </arguments>
+                            <outputFile>${wrk.output.dir}/wrk-mock-jwt-results.txt</outputFile>
+                            <timeout>240000</timeout>
+                            <environmentVariables>
+                                <KEYCLOAK_URL>${keycloak.url}</KEYCLOAK_URL>
+                                <REALM>benchmark</REALM>
+                                <CLIENT_ID>benchmark-client</CLIENT_ID>
+                                <CLIENT_SECRET>benchmark-secret</CLIENT_SECRET>
+                                <USERNAME>benchmark-user</USERNAME>
+                                <PASSWORD>benchmark-password</PASSWORD>
+                                <TOKEN_COUNT>${wrk.jwt.token_count}</TOKEN_COUNT>
+                                <WRK_THREADS>${wrk.threads}</WRK_THREADS>
+                                <WRK_CONNECTIONS>${wrk.connections}</WRK_CONNECTIONS>
+                                <WRK_DURATION>${wrk.duration}</WRK_DURATION>
+                                <WRK_TIMEOUT>${wrk.timeout}</WRK_TIMEOUT>
+                                <COMPOSE_DIR>${integration.compose.dir}</COMPOSE_DIR>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
+
+                    <!-- Run WRK Direct Validation benchmark -->
+                    <execution>
+                        <id>run-wrk-direct-validation-benchmark</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skip.benchmark}</skip>
+                            <executable>bash</executable>
+                            <arguments>
+                                <argument>${wrk.script.dir}/direct_validation_benchmark.sh</argument>
+                            </arguments>
+                            <outputFile>${wrk.output.dir}/wrk-direct-validation-results.txt</outputFile>
+                            <timeout>240000</timeout>
+                            <environmentVariables>
+                                <KEYCLOAK_URL>${keycloak.url}</KEYCLOAK_URL>
+                                <REALM>benchmark</REALM>
+                                <CLIENT_ID>benchmark-client</CLIENT_ID>
+                                <CLIENT_SECRET>benchmark-secret</CLIENT_SECRET>
+                                <USERNAME>benchmark-user</USERNAME>
+                                <PASSWORD>benchmark-password</PASSWORD>
+                                <TOKEN_COUNT>${wrk.jwt.token_count}</TOKEN_COUNT>
+                                <WRK_THREADS>${wrk.threads}</WRK_THREADS>
+                                <WRK_CONNECTIONS>${wrk.connections}</WRK_CONNECTIONS>
+                                <WRK_DURATION>${wrk.duration}</WRK_DURATION>
+                                <WRK_TIMEOUT>${wrk.timeout}</WRK_TIMEOUT>
+                                <COMPOSE_DIR>${integration.compose.dir}</COMPOSE_DIR>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
+
+                    <!-- Run WRK Ablation Baseline benchmark -->
+                    <execution>
+                        <id>run-wrk-ablation-baseline-benchmark</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skip.benchmark}</skip>
+                            <executable>bash</executable>
+                            <arguments>
+                                <argument>${wrk.script.dir}/ablation_baseline_benchmark.sh</argument>
+                            </arguments>
+                            <outputFile>${wrk.output.dir}/wrk-ablation-baseline-results.txt</outputFile>
+                            <timeout>240000</timeout>
+                            <environmentVariables>
+                                <KEYCLOAK_URL>${keycloak.url}</KEYCLOAK_URL>
+                                <REALM>benchmark</REALM>
+                                <CLIENT_ID>benchmark-client</CLIENT_ID>
+                                <CLIENT_SECRET>benchmark-secret</CLIENT_SECRET>
+                                <USERNAME>benchmark-user</USERNAME>
+                                <PASSWORD>benchmark-password</PASSWORD>
+                                <TOKEN_COUNT>${wrk.jwt.token_count}</TOKEN_COUNT>
+                                <WRK_THREADS>${wrk.threads}</WRK_THREADS>
+                                <WRK_CONNECTIONS>${wrk.connections}</WRK_CONNECTIONS>
+                                <WRK_DURATION>${wrk.duration}</WRK_DURATION>
+                                <WRK_TIMEOUT>${wrk.timeout}</WRK_TIMEOUT>
+                                <COMPOSE_DIR>${integration.compose.dir}</COMPOSE_DIR>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
+
+                    <!-- Run WRK Ablation Header-Only benchmark -->
+                    <execution>
+                        <id>run-wrk-ablation-header-only-benchmark</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skip.benchmark}</skip>
+                            <executable>bash</executable>
+                            <arguments>
+                                <argument>${wrk.script.dir}/ablation_header_only_benchmark.sh</argument>
+                            </arguments>
+                            <outputFile>${wrk.output.dir}/wrk-ablation-header-only-results.txt</outputFile>
+                            <timeout>240000</timeout>
+                            <environmentVariables>
+                                <KEYCLOAK_URL>${keycloak.url}</KEYCLOAK_URL>
+                                <REALM>benchmark</REALM>
+                                <CLIENT_ID>benchmark-client</CLIENT_ID>
+                                <CLIENT_SECRET>benchmark-secret</CLIENT_SECRET>
+                                <USERNAME>benchmark-user</USERNAME>
+                                <PASSWORD>benchmark-password</PASSWORD>
+                                <TOKEN_COUNT>${wrk.jwt.token_count}</TOKEN_COUNT>
+                                <WRK_THREADS>${wrk.threads}</WRK_THREADS>
+                                <WRK_CONNECTIONS>${wrk.connections}</WRK_CONNECTIONS>
+                                <WRK_DURATION>${wrk.duration}</WRK_DURATION>
+                                <WRK_TIMEOUT>${wrk.timeout}</WRK_TIMEOUT>
+                                <COMPOSE_DIR>${integration.compose.dir}</COMPOSE_DIR>
                             </environmentVariables>
                         </configuration>
                     </execution>
@@ -400,6 +531,201 @@
                                         <argument>clean</argument>
                                     </arguments>
                                     <workingDirectory>${project.basedir}/../../oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests</workingDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- JFR profiling benchmark profile -->
+        <profile>
+            <id>benchmark-jfr</id>
+            <properties>
+                <!-- Suppress base health+JWT benchmark runs -->
+                <skip.benchmark>true</skip.benchmark>
+                <skip.jfr.benchmark>false</skip.jfr.benchmark>
+                <!-- Longer duration to fit in 240s JFR recording window -->
+                <wrk.duration>200s</wrk.duration>
+                <!-- Default benchmark to profile (overridable with -Djfr.benchmark=...) -->
+                <jfr.benchmark>jwt</jfr.benchmark>
+                <jfr.output.dir>${project.build.directory}/jfr-output</jfr.output.dir>
+                <compose.override>docker-compose.jfr.yml</compose.override>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <!-- Build integration tests with JFR profile -->
+                            <execution>
+                                <id>maven-build-jfr-integration-tests</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${skip.container.lifecycle}</skip>
+                                    <executable>../../mvnw</executable>
+                                    <arguments>
+                                        <argument>clean</argument>
+                                        <argument>package</argument>
+                                        <argument>-Pjfr</argument>
+                                        <argument>-DskipTests</argument>
+                                    </arguments>
+                                    <workingDirectory>${project.basedir}/../../oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests</workingDirectory>
+                                </configuration>
+                            </execution>
+
+                            <!-- Build Docker image with JFR support -->
+                            <execution>
+                                <id>docker-build-jfr-image</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${skip.container.lifecycle}</skip>
+                                    <executable>docker</executable>
+                                    <arguments>
+                                        <argument>compose</argument>
+                                        <argument>build</argument>
+                                    </arguments>
+                                    <workingDirectory>${project.basedir}/../../oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests</workingDirectory>
+                                    <environmentVariables>
+                                        <DOCKERFILE>Dockerfile.native.jfr</DOCKERFILE>
+                                        <DOCKER_IMAGE_TAG>jfr</DOCKER_IMAGE_TAG>
+                                    </environmentVariables>
+                                </configuration>
+                            </execution>
+
+                            <!-- Create JFR output directories -->
+                            <execution>
+                                <id>create-jfr-output-dir</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>mkdir</executable>
+                                    <arguments>
+                                        <argument>-p</argument>
+                                        <argument>${jfr.output.dir}</argument>
+                                        <argument>${wrk.results.dir}</argument>
+                                        <argument>${wrk.output.dir}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+
+                            <!-- Start containers with JFR compose overlay -->
+                            <execution>
+                                <id>start-jfr-containers</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${skip.container.lifecycle}</skip>
+                                    <executable>${integration.scripts.dir}/start-integration-container.sh</executable>
+                                    <workingDirectory>${project.basedir}</workingDirectory>
+                                    <environmentVariables>
+                                        <LOG_TARGET_DIR>${wrk.results.dir}</LOG_TARGET_DIR>
+                                        <COMPOSE_OVERRIDE>${compose.override}</COMPOSE_OVERRIDE>
+                                    </environmentVariables>
+                                </configuration>
+                            </execution>
+
+                            <!-- Pre-JFR health check -->
+                            <execution>
+                                <id>pre-jfr-health-check</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${skip.jfr.benchmark}</skip>
+                                    <executable>bash</executable>
+                                    <arguments>
+                                        <argument>${wrk.script.dir}/pre-benchmark-health-check.sh</argument>
+                                    </arguments>
+                                    <environmentVariables>
+                                        <INTEGRATION_SERVICE_URL>${integration.service.url}</INTEGRATION_SERVICE_URL>
+                                        <PROMETHEUS_URL>http://localhost:9090</PROMETHEUS_URL>
+                                        <KEYCLOAK_URL>${keycloak.url}</KEYCLOAK_URL>
+                                    </environmentVariables>
+                                </configuration>
+                            </execution>
+
+                            <!-- Run the selected JFR benchmark -->
+                            <execution>
+                                <id>run-jfr-benchmark</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${skip.jfr.benchmark}</skip>
+                                    <executable>bash</executable>
+                                    <arguments>
+                                        <argument>${wrk.script.dir}/jfr_benchmark_dispatcher.sh</argument>
+                                    </arguments>
+                                    <outputFile>${wrk.output.dir}/wrk-jfr-${jfr.benchmark}-results.txt</outputFile>
+                                    <timeout>300000</timeout>
+                                    <environmentVariables>
+                                        <JFR_BENCHMARK>${jfr.benchmark}</JFR_BENCHMARK>
+                                        <KEYCLOAK_URL>${keycloak.url}</KEYCLOAK_URL>
+                                        <REALM>benchmark</REALM>
+                                        <CLIENT_ID>benchmark-client</CLIENT_ID>
+                                        <CLIENT_SECRET>benchmark-secret</CLIENT_SECRET>
+                                        <USERNAME>benchmark-user</USERNAME>
+                                        <PASSWORD>benchmark-password</PASSWORD>
+                                        <TOKEN_COUNT>${wrk.jwt.token_count}</TOKEN_COUNT>
+                                        <WRK_THREADS>${wrk.threads}</WRK_THREADS>
+                                        <WRK_CONNECTIONS>${wrk.connections}</WRK_CONNECTIONS>
+                                        <WRK_DURATION>${wrk.duration}</WRK_DURATION>
+                                        <WRK_TIMEOUT>${wrk.timeout}</WRK_TIMEOUT>
+                                        <COMPOSE_DIR>${integration.compose.dir}</COMPOSE_DIR>
+                                    </environmentVariables>
+                                </configuration>
+                            </execution>
+
+                            <!-- Stop JFR containers with compose overlay -->
+                            <execution>
+                                <id>stop-jfr-containers</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${skip.container.lifecycle}</skip>
+                                    <executable>${integration.scripts.dir}/stop-integration-container.sh</executable>
+                                    <workingDirectory>${project.basedir}</workingDirectory>
+                                    <environmentVariables>
+                                        <COMPOSE_OVERRIDE>${compose.override}</COMPOSE_OVERRIDE>
+                                    </environmentVariables>
+                                    <successCodes>
+                                        <successCode>0</successCode>
+                                        <successCode>1</successCode>
+                                    </successCodes>
+                                </configuration>
+                            </execution>
+
+                            <!-- Copy JFR output files to benchmark results -->
+                            <execution>
+                                <id>copy-jfr-output</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${skip.jfr.benchmark}</skip>
+                                    <executable>bash</executable>
+                                    <arguments>
+                                        <argument>-c</argument>
+                                        <argument>cp -v ${project.basedir}/../../oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests/target/jfr-output/*.jfr ${jfr.output.dir}/ 2>/dev/null || echo "No JFR files found to copy"</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                         </executions>

@@ -1,4 +1,4 @@
-= JFR Profiling Analysis - January 2026
+= JFR Profiling Analysis - March 2026
 :toc:
 :toc-placement: preamble
 :toclevels: 3
@@ -322,7 +322,7 @@ The JFR data reveals the 14x gap is primarily due to:
 
 **These operations consume wall-clock time without proportionally consuming CPU cycles** — the CPU is often waiting on memory, cache coherence, or thread scheduling.
 
-NOTE: Despite 250 `CreationalContextImpl` allocations recorded in JFR, the measured CDI overhead via ablation is only 50µs (2.4%). The allocation count overestimated the actual latency impact — the allocations are fast individually, and the real cost lies in JWT validation under concurrency (1,160µs, 55.8%).
+NOTE: Despite 250 `CreationalContextImpl` allocations recorded in JFR, the measured CDI overhead via ablation is only 50µs (2.4%). The allocations are fast individually, and the real cost lies in JWT validation under concurrency (1,160µs, 55.8%).
 
 === Access Log Filter Overhead
 
@@ -436,84 +436,18 @@ Each field requires **different authorization validation** via `InjectionPoint` 
 
 **Conclusion**: The design requires per-request `InjectionPoint` introspection to extract annotation parameters, making `@WithCaching` inapplicable for security reasons. This is the same constraint that blocked `@RequestScoped` refactoring.
 
-=== Estimated Overhead Breakdown
-
-The ablation study measures the 1,087µs as a single layer (JWT minus Mock JWT). The split below is **estimated from JFR allocation data and concurrency modeling**, not measured via ablation.
-
-NOTE: The ablation study with the direct-validation variant now provides a measured split. The estimates below are retained for reference but superseded by measured values: JWT validation under concurrency 1,160µs (55.8%), CDI `Instance.get()` + `@Timed` ~50µs (2.4%).
-
-[cols="2,1,1,1", options="header"]
-|===
-| Component | Estimated | % of 1,087µs | Confidence
-
-| **JWT validation under concurrency**
-| **~600-800µs**
-| **55-74%**
-| MEDIUM (JMH=77µs, 8-10x concurrency multiplier from cache contention, memory barriers, real object allocation)
-
-| Child CreationalContext allocation
-| ~100-200µs
-| 9-18%
-| HIGH (250 JFR allocation samples)
-
-| InjectionPoint construction + annotation extraction
-| ~50-100µs
-| 5-9%
-| MEDIUM (reflection)
-
-| Set.copyOf() × 3 for scopes/roles/groups
-| ~10-20µs
-| ~1-2%
-| LOW
-
-| @Timed Micrometer instrumentation
-| ~1-5µs
-| <1%
-| HIGH (Micrometer docs)
-
-| **Total**
-| **~760-1125µs**
-| -
-| -
-|===
-
-**Matches observed**: 1,087µs
-
-NOTE: The estimated split shows JWT validation under concurrency as the primary contributor (~55-74%), with CDI `Instance.get()` machinery secondary (~15-30%). An additional ablation variant calling `createAccessToken()` directly (bypassing `Instance.get()`) would provide a measured split.
-
-=== Historical Benchmark Context
-
-From struberg/cdi-performance (2015, 10M invocations, 100 threads):
-
-[cols="2,1,1,1", options="header"]
-|===
-| Scope | OpenWebBeans | Weld | Baseline
-
-| @ApplicationScoped
-| 13ms
-| 17,751ms
-| 8ms
-
-| @RequestScoped
-| 648ms
-| 2,593ms
-| 8ms
-|===
-
-**Note**: Data is outdated, Quarkus ArC not included, but shows magnitude of scope overhead differences across implementations.
-
 === Investigation Conclusion
 
 The 14x JMH-to-integration gap (77µs → 1,087µs) is **understood but not optimizable**:
 
-1. **Two contributing factors identified**: JWT validation under concurrency at 55.8%, measured (1,160µs), and CDI `Instance.get()` with per-request `InjectionPoint` introspection at 2.4%, measured (50µs)
+1. **Two contributing factors identified**: JWT validation under concurrency at 55.8% (1,160µs), and CDI `Instance.get()` with per-request `InjectionPoint` introspection at 2.4% (50µs)
 2. **Neither is optimizable**: Concurrency penalty is inherent to real workloads; CDI overhead is blocked by security requirements (different annotation parameters per injection point)
-3. **Split is measured**: The direct-validation ablation variant (bypassing `Instance.get()`) confirms JWT validation under concurrency dominates (1,160µs), while CDI overhead is minimal (50µs)
+3. **Split is measured**: JWT validation under concurrency dominates at 1,160µs, while CDI overhead is minimal at 50µs
 4. **Performance acceptable**: 23K ops/s at 1.9ms P50 exceeds targets (>10K ops/s, <5ms)
 
 == Related Documents
 
-* link:Analysis-01.2026-Integration.adoc[Integration Benchmark Analysis] - Throughput and latency measurements
-* link:Analysis-01.2026-Latency-Decomposition.adoc[Latency Decomposition] - Ablation study results
-* link:Analysis-01.2026-Micro.adoc[Microbenchmark Analysis] - JMH component-level timings
+* link:Analysis-03.2026-Integration.adoc[Integration Benchmark Analysis] - Throughput and latency measurements
+* link:Analysis-03.2026-Latency-Decomposition.adoc[Latency Decomposition] - Ablation study results
+* link:Analysis-03.2026-Micro.adoc[Microbenchmark Analysis] - JMH component-level timings
 * link:../../oauth-sheriff-quarkus-parent/doc/performance/jfr-profiling-guide.adoc[JFR Profiling Guide] - Setup instructions

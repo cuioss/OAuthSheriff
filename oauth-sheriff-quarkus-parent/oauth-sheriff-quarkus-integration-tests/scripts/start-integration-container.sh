@@ -61,7 +61,13 @@ export LOG_TARGET_DIR="${PROJECT_DIR}/target"
 # Start with Docker Compose (includes Keycloak)
 echo "🐳 Starting Docker containers (Quarkus $MODE + Keycloak)..."
 echo "📁 Quarkus logs will be written to: ${LOG_TARGET_DIR}/quarkus.log"
-(cd "${PROJECT_DIR}" && docker compose -f "$COMPOSE_FILE" up -d)
+if [[ -n "$COMPOSE_OVERRIDE" ]]; then
+    mkdir -p "${PROJECT_DIR}/target/jfr-output"
+    echo "📄 Using compose overlay: $COMPOSE_OVERRIDE"
+    (cd "${PROJECT_DIR}" && docker compose -f "$COMPOSE_FILE" -f "$COMPOSE_OVERRIDE" up -d)
+else
+    (cd "${PROJECT_DIR}" && docker compose -f "$COMPOSE_FILE" up -d)
+fi
 
 # Wait for Keycloak to be ready first
 echo "⏳ Waiting for Keycloak to be ready..."

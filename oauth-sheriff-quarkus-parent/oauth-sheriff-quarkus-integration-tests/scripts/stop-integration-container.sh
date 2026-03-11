@@ -14,22 +14,29 @@ cd "${PROJECT_DIR}"
 COMPOSE_FILE="docker-compose.yml"
 MODE="native"
 
+# Build compose command with optional overlay
+COMPOSE_CMD="docker compose -f $COMPOSE_FILE"
+if [[ -n "$COMPOSE_OVERRIDE" ]]; then
+    echo "📄 Using compose overlay: $COMPOSE_OVERRIDE"
+    COMPOSE_CMD="$COMPOSE_CMD -f $COMPOSE_OVERRIDE"
+fi
+
 # Stop and remove containers
 echo "📦 Stopping Docker containers ($MODE mode)..."
-docker compose -f "$COMPOSE_FILE" down
+$COMPOSE_CMD down
 
 # Optional: Clean up images and volumes
 if [ "$1" = "--clean" ]; then
     echo "🧹 Cleaning up Docker images and volumes..."
-    docker compose -f "$COMPOSE_FILE" down --volumes --rmi all
+    $COMPOSE_CMD down --volumes --rmi all
 fi
 
 echo "✅ JWT Integration Tests stopped successfully"
 
 # Show final status
-if docker compose -f "$COMPOSE_FILE" ps | grep -q "Up"; then
+if $COMPOSE_CMD ps | grep -q "Up"; then
     echo "⚠️  Some containers are still running:"
-    docker compose -f "$COMPOSE_FILE" ps
+    $COMPOSE_CMD ps
 else
     echo "✅ All containers are stopped"
 fi

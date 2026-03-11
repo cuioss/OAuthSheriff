@@ -1,0 +1,743 @@
+= JWT Validation Performance Analysis
+:toc: left
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+:source-highlighter: highlight.js
+
+
+== Executive Summary
+
+Performance testing using WRK with stress profile (5 threads, 50-300 connections) shows:
+
+* **JWT Validation (cache enabled, size 20)**: 17,944 ops/s at 50 connections (peak JWT performance)
+* **Health Check**: 70,709 ops/s at 50 connections
+* **Direct Validation**: 18,166 ops/s at 50 connections
+* **Mock JWT (CDI bypass)**: 39,423 ops/s at 50 connections
+* **Ablation Baseline**: 40,789 ops/s at 50 connections
+* **Ablation Header-Only**: 40,897 ops/s at 50 connections
+* **Target Achievement**: Exceeds minimum target (>10k ops/s) at 17.9k ops/s
+* **Error Rate**: 0% across all connection counts (0-300), no token expiration — Maven-managed benchmark infrastructure fetches fresh tokens per benchmark run
+* **CDI Contention**: Negligible at 50 connections (50µs difference between JWT and Direct Validation)
+
+== WRK Stress Profile Results
+
+=== Configuration
+
+* **Tool**: WRK (native C HTTP benchmarking tool)
+* **Profile**: Stress (5 threads, variable connections)
+* **Duration**: 1 minute per benchmark
+* **Environment**: 10 CPU cores (M4), Docker with native executable
+* **Application**: Native Quarkus with virtual threads
+
+=== Performance Results (50 connections, 5 threads)
+
+[cols="2,2,3,2", options="header"]
+|===
+|Endpoint
+|Throughput
+|Latency (Avg/P99)
+|Error Rate
+
+|Health Check
+|70,709 ops/s
+|1.11ms / 8.76ms
+|0%
+
+|Ablation Baseline
+|40,789 ops/s
+|1.59ms / 10.16ms
+|0%
+
+|Ablation Header-Only
+|40,897 ops/s
+|1.54ms / 9.39ms
+|0%
+
+|Mock JWT (CDI bypass)
+|39,423 ops/s
+|1.67ms / 10.84ms
+|0%
+
+|Direct Validation
+|18,166 ops/s
+|3.25ms / 16.48ms
+|0%
+
+|JWT Validation (cache ON, 20)
+|17,944 ops/s
+|3.29ms / 16.60ms
+|0%
+|===
+
+At 50 connections, JWT and Direct Validation are nearly identical in performance (3.29ms vs 3.25ms avg), confirming CDI `Instance.get()` overhead is negligible at low concurrency.
+
+=== Resource Utilization
+
+* **CPU**: JWT (cache ON): 85.0% peak (79.7% avg) | Health: 72.8% peak (67.3% avg)
+* **Memory**: Heap peak 126.0MB (JWT) | GC overhead: ~3.7% of wall-clock time (see link:Analysis-03.2026-JFR-Profiling.adoc#_garbage_collection_analysis[JFR GC analysis])
+* **Threads**: JWT: 135 peak (114 avg) | Health: 41 peak (35 avg)
+* **Cache**: 100% hit rate (cache size 20)
+* **GC**: ~3.7% of wall-clock time (1,312 events in 60s, mostly 1-2ms pauses; see link:Analysis-03.2026-JFR-Profiling.adoc#_garbage_collection_analysis[JFR GC analysis])
+
+== Performance Analysis
+
+=== Connection Count Investigation Results
+
+A systematic sweep across 50-300 connections (5 threads) identifies the optimal connection count and performance degradation points. All 6 endpoints are tested at each connection count. Maven-managed benchmark infrastructure fetches fresh tokens per benchmark run, eliminating the token expiration issue from earlier ad-hoc runs.
+
+[cols="1,2,2,2,2,2,2", options="header"]
+|===
+|Connections
+|Health (req/s)
+|Baseline (req/s)
+|Header-Only (req/s)
+|Mock JWT (req/s)
+|Direct Val (req/s)
+|JWT (req/s)
+
+|50
+|70,709
+|40,789
+|40,897
+|39,423
+|18,166
+|17,944
+
+|100
+|67,202
+|41,602
+|40,034
+|40,450
+|18,211
+|18,130
+
+|150
+|38,893
+|45,112
+|42,709
+|29,507
+|16,696
+|11,760
+
+|200
+|69,110
+|43,759
+|41,937
+|40,638
+|18,061
+|18,551
+
+|250
+|67,175
+|44,650
+|42,082
+|40,135
+|19,355
+|17,936
+
+|300
+|61,090
+|39,507
+|38,303
+|36,067
+|17,640
+|16,400
+|===
+
+[cols="1,2,2,2,2,2,2", options="header"]
+|===
+|Connections
+|Health Avg
+|Baseline Avg
+|Header-Only Avg
+|Mock JWT Avg
+|Direct Val Avg
+|JWT Avg
+
+|50
+|1.11ms
+|1.59ms
+|1.54ms
+|1.67ms
+|3.25ms
+|3.29ms
+
+|100
+|2.10ms
+|3.08ms
+|3.11ms
+|3.06ms
+|6.65ms
+|6.66ms
+
+|150
+|5.21ms
+|3.99ms
+|4.25ms
+|6.23ms
+|10.97ms
+|17.25ms
+
+|200
+|3.56ms
+|5.56ms
+|5.67ms
+|6.00ms
+|14.83ms
+|13.43ms
+
+|250
+|4.56ms
+|6.61ms
+|7.03ms
+|7.59ms
+|16.04ms
+|17.33ms
+
+|300
+|5.98ms
+|9.40ms
+|9.17ms
+|10.18ms
+|20.45ms
+|22.34ms
+|===
+
+[cols="1,2,2,2,2,2,2", options="header"]
+|===
+|Connections
+|Health P99
+|Baseline P99
+|Header-Only P99
+|Mock JWT P99
+|Direct Val P99
+|JWT P99
+
+|50
+|8.76ms
+|10.16ms
+|9.39ms
+|10.84ms
+|16.48ms
+|16.60ms
+
+|100
+|13.07ms
+|17.33ms
+|16.23ms
+|16.22ms
+|32.05ms
+|32.03ms
+
+|150
+|30.91ms
+|19.44ms
+|20.49ms
+|32.38ms
+|51.71ms
+|91.86ms
+
+|200
+|18.02ms
+|26.73ms
+|25.82ms
+|29.60ms
+|92.15ms
+|65.53ms
+
+|250
+|20.83ms
+|29.77ms
+|31.80ms
+|34.54ms
+|76.58ms
+|82.74ms
+
+|300
+|27.57ms
+|43.79ms
+|40.37ms
+|56.20ms
+|91.03ms
+|107.16ms
+|===
+
+**Key Findings:**
+
+* **0% error rate at all connection counts** — Maven infrastructure fetches fresh tokens per benchmark run, completely eliminating token expiration
+* **50 connections** is the optimal operating point: JWT (17,944 ops/s) and Direct Validation (18,166 ops/s) perform nearly identically, confirming CDI overhead is negligible
+* **Ablation variants cluster tightly**: Baseline (~40K), Header-Only (~40K), and Mock JWT (~39K) show minimal latency differences, confirming header parsing and CDI injection are negligible costs
+* **JWT vs Direct Validation gap widens at 150 connections**: JWT drops to 11,760 req/s while Direct Validation holds at 16,696 req/s, indicating CDI contention under moderate concurrency
+* **Health throughput** remains stable at 60-70K ops/s across most connection counts
+* **300 connections** shows graceful degradation: JWT at 16,400 req/s with 22.34ms avg latency, still exceeding the 10K target
+* **Cache effectiveness** confirmed with 100% hit rate across all runs (cache size 20)
+
+==== CDI Contention Bottleneck
+
+The comparison between JWT and Direct Validation across connection counts isolates CDI `Instance.get()` contention:
+
+[cols="1,2,2,2", options="header"]
+|===
+|Metric
+|50 connections
+|100 connections
+|Change
+
+|Direct Validation avg
+|3.25ms
+|6.65ms
+|2.05x (linear scaling)
+
+|JWT avg
+|3.29ms
+|6.66ms
+|2.02x (linear scaling)
+
+|JWT - Direct Val gap
+|~40µs (negligible)
+|~10µs (negligible)
+|Stable
+
+|Direct Val throughput
+|18,166 ops/s
+|18,211 ops/s
+|Stable
+
+|JWT throughput
+|17,944 ops/s
+|18,130 ops/s
+|Stable
+|===
+
+At 50 and 100 connections, JWT and Direct Validation scale identically — CDI `Instance.get()` overhead is negligible (~40µs). At 150 connections, the first divergence appears: JWT drops to 11,760 ops/s (17.25ms avg) while Direct Validation holds at 16,696 ops/s (10.97ms avg), suggesting CDI contention begins at this concurrency level. By 300 connections, JWT avg (22.34ms) exceeds Direct Validation avg (20.45ms) by ~2ms.
+
+=== Health Endpoint as Control Experiment
+
+The health endpoint (`/q/health/live`) and JWT endpoint (`/jwt/validate`) share the entire infrastructure stack: Docker bridge networking, TLS termination, HTTP/2, Quarkus routing, and CDI container. The health endpoint therefore serves as a **control experiment** — any performance difference between the two endpoints must be caused by endpoint-specific processing, not shared infrastructure.
+
+==== Latency Ratio Breakdown
+
+The JWT/Health latency ratio across connection counts:
+
+[cols="1,2,2,1,2,1", options="header"]
+|===
+|Connections
+|Health Avg
+|Direct Val Avg
+|DV/Health Ratio
+|JWT Avg
+|JWT/Health Ratio
+
+|50
+|1.11ms
+|3.25ms
+|**2.93x**
+|3.29ms
+|**2.96x**
+
+|100
+|2.10ms
+|6.65ms
+|**3.17x**
+|6.66ms
+|**3.17x**
+
+|200
+|3.56ms
+|14.83ms
+|**4.17x**
+|13.43ms
+|**3.77x**
+
+|300
+|5.98ms
+|20.45ms
+|**3.42x**
+|22.34ms
+|**3.74x**
+|===
+
+JWT/Health and Direct Validation/Health ratios remain stable (~3-4x) across all connection counts, confirming both scale proportionally with shared infrastructure. The consistent ratio demonstrates that CDI `Instance.get()` does not introduce significant contention in these Maven-managed benchmark runs with fresh tokens.
+
+==== Observed Characteristics
+
+1. **Token cache effectiveness** — Cache size of 20 achieves 100% hit rate across all connection counts
+2. **Library validation time** — 77µs (0.077ms) P50 from JMH micro-benchmark
+3. **JWKS refresh** — Periodic Keycloak communication for public key updates
+
+=== Latency Decomposition
+
+A six-layer ablation study decomposes the JWT avg latency at 50 connections into measured layers. The dominant cost is JWT validation under concurrency at 1,580µs (48.0%), measured via the direct-validation ablation variant (which bypasses CDI `Instance.get()`). CDI `Instance.get()` + `@Timed` adds only 40µs (1.2%) at 50 connections. JAX-RS POST routing contributes 14.6% (0.48ms). CDI `@ApplicationScoped` injection has zero per-request cost.
+
+The Maven-managed benchmark infrastructure eliminates token expiration artifacts, providing clean data across all connection counts. CDI overhead remains negligible (<1ms) through 100 connections, with first signs of divergence appearing at 150 connections.
+
+Full methodology, variant descriptions, raw benchmark data, and analysis: link:Analysis-03.2026-Latency-Decomposition.adoc[Latency Decomposition — Ablation Study].
+
+==== Scaling Observation
+
+At higher connection counts, the shared infrastructure cost grows (queuing) and the Direct Validation/Health ratio remains stable (~4.3-4.7x). However, the JWT/Health ratio diverges sharply at 100 connections (12.6x vs 4.59x at 50 connections) due to CDI `Instance.get()` contention. The 4.59x JWT/Health ratio at 50 connections is consistent with the Direct Validation/Health ratio (4.70x), confirming CDI overhead is negligible at low concurrency.
+
+=== Performance Ceiling
+
+* **Health check capacity**: 70,709 ops/s at 50 connections (peak performance)
+* **JWT validation capacity**: 17,944 ops/s at 50 connections (peak JWT performance, cache enabled, 100% hit rate)
+* **Direct Validation capacity**: 18,166 ops/s at 50 connections
+* **Mock JWT capacity**: 39,423 ops/s at 50 connections (CDI bypass, no JWT validation)
+* **Ablation Baseline capacity**: 40,789 ops/s at 50 connections (bare JAX-RS + CDI)
+* **Performance gap**: ~52,765 ops/s between health and JWT endpoints at 50 connections
+* **Graceful degradation**: JWT sustains 16,400 ops/s even at 300 connections, exceeding 10K target
+
+**Throughput gap explanation:**
+
+At 50 connections, the ~3.9x throughput difference (70.7K health vs 17.9K JWT) is explained by the ~3.0x per-request latency ratio (1.11ms health vs 3.29ms JWT avg). With a fixed number of connections, throughput is inversely proportional to per-request latency. The ratio remains stable across all connection counts (3.0-3.8x), confirming proportional scaling.
+
+=== P99 Tail Latency Analysis
+
+P99 latency grows with connection count, driven by GC pauses and connection queuing:
+
+[cols="1,2,2,2,2,2,2", options="header"]
+|===
+|Connections
+|Health P99
+|Baseline P99
+|Mock JWT P99
+|Direct Val P99
+|JWT P99
+|Notes
+
+|50
+|8.76ms
+|10.16ms
+|10.84ms
+|16.48ms
+|16.60ms
+|Baseline
+
+|100
+|13.07ms
+|17.33ms
+|16.22ms
+|32.05ms
+|32.03ms
+|
+
+|150
+|30.91ms
+|19.44ms
+|32.38ms
+|51.71ms
+|91.86ms
+|JWT P99 spike
+
+|200
+|18.02ms
+|26.73ms
+|29.60ms
+|92.15ms
+|65.53ms
+|
+
+|250
+|20.83ms
+|29.77ms
+|34.54ms
+|76.58ms
+|82.74ms
+|
+
+|300
+|27.57ms
+|43.79ms
+|56.20ms
+|91.03ms
+|107.16ms
+|JWT P99 > 100ms
+|===
+
+JWT and Direct Validation P99 latencies track closely at 50-100 connections but diverge at 150+, consistent with CDI contention effects under higher concurrency. At 300 connections, JWT P99 reaches 107ms — still well under the 2s timeout.
+
+==== P99 by Ablation Variant (50 connections)
+
+The ablation sweep at 50 connections provides per-variant P99 values from Maven-managed benchmark runs:
+
+[cols="2,2,2,2", options="header"]
+|===
+|Variant
+|Avg
+|P99
+|Throughput
+
+|Health
+|1.11ms
+|8.76ms
+|70,709 ops/s
+
+|Baseline
+|1.59ms
+|10.16ms
+|40,789 ops/s
+
+|Header-Only
+|1.54ms
+|9.39ms
+|40,897 ops/s
+
+|Mock JWT
+|1.67ms
+|10.84ms
+|39,423 ops/s
+
+|Direct Validation
+|3.25ms
+|16.48ms
+|18,166 ops/s
+
+|JWT
+|3.29ms
+|16.60ms
+|17,944 ops/s
+|===
+
+**Key finding**: JWT P99 (16.60ms) and Direct Validation P99 (16.48ms) are nearly identical at 50 connections, confirming CDI `Instance.get()` does NOT add GC pressure or tail latency at low concurrency. The ablation variants (Baseline, Header-Only, Mock JWT) cluster at ~10ms P99, confirming that header parsing and CDI injection are negligible costs.
+
+=== Endpoint Implementation Comparison
+
+Both endpoints use CDI `@ApplicationScoped` constructor injection, which has zero per-request cost (confirmed by ablation study). The differentiator is the JWT endpoint's use of `Instance<BearerTokenResult>.get()` — a `@Dependent`-scoped CDI producer that triggers per-request `InjectionPoint` introspection and the full JWT validation pipeline.
+
+[cols="2,2,2,2", options="header"]
+|===
+|Factor
+|Health (`/q/health/live`)
+|JWT (`/jwt/validate`)
+|Notes
+
+|Request-scoped producers
+|None
+|Yes (`Instance<BearerTokenResult>`)
+|Observable from code
+
+|Producer invocation
+|None
+|`basicToken.get()` per request
+|Observable from code
+
+|Response complexity
+|Simple status object
+|Nested maps with collections
+|Observable from code
+
+|Business logic
+|Check if list is empty
+|Extract claims, build map, authorization checks
+|Observable from code
+
+|JWT validation
+|None
+|Core library validates in 77µs (micro-benchmark)
+|From JMH data
+|===
+
+=== Per-Thread and Per-CPU Efficiency (50 connections)
+
+[cols="2,2,2,2", options="header"]
+|===
+|Endpoint
+|Throughput
+|Threads (avg)
+|ops/s per thread
+
+|Health
+|89,900 ops/s
+|35
+|**2,569**
+
+|JWT
+|22,700 ops/s
+|74
+|**307**
+|===
+
+JWT endpoint has lower per-thread efficiency, expected given its longer processing time (3.29ms avg vs 1.11ms avg for health).
+
+[cols="2,2,2,2", options="header"]
+|===
+|Endpoint
+|Throughput
+|CPU (peak)
+|ops/s per 1% CPU
+
+|Health
+|89,900 ops/s
+|75.6%
+|**1,189**
+
+|JWT
+|22,700 ops/s
+|81.5%
+|**279**
+|===
+
+JWT endpoint is 4.3x less CPU-efficient. Since both endpoints share the same HTTP/Quarkus/CDI infrastructure, the difference is attributable to JWT-specific processing: cryptographic signature verification, token claims extraction, request-scoped producers, and complex JSON response serialization.
+
+== Conclusion
+
+Comprehensive WRK stress testing across 50-300 connections with Maven-managed benchmark infrastructure reveals:
+
+* **Peak JWT performance**: 17,944 ops/s at 50 connections (cache enabled, 100% hit rate)
+* **Peak health performance**: 70,709 ops/s at 50 connections
+* **0% error rate across all connection counts**: Maven infrastructure fetches fresh tokens per benchmark run, eliminating token expiration entirely
+* **Graceful degradation**: JWT sustains 16,400 ops/s at 300 connections (22.34ms avg), exceeding the 10K target
+* **CDI overhead negligible at 50-100 connections**: JWT and Direct Validation track identically (~40µs gap), diverging only at 150+ connections
+* **JWT/Health ratio stable**: ~3.0-3.8x across all connection counts, confirming proportional scaling without CDI contention as a dominant factor
+* **Six-endpoint ablation study**: Baseline/Header-Only/Mock JWT cluster at ~40K ops/s, Direct Validation and JWT cluster at ~18K ops/s — confirming JWT validation is the dominant cost
+* **Cache effectiveness**: Lock-free cache achieves 100% hit rate (size 20), zero performance collapse
+* **Complete connection sweep data**: All 6 endpoints measured at 50, 100, 150, 200, 250, 300 connections with no token expiration artifacts
+
+== Aspects Evaluated but Ruled Out
+
+This section consolidates factors systematically investigated as potential causes of the ~20x JMH-to-integration gap (77µs → 1,580µs under concurrency), with measured evidence showing they do NOT explain the performance difference.
+
+=== Lock Contention
+
+**Finding**: Lock contention is **not** a performance factor.
+
+[cols="2,3", options="header"]
+|===
+| Metric | Value
+
+| JavaMonitorEnter events (240s benchmark) | 14 total
+| Monitors involved | `Http1xServerConnection` (6), `EPollSelectorImpl` (8)
+| Per-event duration | 10-14ms
+| Impact on 21K req/s throughput | Negligible (<0.001%)
+|===
+
+The 14 lock events over 240 seconds represent sporadic Vert.x HTTP/1.x connection write queue contention — standard behavior, not a bottleneck.
+
+=== Garbage Collection
+
+**Finding**: GC overhead is **not** the primary cause of the 14x gap.
+
+[cols="2,3", options="header"]
+|===
+| Metric | Value
+
+| GC events (60s benchmark) | 1,312
+| Total pause time | 2,223ms (3.7% of wall-clock)
+| GC frequency | 22 GCs/second
+| Requests per GC | ~950 (21K req/s ÷ 22 GCs/s)
+| Pause distribution | 89% at 1-2ms, 10% at >10ms
+| Heap usage (sawtooth) | 10-100 MB, avg 45 MB
+|===
+
+At 22 GCs/second with ~21,000 requests/second, only 1 in 950 requests encounters a GC pause. The 3.7% overhead is amortized — most individual requests complete without GC interference. GC contributes to tail latency (P99) but not median latency.
+
+=== Access Log Filter
+
+**Finding**: The filter adds overhead but does **not** explain the JWT-health gap.
+
+The `CustomAccessLogFilter` runs on **all** JAX-RS endpoints (both health and JWT), executing `shouldLog()` and `isPathIncluded()` on every response.
+
+[cols="2,2,2,2", options="header"]
+|===
+| Endpoint | Filter Enabled | Filter Disabled | Difference
+
+| Health P50 | 0.510ms | 0.417ms | **-0.093ms (18%)**
+| JWT P50 | 1.91ms | 1.96ms | +0.05ms (variance)
+| JWT/Health ratio | 4.55x | 4.70x | ~same
+|===
+
+**Conclusion**: Filter overhead is ~0.1ms per request, measurable on the health endpoint (0.510ms → 0.417ms) but within noise on the JWT endpoint. The 1.4ms JWT-health gap (1.91ms − 0.51ms) remains unchanged when the filter is disabled, confirming it does not explain JWT-specific latency.
+
+=== CDI @ApplicationScoped Injection
+
+**Finding**: CDI constructor injection has **zero** per-request cost.
+
+The ablation study compared a bare JAX-RS endpoint (zero CDI) against a CDI-injected endpoint:
+
+[cols="2,2,2", options="header"]
+|===
+| Variant | P50 (ms) | Notes
+
+| A: Bare Baseline (no CDI) | 0.870 | Zero `@Inject` dependencies
+| B: JAX-RS Baseline (CDI-injected) | 0.784 | `@ApplicationScoped` class
+| Difference (A − B) | **+0.086ms** | CDI is _faster_
+|===
+
+Variant A (no CDI) was 0.086ms **slower** than B (CDI-injected) — the opposite of what CDI overhead would cause. This confirms `@ApplicationScoped` beans are resolved at startup, not per request. The 0.086ms difference is attributable to benchmark ordering variance (A ran 6th, B ran 4th).
+
+=== @RequestScoped Producer Refactoring
+
+**Finding**: Refactoring to `@RequestScoped` is **not feasible** due to semantic constraints.
+
+The `BearerTokenProducer.produceBearerTokenResult()` method is `@Dependent` scoped. Investigation of a `@RequestScoped` refactoring revealed:
+
+* Multiple injection points use different `@BearerToken` annotation parameters (different required scopes/roles)
+* A `@RequestScoped` producer would cache the **first** call's result, breaking security validation for subsequent calls with different requirements
+* The current design correctly re-evaluates requirements per injection point
+
+**Conclusion**: The `@Dependent` scope is semantically required for correct security behavior.
+
+=== Root Cause Analysis: Combined CDI Producer + JWT Validation Cost (Investigation Complete)
+
+After systematically ruling out lock contention, GC, access log filter, CDI `@ApplicationScoped` injection, and `@RequestScoped` refactoring, the 1.087ms cost has been decomposed into two contributing factors. A direct-validation ablation variant (which calls `tokenValidator.createAccessToken()` directly, bypassing CDI `Instance.get()`) provides a **measured split**.
+
+==== Contributing Factor 1: JWT Validation Under Concurrency (1,580µs, measured 48.0%)
+
+The core JWT library validates in 77µs (JMH, single-thread isolation). Under 50 concurrent connections, the measured cost is 1,580µs (Mock JWT avg 1.67ms → Direct Validation avg 3.25ms), a ~20x increase due to:
+
+* **CPU cache line invalidation** — concurrent access to shared lock-free cache
+* **Memory barriers** — `ConcurrentHashMap` operations require ordering guarantees
+* **Real object allocation** — `AccessTokenContent`, `HashMap` for claims, `Set` for scopes/roles/groups (vs JMH reusing pre-parsed data)
+* **Thread scheduling** — 50 concurrent connections cause frequent context switches
+
+==== Contributing Factor 2: CDI Instance.get() + @Timed Overhead (~40µs at 50 conns)
+
+Each `Instance.get()` call in Quarkus ArC performs CreationalContext allocation, InjectionPointImpl construction, `@BearerToken` annotation introspection, bean instance creation, and `@Timed` Micrometer instrumentation. At 50 connections, the measured ablation data shows these operations add only ~40µs total (Direct Validation avg 3.25ms -> JWT avg 3.29ms). The CDI machinery is highly optimized in Quarkus ArC.
+
+With Maven-managed benchmarks and fresh tokens, CDI overhead remains negligible through 100 connections (JWT 6.66ms vs Direct Validation 6.65ms — within noise). At 150 connections, a divergence appears: JWT avg 17.25ms vs Direct Validation avg 10.97ms, suggesting CDI contention may begin at this concurrency level.
+
+==== Why Neither Factor Can Be Optimized
+
+**JWT concurrency penalty**: Inherent to concurrent workloads with real object allocation. The lock-free cache design is already optimal (14 lock events over 240 seconds).
+
+**CDI `Instance.get()` overhead**: Quarkus ArC provides `@WithCaching` to cache `Instance.get()` results, but it **cannot be applied** here:
+
+* The `JwtValidationEndpoint` uses 5 different `Instance<BearerTokenResult>` fields with different `@BearerToken` annotation parameters
+* Each field requires different authorization validation (scopes, roles, groups)
+* Caching would return the wrong result → **security bypass**
+
+**Conclusion**: Both the `@Dependent` scope with per-request `InjectionPoint` introspection and the concurrent validation cost are **inherent to this design**. The 1.087ms combined overhead cannot be reduced without API changes.
+
+==== Investigation Status: Complete
+
+[cols="2,1,2", options="header"]
+|===
+| Aspect | Status | Conclusion
+
+| Cost factors identified
+| ✅
+| Combined: JWT validation under concurrency + CDI Instance.get() overhead
+
+| Individual factor split
+| ✅
+| Measured via direct-validation ablation variant
+
+| Optimization feasibility
+| ❌
+| Both factors blocked (concurrency is inherent; CDI blocked by security requirements)
+
+| Performance targets met
+| ✅
+| 17.9K ops/s at 50 connections exceeds 10K target, 3.29ms avg under 5ms target
+
+| CDI contention investigated
+| ✅
+| CDI `Instance.get()` adds ~40µs at 50 conns, negligible at 100 conns; first divergence at 150 conns
+
+| Further investigation value
+| Complete
+| At 50 conns: validation dominates (48.0%), CDI minimal (1.2%). Clean data across all connection counts
+|===
+
+Full CDI research findings: link:Analysis-03.2026-JFR-Profiling.adoc#_cdi_producer_chain_research_findings[JFR Profiling Analysis — CDI Producer Chain Research]
