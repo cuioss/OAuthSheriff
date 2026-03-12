@@ -61,7 +61,7 @@ Automatically enabled with `-O2` and `-O3`. XGBoost-based static profiler provid
 
 | JWT Throughput | 25,178 ops/s | Exceeds target by 2.5x
 | JWT Avg Latency | 2.30ms | Exceeds target by 2.2x
-| RSA Verification | 1,060µs (68µs in JMH isolation) | Dominant cost under concurrency
+| RSA Verification | 1,060µs (50 conns) | CPU saturation, not native-image-specific
 | Startup Time | 0.172s | Exceeds target by 5.8x
 |===
 

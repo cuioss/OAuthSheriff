@@ -10,10 +10,10 @@
 
 JMH micro-benchmark testing of the core JWT validation library:
 
-* **Core Validation**: 159,100 ops/s, P50=77µs
-* **Signature validation** dominates at 68µs (88% of total)
+* **Core Validation**: 48µs at 1 thread, 556µs at 50 threads, 957µs at 100 threads
+* **Signature validation** dominates at 68µs (88% of pipeline)
 * **Fast-fail on invalid tokens**: 222,300 ops/s (+39%)
-* **Integration gap**: ~6x throughput difference vs WRK at 50 connections — explained by link:Analysis-03.2026-Latency-Decomposition.adoc[ablation study]
+* **Concurrency degradation is JVM-level**: HotSpot shows 11.6x multiplier at 50 threads — not native-image-specific
 
 == Configuration
 
@@ -121,12 +121,30 @@ Based on a dedicated JMH run (1,024 samples):
 
 NOTE: The test resource file `jwt-validation-metrics.json` contains data from an earlier run with different values. The numbers above reflect the most recent benchmark run.
 
+== Concurrency Sweep (HotSpot JVM)
+
+JMH `measureAverageTime` at varying thread counts on OpenJDK 21.0.7 (Temurin):
+
+[cols="1,2,2", options="header"]
+|===
+|Threads
+|Avg Latency
+|Multiplier vs 1 thread
+
+|1 |48µs |1.0x
+|10 |89µs |1.9x
+|50 |556µs |11.6x
+|100 |957µs |20.0x
+|===
+
+The scaling pattern matches **CPU saturation**: on 10 cores, 1→10 threads is nearly linear (fits available cores). Beyond 10 threads, latency degrades proportionally to oversubscription (50 threads = 5:1 ratio → 11.6x multiplier). This is a JVM-level RSA characteristic, not native-image-specific. The native integration cost of 1,060µs at 50 connections adds ~2x on top of the JVM baseline (556µs) — consistent with HTTP/TLS/Quarkus overhead.
+
 == Library vs Integration Gap
 
 [cols="2,2,2", options="header"]
 |===
 |Metric
-|Micro (JMH)
+|Micro (JMH, 100 threads)
 |Integration (WRK, 50 conns)
 
 |Throughput
@@ -134,16 +152,16 @@ NOTE: The test resource file `jwt-validation-metrics.json` contains data from an
 |25,178 ops/s
 
 |Latency
-|77 µs (P50)
+|957 µs (avg, 100t)
 |2,300 µs (avg)
 
-|P99
-|163 µs
-|11,520 µs
+|Single-thread
+|48 µs
+|N/A
 |===
 
-The ~6x throughput gap and ~30x latency gap are fully explained by integration overhead. The link:Analysis-03.2026-Latency-Decomposition.adoc[ablation study] decomposes the 2.30ms into shared infrastructure (33.9%), JAX-RS routing (17.4%), and JWT validation under concurrency (46.1%).
+The link:Analysis-03.2026-Latency-Decomposition.adoc[ablation study] decomposes the 2.30ms into shared infrastructure (33.9%), JAX-RS routing (17.4%), and JWT validation under concurrency (46.1%).
 
 == Conclusion
 
-The core library is highly optimized at 77µs P50. The integration overhead is expected for HTTP-based microservices. Signature validation (RS256) dominates at 88% — this is the primary candidate for optimization, but no alternative has been benchmarked.
+The core library is highly optimized at 48µs single-threaded. RSA signature verification (RS256) dominates at 88%. Under concurrency, latency degrades due to CPU saturation — 50 compute-bound threads on 10 cores causes ~11:1 oversubscription (48µs → 556µs). This is a JVM-level characteristic, not a GraalVM or framework issue. No alternative algorithm has been benchmarked.

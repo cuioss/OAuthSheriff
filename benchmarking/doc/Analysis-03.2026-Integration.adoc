@@ -295,7 +295,7 @@ NOTE: Thread count and CPU data from JFR profiling. Throughput from benchmark sw
 |296
 |===
 
-JWT is ~4.6x less CPU-efficient. The ablation study identifies JWT validation as the dominant cost; the exact CPU-level breakdown between cryptographic operations, object allocation, and serialization is not individually measured at integration level.
+JWT uses 3.3x more threads than Health (114 vs 35) while achieving 3.9x lower throughput. At 85% peak CPU with 114 threads on 10 cores (~11:1 oversubscription), the system is CPU-saturated. The per-thread efficiency drop (2,806 → 221 ops/s/thread) is dominated by threads queuing for CPU time to perform compute-bound RSA verification.
 
 == Aspects Evaluated but Ruled Out
 
@@ -330,18 +330,41 @@ Quarkus ArC's `@WithCaching` could eliminate this overhead, but **cannot be appl
 
 Not feasible — multiple injection points use different `@BearerToken` parameters, so a request-scoped cache would break security validation.
 
-== Root Cause: JWT Validation Under Concurrency
+== Root Cause: CPU Saturation From RSA Under Concurrency
 
-After ruling out all framework-level factors, the dominant cost is **JWT cryptographic validation under concurrency**.
+After ruling out all framework-level factors, the dominant cost is **CPU saturation from RSA signature verification under concurrency**.
 
-The core library validates in 77µs (link:Analysis-03.2026-Micro.adoc[JMH micro-benchmark]). Under 50 concurrent connections, the measured cost is 1,060µs (link:Analysis-03.2026-Latency-Decomposition.adoc[ablation study]: Direct Validation minus Mock JWT) — a ~14x increase. **The exact causes of this concurrency multiplier are not individually measured.** JFR shows minimal lock contention (14 events in 240s) and low CPU% for the library (0.3%), which rules out CPU-bound bottlenecks but does not pinpoint the wall-clock cost.
+=== Evidence
 
-The lock-free cache design is already optimal (14 lock events over 240 seconds). No further optimization path has been identified within the current architecture.
+RSA verification is compute-bound (88% of the validation pipeline). With 114 avg threads (JFR) competing for 10 CPU cores at 85% peak utilization, this is **~11:1 thread-to-core oversubscription**. Most threads are waiting for CPU time, not executing.
+
+A JMH concurrency sweep on HotSpot JVM confirms this is **not a native-image issue**:
+
+[cols="1,2,2", options="header"]
+|===
+| Threads | Avg Latency | Multiplier
+
+| 1 | 48µs | 1.0x
+| 10 | 89µs | 1.9x (fits 10 cores — nearly linear)
+| 50 | 556µs | 11.6x (5:1 oversubscription)
+| 100 | 957µs | 20.0x (10:1 oversubscription)
+|===
+
+The 1→10 thread scaling is nearly linear (10 threads on 10 cores). Beyond 10 threads, latency degrades proportionally to oversubscription. The native integration cost of 1,060µs at 50 connections adds ~2x on top of the JVM baseline (556µs) — consistent with HTTP/TLS/Quarkus overhead.
+
+=== Why CPU% Doesn't Match Latency%
+
+JFR shows the OAuth library at 0.3% of CPU samples, yet the ablation study measures JWT validation at 46.1% of wall-clock time. CPU saturation explains this: JFR samples **on-CPU** time, but with ~11:1 oversubscription most threads are **off-CPU** (waiting to be scheduled) at any given sample point. The wall-clock cost includes both on-CPU and queuing time.
+
+=== Implications
+
+The lock-free cache design is already optimal (14 lock events over 240 seconds). The bottleneck is fundamental: RSA 2048-bit signature verification is compute-bound, and the thread count exceeds available CPU cores. No further optimization path exists within the current architecture short of reducing thread count or switching to a less compute-intensive algorithm (not benchmarked).
 
 == Conclusion
 
 * **25.2K ops/s** at 50 connections exceeds the 10K target by 2.5x
 * **2.30ms avg** latency well under the 5ms target
-* **JWT validation under concurrency** (1,060µs, 46.1% of request time) is the sole significant cost — all framework overhead is negligible
-* **No optimization path identified** within the current architecture
+* **CPU saturation from RSA under concurrency** (1,060µs, 46.1% of request time) is the sole significant cost — all framework overhead is negligible
+* **Not native-image-specific**: JMH concurrency sweep shows the same degradation on HotSpot JVM (556µs at 50 threads)
+* **No optimization path** within the current architecture — bottleneck is thread-to-core oversubscription for compute-bound RSA
 * **Stable scaling** through 300 connections with no anomalous behavior

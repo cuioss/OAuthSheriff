@@ -30,8 +30,6 @@ JWT validation performance characteristics, baselines, and analysis for the CUI 
 
 All measurements on Mandrel native image at 50 concurrent connections (optimal). See link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc[Integration Analysis] for connection sweep (50-300).
 
-For comparison, the core library in JMH isolation (no HTTP stack, no concurrency) achieves 159,100 ops/s at 77µs P50. The gap is fully explained by the link:../../../benchmarking/doc/Analysis-03.2026-Latency-Decomposition.adoc[ablation study].
-
 == Latency Decomposition
 
 From the link:../../../benchmarking/doc/Analysis-03.2026-Latency-Decomposition.adoc[ablation study]:
@@ -50,15 +48,35 @@ From the link:../../../benchmarking/doc/Analysis-03.2026-Latency-Decomposition.a
 
 **Total**: 0.78 + 0.40 + 0.06 + 0 + 1.06 + ~0 ≈ **2.30ms**
 
-JWT validation under concurrency is the sole significant cost. The core library validates in 77µs isolation (JMH); under 50 concurrent connections the measured cost is 1,060µs — a ~14x increase. The exact causes of this concurrency multiplier are not individually measured. See link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc#_root_cause_jwt_validation_under_concurrency[root cause analysis].
+== Root Cause: CPU Saturation
+
+RSA signature verification is compute-bound (88% of the validation pipeline). With 114 avg threads competing for 10 CPU cores at 85% peak utilization, the system is CPU-saturated (~11:1 thread-to-core oversubscription).
+
+=== JMH Concurrency Sweep (HotSpot JVM)
+
+A concurrency sweep on HotSpot JVM (OpenJDK 21.0.7, Apple M4, 10 cores) confirms this is **not native-image-specific**:
+
+[cols="1,2,2,2", options="header"]
+|===
+| Threads | Avg Latency | Multiplier vs 1 thread | Interpretation
+
+| 1 | 48µs | 1.0x | Baseline — single core
+| 10 | 89µs | 1.9x | Fits 10 cores — nearly linear
+| 50 | 556µs | 11.6x | 5:1 oversubscription
+| 100 | 957µs | 20.0x | 10:1 oversubscription
+|===
+
+The native integration cost of 1,060µs at 50 connections adds ~2x on top of the JVM baseline (556µs) — consistent with HTTP/TLS/Quarkus overhead, not a native-image penalty.
+
+See link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc#_root_cause_cpu_saturation_from_rsa_under_concurrency[Integration Analysis root cause] for full details.
 
 == JWT Validation Pipeline
 
-RSA signature verification dominates the validation pipeline. Under native image concurrency (50 connections), JWT validation costs **1,060µs** — 46.1% of total request time. In JMH isolation the pipeline breaks down as:
+RSA signature verification dominates the validation pipeline (88% at single-thread):
 
 [cols="2,2,2", options="header"]
 |===
-| Component | JMH Time (P50) | Share of Pipeline
+| Component | Time (1 thread) | Share of Pipeline
 
 | RSA Signature Verification | 68µs | **88%**
 | Token Parsing | 4.3µs | 6%
@@ -66,7 +84,7 @@ RSA signature verification dominates the validation pipeline. Under native image
 | Other | ~4.6µs | 6%
 |===
 
-The ~14x gap between JMH isolation (77µs) and native integration (1,060µs) is measured but the individual causes are not decomposed. See link:../../../benchmarking/doc/Analysis-03.2026-Micro.adoc[Microbenchmark Analysis] and link:../../../benchmarking/doc/Analysis-03.2026-Integration.adoc#_root_cause_jwt_validation_under_concurrency[root cause analysis].
+See link:../../../benchmarking/doc/Analysis-03.2026-Micro.adoc[Microbenchmark Analysis] for full results and concurrency sweep data.
 
 == Algorithm Performance
 
@@ -74,12 +92,21 @@ The ~14x gap between JMH isolation (77µs) and native integration (1,060µs) is 
 |===
 | Algorithm | Type | Security Level | Notes
 
-| RS256/384/512 | RSA | 2048-bit | 1,060µs under concurrency (68µs JMH) — current default
+| RS256/384/512 | RSA | 2048-bit | 48µs (1t) / 556µs (50t) / 1,060µs (native 50c) — current default
 | ES256/384/512 | ECDSA | 256-384-bit curves | Not benchmarked
 | Ed25519/Ed448 | EdDSA | Curve25519/448 | Not benchmarked
 |===
 
 No alternative algorithm has been benchmarked. Algorithm choice should be driven by standards compliance, token size, and key management.
+
+== JCA Provider Landscape
+
+* **Default JDK** (Recommended): Full native image support, automatic updates
+* **BouncyCastle**: Only if specific algorithms needed; requires reflection configuration
+* **Conscrypt**: Not suitable for GraalVM native image (BoringSSL dependencies)
+* **Jipher**: No longer bundled with GraalVM 25; consider only for FIPS compliance
+
+Concurrency scaling is a JVM-level characteristic, not provider-specific.
 
 == Native Image Performance
 
@@ -111,13 +138,17 @@ No alternative algorithm has been benchmarked. Algorithm choice should be driven
 
 [source,bash]
 ----
-# Integration benchmarks
+# Integration benchmarks (native image)
 cd oauth-sheriff-quarkus-parent/oauth-sheriff-quarkus-integration-tests
 ../../mvnw clean verify -Pintegration-tests
 
-# JMH microbenchmarks (run from repository root)
+# JMH microbenchmarks (HotSpot JVM)
 cd benchmarking/benchmark-core
 ../../mvnw clean verify -Pbenchmark
+
+# Concurrency sweep (1, 10, 50, 100 threads on HotSpot JVM)
+cd benchmarking/benchmark-core
+../../mvnw clean verify -Pbenchmark-concurrency-sweep
 
 # JFR profiling
 docker compose -f docker-compose.yml -f docker-compose.jfr.yml up -d

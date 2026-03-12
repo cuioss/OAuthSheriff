@@ -156,7 +156,7 @@ Top allocation types from 45,048 `ObjectAllocationSample` events:
 
 == Why CPU% Doesn't Match Latency%
 
-JFR shows CUI library at 0.3% of CPU samples, yet the ablation study measures JWT validation at 46% of request time. **The exact cause of this discrepancy is unknown.** The low CPU% with high wall-clock cost suggests the time is spent on operations not visible in CPU sampling (e.g., memory stalls, scheduling, cache coherence), but this has not been individually measured.
+JFR shows CUI library at 0.3% of CPU samples, yet the ablation study measures JWT validation at 46% of request time. This is explained by **CPU saturation**: with 114 avg threads competing for 10 cores (~11:1 oversubscription at 85% peak CPU), most threads are **off-CPU** (waiting to be scheduled) at any given JFR sample point. JFR `ExecutionSample` only captures on-CPU time, but wall-clock latency includes both on-CPU execution and CPU scheduling wait time. A JMH concurrency sweep confirms: RSA latency scales proportionally to thread oversubscription (48µs at 1 thread → 556µs at 50 threads on HotSpot JVM). See link:Analysis-03.2026-Integration.adoc#_root_cause_cpu_saturation_from_rsa_under_concurrency[root cause analysis].
 
 == Access Log Filter
 
