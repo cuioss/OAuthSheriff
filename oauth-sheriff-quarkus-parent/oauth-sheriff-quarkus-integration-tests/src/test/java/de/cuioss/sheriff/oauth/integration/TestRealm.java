@@ -42,6 +42,10 @@ public class TestRealm {
     private static final String INTEGRATION_USERNAME = "integration-user";
     private static final String INTEGRATION_PASSWORD = "integration-password";
 
+    // DPoP client constants (same realm, different client with dpop.bound.access.tokens=true)
+    private static final String DPOP_CLIENT_ID = "dpop-client";
+    private static final String DPOP_CLIENT_SECRET = "dpop-secret";
+
     // Benchmark realm constants
     private static final String BENCHMARK_REALM_ID = "benchmark";
     private static final String BENCHMARK_CLIENT_ID = "benchmark-client";
@@ -82,6 +86,22 @@ public class TestRealm {
                 INTEGRATION_REALM_ID,
                 INTEGRATION_CLIENT_ID,
                 INTEGRATION_CLIENT_SECRET,
+                INTEGRATION_USERNAME,
+                INTEGRATION_PASSWORD
+        );
+    }
+
+    /**
+     * Factory method to create a TestRealm instance for DPoP testing.
+     * Uses the dpop-client in the integration realm which has {@code dpop.bound.access.tokens=true}.
+     *
+     * @return TestRealm configured for DPoP testing
+     */
+    public static TestRealm createDpopRealm() {
+        return new TestRealm(
+                INTEGRATION_REALM_ID,
+                DPOP_CLIENT_ID,
+                DPOP_CLIENT_SECRET,
                 INTEGRATION_USERNAME,
                 INTEGRATION_PASSWORD
         );
@@ -157,6 +177,47 @@ public class TestRealm {
      */
     public TokenResponse obtainValidTokenWithAllScopes() {
         return obtainValidTokenWithScopes("openid profile email read");
+    }
+
+    /**
+     * Obtains a DPoP-bound token from Keycloak by sending a DPoP proof header
+     * with the token request. The returned access token will contain a {@code cnf.jkt} claim.
+     *
+     * @param dpopHelper the DPoP proof helper (provides the key pair and proof generation)
+     * @return TokenResponse containing DPoP-bound access, ID, and refresh tokens
+     */
+    public TokenResponse obtainDpopBoundToken(DpopProofHelper dpopHelper) {
+        String tokenUrl = KEYCLOAK_BASE_URL + TOKEN_ENDPOINT_TEMPLATE.formatted(realmIdentifier);
+        String dpopProof = dpopHelper.createTokenEndpointProof(tokenUrl);
+
+        Response tokenResponse = given()
+                .baseUri(KEYCLOAK_BASE_URL)
+                .contentType("application/x-www-form-urlencoded")
+                .header("DPoP", dpopProof)
+                .formParam("client_id", clientId)
+                .formParam("client_secret", clientSecret)
+                .formParam("username", username)
+                .formParam("password", password)
+                .formParam("grant_type", "password")
+                .formParam("scope", "openid profile email")
+                .when()
+                .post(TOKEN_ENDPOINT_TEMPLATE.formatted(realmIdentifier));
+
+        assertEquals(200, tokenResponse.statusCode(),
+                "Should be able to obtain DPoP-bound tokens from " + realmIdentifier
+                        + " realm. Response: " + tokenResponse.body().asString());
+
+        Map<String, Object> tokenData = tokenResponse.jsonPath().getMap("");
+
+        String accessToken = (String) tokenData.get("access_token");
+        String idToken = (String) tokenData.get("id_token");
+        String refreshToken = (String) tokenData.get("refresh_token");
+
+        validateToken(accessToken, "DPoP-bound access token");
+        validateToken(idToken, "ID token");
+        validateToken(refreshToken, "Refresh token");
+
+        return new TokenResponse(accessToken, idToken, refreshToken);
     }
 
     /**
