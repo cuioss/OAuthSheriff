@@ -219,5 +219,5 @@ The library is continuously benchmarked with results published to GitHub Pages:
 * xref:benchmarking/benchmark-core/README.adoc[Micro-benchmarks] - In-memory performance testing
 * xref:benchmarking/benchmark-integration-wrk/README.adoc[WRK Load Testing] - HTTP-based load testing with WRK
 * xref:benchmarking/doc/performance-scoring.adoc[Performance Metrics] - Understanding the scoring system
-* xref:benchmarking/doc/Analysis-01.2026-Integration.adoc[Integration Benchmark Analysis (January 2026)] - WRK HTTP load testing analysis
-* xref:benchmarking/doc/Analysis-01.2026-Micro.adoc[Micro-Benchmark Analysis (January 2026)] - JMH library performance analysis
+* xref:benchmarking/doc/Analysis-03.2026-Integration.adoc[Integration Benchmark Analysis (March 2026)] - WRK HTTP load testing analysis
+* xref:benchmarking/doc/Analysis-03.2026-Micro.adoc[Micro-Benchmark Analysis (March 2026)] - JMH library performance analysis

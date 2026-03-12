@@ -1,5 +1,6 @@
--- Optimized WRK script for JWT validation benchmark
--- High-performance version with in-memory token management
+-- Optimized WRK script for Ablation Baseline benchmark
+-- Identical to mock_jwt_benchmark.lua but targets /mock-jwt/baseline endpoint
+-- Purpose: Measure bare JAX-RS + CDI-injected class overhead (no per-request processing)
 
 -- Token pool (loaded at module initialization, no file I/O)
 local tokens = {}
@@ -77,7 +78,7 @@ function request()
 
     -- Build optimized request (minimize allocations)
     wrk.method = "POST"
-    wrk.path = "/jwt/validate"
+    wrk.path = "/mock-jwt/baseline"
     wrk.headers["Authorization"] = "Bearer " .. token
     wrk.headers["Content-Type"] = "application/json"
     wrk.headers["Accept"] = "application/json"

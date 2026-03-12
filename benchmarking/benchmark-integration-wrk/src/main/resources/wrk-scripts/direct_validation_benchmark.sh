@@ -1,6 +1,7 @@
 #!/bin/bash
-# JWT benchmark runner wrapper for Maven execution
-# This script runs the JWT benchmark and ensures metadata is captured in Maven's outputFile
+# Direct Validation benchmark runner wrapper for Maven execution
+# Targets /mock-jwt/direct-validation endpoint
+# Purpose: Measure JWT validation cost under concurrency without CDI producer chain
 
 set -e
 
@@ -16,7 +17,7 @@ set -e
 : "${WRK_CONNECTIONS:?ERROR: WRK_CONNECTIONS environment variable is not set}"
 : "${WRK_DURATION:?ERROR: WRK_DURATION environment variable is not set}"
 : "${WRK_TIMEOUT:?ERROR: WRK_TIMEOUT environment variable is not set}"
-BENCHMARK_NAME="jwtValidation"
+BENCHMARK_NAME="directValidation"
 
 # Service URL uses Docker service name (configured in docker-compose.yml)
 SERVICE_URL="https://oauth-sheriff-integration-tests:8443"
@@ -64,7 +65,7 @@ TOKEN_LINE_COUNT=$(echo "$TOKEN_DATA" | wc -l | xargs)
 echo "Successfully loaded $TOKEN_LINE_COUNT tokens in memory"
 echo ""
 
-# Run wrk with the optimized script using docker compose
+# Run wrk with the direct validation script using docker compose
 # Token data passed as environment variable to the container
 # Network and service topology managed by docker-compose.yml
 cd "$COMPOSE_DIR"
@@ -74,8 +75,8 @@ docker compose run --rm -e TOKEN_DATA="$TOKEN_DATA" wrk \
     -d"$WRK_DURATION" \
     --timeout "$WRK_TIMEOUT" \
     --latency \
-    -s /scripts/jwt_benchmark.lua \
-    "$SERVICE_URL/jwt/validate"
+    -s /scripts/direct_validation_benchmark.lua \
+    "$SERVICE_URL/mock-jwt/direct-validation"
 
 # Record benchmark end time and output to stdout
 BENCHMARK_END_TIME=$(date +%s)

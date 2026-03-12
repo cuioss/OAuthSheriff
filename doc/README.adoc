@@ -31,8 +31,8 @@ This is the central navigation for OAuthSheriff documentation.
 == Benchmarking
 
 * xref:../benchmarking/README.adoc[Benchmarking Overview]
-* xref:../benchmarking/doc/Analysis-01.2026-Micro.adoc[Micro-Benchmark Analysis (January 2026)]
-* xref:../benchmarking/doc/Analysis-01.2026-Integration.adoc[Integration Benchmark Analysis (January 2026)]
+* xref:../benchmarking/doc/Analysis-03.2026-Micro.adoc[Micro-Benchmark Analysis (March 2026)]
+* xref:../benchmarking/doc/Analysis-03.2026-Integration.adoc[Integration Benchmark Analysis (March 2026)]
 * xref:../benchmarking/doc/performance-scoring.adoc[Performance Scoring]
 
 == Configuration

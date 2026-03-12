@@ -293,6 +293,15 @@
             </build>
         </profile>
 
+        <!-- Concurrency sweep: runs measureAverageTime at 1, 10, 50, 100 threads -->
+        <profile>
+            <id>benchmark-concurrency-sweep</id>
+            <properties>
+                <skip.benchmark>false</skip.benchmark>
+                <benchmark.runner>de.cuioss.sheriff.oauth.core.benchmark.ConcurrencySweepRunner</benchmark.runner>
+            </properties>
+        </profile>
+
         <!-- Quick benchmark profile for faster testing -->
         <profile>
             <id>quick</id>

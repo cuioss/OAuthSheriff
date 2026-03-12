@@ -1,0 +1,242 @@
+= JFR Profiling Analysis - March 2026
+:toc:
+:toc-placement: preamble
+:toclevels: 3
+
+== Recording Configuration
+
+* **Platform**: Apple M4, 10 CPU cores
+* **Runtime**: Mandrel jdk-25 native image
+* **Framework**: Quarkus 3.27.2 (LTS)
+* **JFR Settings**: `profile` preset, 240 seconds
+* **Load**: WRK, 50 concurrent connections
+* **Samples**: 48,027 execution samples, 3,181 unique hot methods
+
+== CPU Hotspot Analysis
+
+=== Top 15 Hot Methods
+
+[cols="1,3,1,1", options="header"]
+|===
+| Rank | Method | Samples | %
+
+| 1 | `GHASH.blockMult()` | 5,126 | 10.68%
+| 2 | `AESCrypt.implEncryptBlock()` | 2,871 | 5.98%
+| 3 | `FileOutputStream.writeBytes()` | 1,337 | 2.78%
+| 4 | `SocketDispatcher.write0()` | 1,298 | 2.70%
+| 5 | `CounterMode.implCrypt()` | 973 | 2.03%
+| 6 | `PlatformDependent.getByte()` | 927 | 1.93%
+| 7 | `CodeInfoDecoder.lookupCodeInfo()` | 906 | 1.89%
+| 8 | `JfrOldObjectSampler.scavenge()` | 840 | 1.75%
+| 9 | `Pthread.pthread_cond_timedwait()` | 839 | 1.75%
+| 10 | `EPoll.wait()` | 814 | 1.70%
+| 11 | `JavaMonitor.tryRelease()` | 545 | 1.14%
+| 12 | `EventFD.set0()` | 461 | 0.96%
+| 13 | `SocketDispatcher.read0()` | 460 | 0.96%
+| 14 | `StringLatin1.charAt()` | 434 | 0.90%
+| 15 | `UnmanagedMemoryUtil.copyLongsForward()` | 434 | 0.90%
+|===
+
+=== Categorized CPU Usage
+
+[cols="2,1,1,3", options="header"]
+|===
+| Category | Samples | % | Components
+
+| TLS/Crypto
+| 8,970
+| 18.7%
+| GHASH (5,126), AES (2,871), CounterMode (973)
+
+| Network I/O
+| 4,369
+| 9.1%
+| FileOutputStream (1,337), SocketDispatcher write (1,298), read (460), EPoll (814), EventFD (461)
+
+| JVM Runtime (SubstrateVM)
+| ~4,500
+| 9.4%
+| CodeInfoDecoder, JFR sampling, GC, monitors, memory ops
+
+| Netty Buffers
+| ~1,500
+| 3.1%
+| PlatformDependent, ByteBuf operations
+
+| Quarkus/Arc Framework
+| ~600
+| 1.3%
+| VertxLocalsHelper, RequestHandler, ContextInstances
+
+| Vert.x HTTP
+| ~500
+| 1.0%
+| HttpUtils, header validation
+
+| CUI Sheriff OAuth
+| ~160
+| 0.3%
+| See below
+
+| BigInteger (RSA)
+| 46
+| 0.1%
+| addOne (31), mulsub (5), montReduce (3), other (7)
+|===
+
+TLS encryption (18.7%) is the single largest CPU consumer — shared infrastructure cost, not JWT-specific.
+
+== CUI Sheriff OAuth Library
+
+[cols="3,1", options="header"]
+|===
+| Method | Samples
+
+| `TokenContent.getClaimOption()` | 9
+| `CustomAccessLogFilter.filter()` (proxy) | 8
+| `VertxHttpServletRequestAdapter.getHeaders()` | 7
+| `LogRecordModel.format()` | 7
+| `CustomAccessLogFilter.filter()` | 6
+| `ClientIpExtractor.extractFromHeader()` | 5
+| `CustomAccessLogFilter.formatLogEntry()` | 5
+| `BearerTokenProducer.getBearerTokenResult()` | 4
+| `AccessTokenContent.getScopes()` | 4
+| `CollectionClaimHandler.providesValues()` | 4
+| Other methods (41 unique) | ~100
+| **Total** | **~160**
+|===
+
+`CustomAccessLogFilter` and logging account for ~50% of CUI library samples — but that is 50% of only 0.3% total CPU. `TokenValidator.createAccessToken()` appears only 1 time in samples.
+
+== Garbage Collection Analysis
+
+[cols="2,2", options="header"]
+|===
+| Metric | Value
+
+| GC events (60s) | 1,312
+| Total pause time | 2,223 ms (3.7% wall-clock)
+| Average pause | 1.69 ms
+| Frequency | ~22 GCs/second
+|===
+
+**Pause distribution:** 89% at 1-2ms, 1% at 2-5ms, 10% at >10ms.
+
+**Heap:** sawtooth pattern, 10-100 MB (avg 45 MB).
+
+At ~25K req/s, only 1 in 1,140 requests encounters a GC pause. GC contributes to P99 tail latency but not median latency.
+
+== Lock Contention
+
+Only **14 JavaMonitorEnter events** over 240 seconds: `Http1xServerConnection` (6) and `EPollSelectorImpl` (8). Negligible.
+
+== Memory Allocation
+
+Top allocation types from 45,048 `ObjectAllocationSample` events:
+
+[cols="2,1,2", options="header"]
+|===
+| Object Class | Samples | Purpose
+
+| `byte[]` | 12,216 | I/O buffers, serialization
+| `Object[]` | 2,607 | Array allocations
+| `long[]` | 2,482 | Primitive arrays
+| `HashMap$Node` | 2,040 | Map entries (headers, claims)
+| `FrameInfoQueryResult` | 1,655 | SubstrateVM stack traces (JFR overhead)
+| `HashMap$Node[]` | 1,064 | Map backing arrays
+| `String` | 1,042 | String allocations
+| `HashMap` | 811 | New HashMap instances
+| `ArrayList$Itr` | 808 | Iterator allocations
+| `JavaMonitor` | 766 | SubstrateVM monitor objects
+| `ArrayList` | 749 | List allocations
+| `StringBuilder` | 708 | String building
+| `HeadersMultiMap$MapEntry` | 463 | Vert.x HTTP headers
+| `CreationalContextImpl` | 250 | CDI bean creation contexts
+|===
+
+== Why CPU% Doesn't Match Latency%
+
+JFR shows CUI library at 0.3% of CPU samples, yet the ablation study measures JWT validation at 46% of request time. This is explained by **CPU saturation**: with 114 avg threads competing for 10 cores (~11:1 oversubscription at 85% peak CPU), most threads are **off-CPU** (waiting to be scheduled) at any given JFR sample point. JFR `ExecutionSample` only captures on-CPU time, but wall-clock latency includes both on-CPU execution and CPU scheduling wait time. A JMH concurrency sweep confirms: RSA latency scales proportionally to thread oversubscription (48µs at 1 thread → 556µs at 50 threads on HotSpot JVM). See link:Analysis-03.2026-Integration.adoc#_root_cause_cpu_saturation_from_rsa_under_concurrency[root cause analysis].
+
+== Access Log Filter
+
+The `CustomAccessLogFilter` runs on all JAX-RS endpoints. Measured impact (filter disabled):
+
+* Health P50: 0.510ms → 0.417ms (-0.093ms)
+* JWT P50: 1.91ms → 1.96ms (within variance)
+
+The filter does not explain the JWT-health gap. It can be disabled for benchmark isolation: `cui.http.access-log.filter.enabled=false`.
+
+[[_cdi_producer_chain_research_findings]]
+== CDI Producer Chain Research
+
+This section documents why the CDI `Instance.get()` overhead cannot be reduced.
+
+=== What `Instance.get()` Does
+
+Each call (from Quarkus ArC source):
+
+1. Creates child `CreationalContext`
+2. Constructs `InjectionPointImpl` with type, qualifiers, annotations
+3. Sets `InjectionPoint` via `InjectionPointProvider.setCurrent()`
+4. Creates bean instance (`@Dependent` scope)
+5. Cleans up in try-finally
+
+JFR confirms: 250 `CreationalContextImpl` allocations during benchmark. The ablation study measures the total cost at ~20µs — fast individually.
+
+=== Why `@WithCaching` Cannot Be Applied
+
+Quarkus ArC's `@WithCaching` caches `Instance.get()` results. The `JwtValidationEndpoint` uses 5 fields with different `@BearerToken` parameters:
+
+[source,java]
+----
+@BearerToken Instance<BearerTokenResult> basicToken;
+@BearerToken(requiredScopes = {"read"}) Instance<BearerTokenResult> tokenWithScopes;
+@BearerToken(requiredRoles = {"user"}) Instance<BearerTokenResult> tokenWithRoles;
+@BearerToken(requiredGroups = {"test-group"}) Instance<BearerTokenResult> tokenWithGroups;
+@BearerToken(requiredScopes = {"read"}, requiredRoles = {"user"}, ...) Instance<BearerTokenResult> tokenWithAll;
+----
+
+Caching would return `basicToken`'s result for all fields — a security bypass. The `@Dependent` scope with per-request `InjectionPoint` introspection is required for correct authorization.
+
+=== Memory Leak Risk
+
+`Instance.get()` for `@Dependent` beans in `@ApplicationScoped` holders accumulates dependent instances for the application lifetime. Mitigate with `Instance.Handle` or `instance.destroy()`.
+
+== Container Configuration
+
+JFR output requires a volume mount:
+
+[source,yaml]
+----
+# docker-compose.jfr.yml
+services:
+  oauth-sheriff-integration-tests:
+    image: "oauth-sheriff-integration-tests:jfr"
+    volumes:
+      - ./target/jfr-output:/tmp/jfr-output:rw
+----
+
+== JFR Analysis Commands
+
+[source,bash]
+----
+jfr summary jwt-profile.jfr
+
+jfr print --events ExecutionSample jwt-profile.jfr | \
+  grep -A1 "stackTrace = \[" | grep -v "stackTrace" | \
+  sed 's/^[[:space:]]*//' | sort | uniq -c | sort -rn | head -50
+
+jfr print --events ExecutionSample jwt-profile.jfr | \
+  grep -A1 "stackTrace = \[" | grep "BigInteger" | sort | uniq -c
+
+jfr print --events ExecutionSample jwt-profile.jfr | \
+  grep -A1 "stackTrace = \[" | grep "de.cuioss" | sort | uniq -c | sort -rn
+----
+
+== Related Documents
+
+* link:Analysis-03.2026-Integration.adoc[Integration Benchmark Analysis] — throughput, latency, connection sweep
+* link:Analysis-03.2026-Latency-Decomposition.adoc[Latency Decomposition] — ablation study
+* link:Analysis-03.2026-Micro.adoc[Microbenchmark Analysis] — JMH library timings
+* link:../../oauth-sheriff-quarkus-parent/doc/performance/jfr-profiling-guide.adoc[JFR Profiling Guide] — setup instructions

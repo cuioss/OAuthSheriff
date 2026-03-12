@@ -1,0 +1,370 @@
+= JWT Validation Performance Analysis
+:toc: left
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+:source-highlighter: highlight.js
+
+
+== Executive Summary
+
+WRK stress testing (5 threads, 50-300 connections, 0% error rate) on native Quarkus with virtual threads:
+
+* **JWT Validation**: 25,178 ops/s at 50 connections (2.30ms avg), exceeds 10K target
+* **Health Check**: 98,211 ops/s at 50 connections (0.78ms avg)
+* **JWT/Health ratio**: stable ~3x across all connection counts — JWT validation under concurrency is the dominant cost (link:Analysis-03.2026-Latency-Decomposition.adoc[decomposition])
+* **Graceful degradation**: JWT sustains 22,745 ops/s at 300 connections
+
+== Configuration
+
+* **Tool**: WRK (HTTP benchmarking tool with Lua scripting)
+* **Profile**: Stress (5 threads, variable connections)
+* **Duration**: 1 minute per benchmark
+* **Environment**: 10 CPU cores (M4), Docker with native executable
+* **Token management**: Maven-managed infrastructure fetches fresh tokens per benchmark run
+
+== Results (50 connections)
+
+[cols="2,2,3,2", options="header"]
+|===
+|Endpoint
+|Throughput
+|Latency (Avg/P99)
+|Error Rate
+
+|Health Check
+|98,211 ops/s
+|0.78ms / 6.04ms
+|0%
+
+|Ablation Baseline
+|57,054 ops/s
+|1.18ms / 7.90ms
+|0%
+
+|Ablation Header-Only
+|53,845 ops/s
+|1.24ms / 8.00ms
+|0%
+
+|Mock JWT
+|54,748 ops/s
+|1.22ms / 8.01ms
+|0%
+
+|Direct Validation
+|24,822 ops/s
+|2.28ms / 11.10ms
+|0%
+
+|JWT Validation
+|25,178 ops/s
+|2.30ms / 11.52ms
+|0%
+|===
+
+The ablation variants form two clear clusters: infrastructure-only endpoints at ~54K ops/s, and JWT-processing endpoints at ~25K ops/s. The gap between clusters is the JWT validation cost. See link:Analysis-03.2026-Latency-Decomposition.adoc[Latency Decomposition] for the full six-layer breakdown.
+
+=== Resource Utilization
+
+NOTE: From JFR profiling run (50 connections). See link:Analysis-03.2026-JFR-Profiling.adoc[JFR Profiling Analysis] for details.
+
+* **CPU**: JWT: 85.0% peak (79.7% avg) | Health: 72.8% peak (67.3% avg)
+* **Memory**: Heap peak 126.0MB | GC: ~3.7% of wall-clock time
+* **Threads**: JWT: 135 peak (114 avg) | Health: 41 peak (35 avg)
+* **Cache**: 100% hit rate (size 20)
+
+== Connection Sweep (50-300 connections)
+
+=== Throughput
+
+[cols="1,2,2,2,2,2,2", options="header"]
+|===
+|Connections
+|Health (req/s)
+|Baseline (req/s)
+|Header-Only (req/s)
+|Mock JWT (req/s)
+|Direct Val (req/s)
+|JWT (req/s)
+
+|50
+|98,211
+|57,054
+|53,845
+|54,748
+|24,822
+|25,178
+
+|100
+|95,873
+|54,879
+|51,710
+|48,319
+|22,934
+|22,312
+
+|150
+|88,188
+|56,436
+|53,370
+|53,208
+|23,538
+|23,399
+
+|200
+|89,605
+|54,611
+|53,058
+|52,400
+|23,336
+|23,505
+
+|250
+|87,544
+|55,161
+|52,441
+|51,698
+|23,749
+|23,520
+
+|300
+|85,282
+|54,538
+|51,934
+|51,146
+|23,097
+|22,745
+|===
+
+=== Average Latency
+
+[cols="1,2,2,2,2,2,2", options="header"]
+|===
+|Connections
+|Health
+|Baseline
+|Header-Only
+|Mock JWT
+|Direct Val
+|JWT
+
+|50
+|0.78ms
+|1.18ms
+|1.24ms
+|1.22ms
+|2.28ms
+|2.30ms
+
+|100
+|1.48ms
+|2.19ms
+|2.32ms
+|2.53ms
+|5.20ms
+|5.27ms
+
+|150
+|2.25ms
+|3.15ms
+|3.32ms
+|3.40ms
+|7.75ms
+|7.89ms
+
+|200
+|2.77ms
+|4.23ms
+|4.37ms
+|4.56ms
+|10.26ms
+|10.26ms
+
+|250
+|3.49ms
+|5.21ms
+|5.46ms
+|5.61ms
+|12.25ms
+|12.46ms
+
+|300
+|4.20ms
+|6.37ms
+|6.67ms
+|6.76ms
+|14.98ms
+|15.11ms
+|===
+
+=== P99 Latency
+
+[cols="1,2,2,2,2,2,2", options="header"]
+|===
+|Connections
+|Health
+|Baseline
+|Header-Only
+|Mock JWT
+|Direct Val
+|JWT
+
+|50
+|6.04ms
+|7.90ms
+|8.00ms
+|8.01ms
+|11.10ms
+|11.52ms
+
+|100
+|9.46ms
+|11.56ms
+|11.71ms
+|13.13ms
+|24.53ms
+|24.14ms
+
+|150
+|12.47ms
+|15.40ms
+|15.29ms
+|17.07ms
+|35.60ms
+|37.07ms
+
+|200
+|13.89ms
+|18.91ms
+|18.36ms
+|21.00ms
+|44.47ms
+|44.80ms
+
+|250
+|16.07ms
+|22.36ms
+|21.70ms
+|23.62ms
+|49.44ms
+|51.39ms
+
+|300
+|17.82ms
+|26.08ms
+|25.09ms
+|26.94ms
+|58.63ms
+|58.52ms
+|===
+
+=== Key Observations
+
+* **50 connections is optimal**: peak throughput for all endpoints
+* **Smooth monotonic degradation** from 50 to 300 connections across all endpoints
+* **JWT/Health latency ratio stable** at ~3.0-3.7x across all connection counts, confirming proportional scaling
+* **JWT and Direct Validation track identically** at every connection count — the gap never exceeds 210µs (<2%), confirming CDI overhead is noise (see <<_cdi_overhead>>)
+* **At 300 connections**, JWT at 22,745 req/s with 58.52ms P99
+
+== Per-Thread and Per-CPU Efficiency (50 connections)
+
+NOTE: Thread count and CPU data from JFR profiling. Throughput from benchmark sweep.
+
+[cols="2,2,2,2,2,2", options="header"]
+|===
+|Endpoint
+|Throughput
+|Threads (avg)
+|ops/s per thread
+|CPU (peak)
+|ops/s per 1% CPU
+
+|Health
+|98,211 ops/s
+|35
+|2,806
+|72.8%
+|1,349
+
+|JWT
+|25,178 ops/s
+|114
+|221
+|85.0%
+|296
+|===
+
+JWT uses 3.3x more threads than Health (114 vs 35) while achieving 3.9x lower throughput. At 85% peak CPU with 114 threads on 10 cores (~11:1 oversubscription), the system is CPU-saturated. The per-thread efficiency drop (2,806 → 221 ops/s/thread) is dominated by threads queuing for CPU time to perform compute-bound RSA verification.
+
+== Aspects Evaluated but Ruled Out
+
+This section consolidates factors investigated as potential causes of the health-to-JWT gap, with evidence showing they are not significant.
+
+=== Lock Contention
+
+JFR recorded only 14 `JavaMonitorEnter` events over 240 seconds — sporadic Vert.x connection write queue contention, not a bottleneck.
+
+=== Garbage Collection
+
+GC accounts for ~3.7% of wall-clock time (1,312 events in 60s, 22 GCs/second). At ~25K req/s, only 1 in 1,140 requests encounters a GC pause. GC contributes to P99 tail latency but not median latency. See link:Analysis-03.2026-JFR-Profiling.adoc#_garbage_collection_analysis[JFR GC analysis] for raw data.
+
+=== Access Log Filter
+
+The `CustomAccessLogFilter` runs on all endpoints. Disabling it improved health P50 by ~0.1ms but had no effect on JWT. The filter does not explain the JWT-health gap.
+
+=== CDI `@ApplicationScoped` Injection
+
+The ablation study confirmed zero per-request cost — a bare JAX-RS endpoint without CDI was actually 0.086ms slower than the CDI-injected variant (benchmark ordering variance).
+
+[[_cdi_overhead]]
+=== CDI `Instance.get()` Overhead
+
+The `JwtValidationEndpoint` uses `Instance<BearerTokenResult>.get()`, a `@Dependent`-scoped CDI producer. Each call creates a `CreationalContext`, performs `InjectionPoint` introspection, and invokes the producer.
+
+The ablation study measured this overhead at **~20µs** (JWT avg 2.30ms minus Direct Validation avg 2.28ms). This is within measurement noise and **not a meaningful performance factor**.
+
+Quarkus ArC's `@WithCaching` could eliminate this overhead, but **cannot be applied** because the endpoint uses 5 different `Instance` fields with different `@BearerToken` annotation parameters (different required scopes/roles/groups). Caching would return incorrect results — a security bypass. The `@Dependent` scope is semantically required. See link:Analysis-03.2026-JFR-Profiling.adoc#_cdi_producer_chain_research_findings[JFR CDI research] for details.
+
+=== `@RequestScoped` Producer Refactoring
+
+Not feasible — multiple injection points use different `@BearerToken` parameters, so a request-scoped cache would break security validation.
+
+== Root Cause: CPU Saturation From RSA Under Concurrency
+
+After ruling out all framework-level factors, the dominant cost is **CPU saturation from RSA signature verification under concurrency**.
+
+=== Evidence
+
+RSA verification is compute-bound (88% of the validation pipeline). With 114 avg threads (JFR) competing for 10 CPU cores at 85% peak utilization, this is **~11:1 thread-to-core oversubscription**. Most threads are waiting for CPU time, not executing.
+
+A JMH concurrency sweep on HotSpot JVM confirms this is **not a native-image issue**:
+
+[cols="1,2,2", options="header"]
+|===
+| Threads | Avg Latency | Multiplier
+
+| 1 | 48µs | 1.0x
+| 10 | 89µs | 1.9x (fits 10 cores — nearly linear)
+| 50 | 556µs | 11.6x (5:1 oversubscription)
+| 100 | 957µs | 20.0x (10:1 oversubscription)
+|===
+
+The 1→10 thread scaling is nearly linear (10 threads on 10 cores). Beyond 10 threads, latency degrades proportionally to oversubscription. The native integration cost of 1,060µs at 50 connections adds ~2x on top of the JVM baseline (556µs) — consistent with HTTP/TLS/Quarkus overhead.
+
+=== Why CPU% Doesn't Match Latency%
+
+JFR shows the OAuth library at 0.3% of CPU samples, yet the ablation study measures JWT validation at 46.1% of wall-clock time. CPU saturation explains this: JFR samples **on-CPU** time, but with ~11:1 oversubscription most threads are **off-CPU** (waiting to be scheduled) at any given sample point. The wall-clock cost includes both on-CPU and queuing time.
+
+=== Implications
+
+The lock-free cache design is already optimal (14 lock events over 240 seconds). The bottleneck is fundamental: RSA 2048-bit signature verification is compute-bound, and the thread count exceeds available CPU cores. No further optimization path exists within the current architecture short of reducing thread count or switching to a less compute-intensive algorithm (not benchmarked).
+
+== Conclusion
+
+* **25.2K ops/s** at 50 connections exceeds the 10K target by 2.5x
+* **2.30ms avg** latency well under the 5ms target
+* **CPU saturation from RSA under concurrency** (1,060µs, 46.1% of request time) is the sole significant cost — all framework overhead is negligible
+* **Not native-image-specific**: JMH concurrency sweep shows the same degradation on HotSpot JVM (556µs at 50 threads)
+* **No optimization path** within the current architecture — bottleneck is thread-to-core oversubscription for compute-bound RSA
+* **Stable scaling** through 300 connections with no anomalous behavior

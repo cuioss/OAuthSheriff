@@ -1,0 +1,177 @@
+= Latency Decomposition — Ablation Study
+:toc: left
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+:source-highlighter: highlight.js
+
+Companion document to link:Analysis-03.2026-Integration.adoc[JWT Validation Performance Analysis].
+
+== Methodology
+
+An ablation study decomposes the full JWT avg latency (2.30ms at 50 connections) by progressively adding processing layers. Each variant adds exactly one component, isolating its cost by comparison with the previous variant.
+
+[cols="1,2,3,3", options="header"]
+|===
+|Variant
+|Path
+|What it does
+|What it isolates
+
+|Health (existing)
+|`GET /q/health/live`
+|SmallRye Health, minimal JSON
+|Shared infrastructure baseline
+
+|**B: JAX-RS Baseline**
+|`POST /mock-jwt/baseline`
+|CDI-injected class, pre-built response
+|JAX-RS POST routing + Jackson (B minus Health)
+
+|**C: Header Only**
+|`POST /mock-jwt/header-only`
+|Calls `resolveHeaderMap()`, pre-built response
+|Vert.x context resolution (C minus B)
+
+|Mock JWT (existing)
+|`POST /mock-jwt/validate`
+|resolveHeaderMap() + header parsing + HashMap
+|Authorization parsing (Mock minus C)
+
+|**D: Direct Validation**
+|`POST /mock-jwt/direct-validate`
+|Calls `createAccessToken()` directly, no CDI proxy
+|JWT validation under concurrency (D minus Mock)
+
+|JWT (existing)
+|`POST /jwt/validate`
+|Full JWT validation via CDI `Instance.get()`
+|CDI proxy overhead (JWT minus D)
+|===
+
+All variants use POST with Authorization header (same WRK Lua script) so differences are purely server-side.
+
+NOTE: A historical Variant A (bare JAX-RS without CDI) confirmed that `@ApplicationScoped` injection has zero per-request cost. It was removed after serving its purpose.
+
+== Results (50 connections, 5 threads, 60s)
+
+[cols="2,2,2,2", options="header"]
+|===
+|Endpoint
+|Avg (ms)
+|P99 (ms)
+|Throughput
+
+|Health
+|0.78
+|6.04
+|98,211 ops/s
+
+|B: JAX-RS Baseline
+|1.18
+|7.90
+|57,054 ops/s
+
+|C: Header Only
+|1.24
+|8.00
+|53,845 ops/s
+
+|Mock JWT
+|1.22
+|8.01
+|54,748 ops/s
+
+|D: Direct Validation
+|2.28
+|11.10
+|24,822 ops/s
+
+|JWT
+|2.30
+|11.52
+|25,178 ops/s
+|===
+
+== Six-Layer Decomposition
+
+[cols="3,2,2,2", options="header"]
+|===
+|Layer
+|Latency (avg)
+|% of total
+|How Measured
+
+|**1. Shared infrastructure** (Docker, TLS, HTTP/2, Quarkus routing)
+|0.78ms
+|33.9%
+|Health endpoint
+
+|**2. JAX-RS POST routing + Jackson serialization**
+|0.40ms
+|17.4%
+|B minus Health (1.18 − 0.78)
+
+|**3. Vert.x context resolution** (`resolveHeaderMap()`)
+|0.06ms
+|2.6%
+|C minus B (1.24 − 1.18)
+
+|**4. Authorization parsing + HashMap construction**
+|~0ms
+|~0%
+|Mock minus C (within noise)
+
+|**5. JWT validation under concurrency** (`createAccessToken()`)
+|1.06ms
+|**46.1%**
+|D minus Mock (2.28 − 1.22)
+
+|**6. CDI proxy + `@Timed`**
+|~0ms
+|~0%
+|JWT minus D (within noise)
+|===
+
+Total: 0.78 + 0.40 + 0.06 + 0 + 1.06 + ~0 ≈ 2.30ms.
+
+== P99 Decomposition
+
+[cols="2,2,2", options="header"]
+|===
+|Variant
+|P99 (ms)
+|P99 Delta
+
+|Health
+|6.04
+|—
+
+|B: Baseline
+|7.90
+|+1.86ms
+
+|C: Header-only
+|8.00
+|+0.10ms (noise)
+
+|Mock JWT
+|8.01
+|+0.01ms (noise)
+
+|D: Direct Validation
+|11.10
+|**+3.09ms**
+
+|JWT
+|11.52
+|+0.42ms (noise)
+|===
+
+JWT validation is also the dominant source of P99 tail latency (+3.09ms). The CDI layer adds no measurable tail latency.
+
+== Key Findings
+
+* **CPU saturation from RSA under concurrency is the sole significant cost** at 46.1% (1,060µs) of request time. The core library validates in 48µs at 1 thread (link:Analysis-03.2026-Micro.adoc[micro-benchmark]). A JMH concurrency sweep shows this scales with thread-to-core oversubscription (556µs at 50 threads on HotSpot JVM, 10 cores). See link:Analysis-03.2026-Integration.adoc#_root_cause_cpu_saturation_from_rsa_under_concurrency[root cause analysis].
+* **Shared infrastructure + JAX-RS routing** account for 51.3% — expected overhead for HTTP-based microservices.
+* **All other layers are noise**: Vert.x resolution (0.06ms), authorization parsing (~0ms), and CDI proxy (~0ms) are individually negligible.

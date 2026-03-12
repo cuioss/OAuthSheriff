@@ -199,7 +199,7 @@ The `skip.container.lifecycle` property optimizes benchmark iteration:
 * **Script**: `health_live_check.lua`
 * **Purpose**: Baseline performance without authentication
 * **Expected** (150 connections, stress profile): 70,000+ req/s, P50 <2ms latency
-* **Measured**: 88,700 req/s, P50 1.25ms (see link:../doc/Analysis-01.2026-Integration.adoc[Integration Analysis])
+* **Measured**: 88,700 req/s, P50 1.25ms (see link:../doc/Analysis-03.2026-Integration.adoc[Integration Analysis])
 
 === JWT Validation Benchmark
 
@@ -207,7 +207,7 @@ The `skip.container.lifecycle` property optimizes benchmark iteration:
 * **Script**: `jwt_benchmark.lua`
 * **Purpose**: Real JWT processing performance with cache
 * **Expected** (150 connections, stress profile): 20,000+ req/s, P50 <10ms latency
-* **Measured**: 23,800 req/s, P50 5.49ms (see link:../doc/Analysis-01.2026-Integration.adoc[Integration Analysis])
+* **Measured**: 23,800 req/s, P50 5.49ms (see link:../doc/Analysis-03.2026-Integration.adoc[Integration Analysis])
 
 == Output
 

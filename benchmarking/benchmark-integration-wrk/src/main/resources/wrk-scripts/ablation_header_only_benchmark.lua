@@ -1,5 +1,6 @@
--- Optimized WRK script for JWT validation benchmark
--- High-performance version with in-memory token management
+-- Optimized WRK script for Ablation Header-Only benchmark
+-- Identical to mock_jwt_benchmark.lua but targets /mock-jwt/header-only endpoint
+-- Purpose: Measure Vert.x header resolution overhead (no token parsing, no validation)
 
 -- Token pool (loaded at module initialization, no file I/O)
 local tokens = {}
@@ -77,7 +78,7 @@ function request()
 
     -- Build optimized request (minimize allocations)
     wrk.method = "POST"
-    wrk.path = "/jwt/validate"
+    wrk.path = "/mock-jwt/header-only"
     wrk.headers["Authorization"] = "Bearer " .. token
     wrk.headers["Content-Type"] = "application/json"
     wrk.headers["Accept"] = "application/json"

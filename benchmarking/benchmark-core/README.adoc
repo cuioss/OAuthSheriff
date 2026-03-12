@@ -26,6 +26,9 @@ Performance benchmarking for JWT token validation core library using JMH.
 
 # With JFR profiling for detailed analysis
 ./mvnw clean verify -pl benchmarking/benchmark-core -Pbenchmark-jfr
+
+# Concurrency sweep (1, 10, 50, 100 threads) — measures RSA scaling on HotSpot
+./mvnw clean verify -pl benchmarking/benchmark-core -Pbenchmark-concurrency-sweep
 ----
 
 == Configuration
@@ -44,9 +47,10 @@ Performance benchmarking for JWT token validation core library using JMH.
 
 === Profiles
 
-* `benchmark` - Runs the benchmarks with default settings
+* `benchmark` - Runs the benchmarks with default settings (100 threads)
 * `benchmark,quick` - Fast validation with reduced iterations (2), warmup iterations (1), time (5s), and warmup time (2s)
 * `benchmark-jfr` - Runs benchmarks with Java Flight Recorder profiling
+* `benchmark-concurrency-sweep` - Runs `measureAverageTime` at 1, 10, 50, and 100 threads to measure RSA concurrency scaling on HotSpot JVM
 
 === Running Specific Benchmarks
 
@@ -167,7 +171,7 @@ For comprehensive documentation on benchmarking, analysis, and visualization:
 === Quick Links
 
 * link:../doc/workflow.adoc[Benchmark Workflow] - Complete workflow guide
-* link:../doc/Analysis-01.2026-Micro.adoc[Micro-Benchmark Analysis (January 2026)] - Latest benchmark insights
+* link:../doc/Analysis-03.2026-Micro.adoc[Micro-Benchmark Analysis (March 2026)] - Latest benchmark insights
 * link:../doc/performance-scoring.adoc[Performance Scoring] - Methodology details
 * link:../doc/local-testing.adoc[Local Testing] - Development setup
 

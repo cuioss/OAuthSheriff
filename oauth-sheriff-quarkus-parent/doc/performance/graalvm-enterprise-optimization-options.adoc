@@ -10,7 +10,7 @@
 GraalVM Enterprise Edition (Oracle GraalVM) specific optimization options. These features require Oracle GraalVM or commercial licensing.
 
 **Context**: OAuth Sheriff targets GraalVM Community Edition (Mandrel) as primary runtime +
-**Current Performance**: Community Edition achieves 22,700+ ops/s JWT validation
+**Current Performance**: Community Edition achieves 25,178 ops/s JWT validation (March 2026)
 
 == Enterprise Edition Features
 
@@ -27,8 +27,8 @@ native-image --pgo-instrument YourApp
 native-image --pgo=default.iprof -O3 YourApp
 ----
 
-* 15-20% performance improvement (Oracle estimates)
-* 10-15% smaller binary size
+* 15-20% performance improvement (Oracle estimates, not verified)
+* 10-15% smaller binary size (Oracle estimates, not verified)
 
 === G1 Garbage Collector
 
@@ -45,7 +45,7 @@ native-image --gc=G1 YourApp
 
 WARNING: Jipher is **no longer bundled** with Oracle GraalVM 25. Must be downloaded separately.
 
-Relevant only for FIPS 140-2 compliance, not performance optimization (RSA already at 68us).
+Relevant only for FIPS 140-2 compliance, not performance optimization.
 
 === ML-Powered Optimization (GraalVM 25)
 
@@ -53,31 +53,31 @@ Automatically enabled with `-O2` and `-O3`. XGBoost-based static profiler provid
 
 == Cost-Benefit Analysis
 
-=== Current Community Edition Performance
+=== Current Community Edition Performance (March 2026)
 
 [cols="2,2,2", options="header"]
 |===
 | Metric | Community Edition | Notes
 
-| JWT Throughput | 22,700+ ops/s | Exceeds targets by 2.3x
-| P50 Latency | 1.91ms | Exceeds target by 2.6x
-| RSA Verification | 68us | No bottleneck
+| JWT Throughput | 25,178 ops/s | Exceeds target by 2.5x
+| JWT Avg Latency | 2.30ms | Exceeds target by 2.2x
+| RSA Verification | 1,060µs (50 conns) | CPU saturation, not native-image-specific
 | Startup Time | 0.172s | Exceeds target by 5.8x
 |===
 
 === Enterprise Edition Expected Gains
 
-[cols="2,2,2", options="header"]
-|===
-| Feature | Expected Improvement | Cumulative Ops/s
+NOTE: The following estimates are from Oracle marketing materials. They have **not been verified** with this project's workload.
 
-| Baseline (Community) | - | 22,700
-| PGO | +15-20% | 26,000-27,200
-| G1 GC (if applicable) | +5-10% | 27,300-29,900
-| Combined Maximum | +25-30% | ~29,500
+[cols="2,2", options="header"]
+|===
+| Feature | Oracle's Claimed Improvement
+
+| PGO | +15-20%
+| G1 GC | +5-10%
 |===
 
-22,700 ops/s already exceeds requirements. Incremental gain may not justify licensing costs.
+25,178 ops/s already exceeds requirements by 2.5x. Incremental gain may not justify licensing costs.
 
 === When Enterprise Edition Matters
 

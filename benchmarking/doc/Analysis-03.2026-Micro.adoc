@@ -1,0 +1,167 @@
+= JWT Library Performance Analysis (Micro-Benchmarks)
+:toc: left
+:toclevels: 3
+:toc-title: Table of Contents
+:sectnums:
+:source-highlighter: highlight.js
+
+
+== Executive Summary
+
+JMH micro-benchmark testing of the core JWT validation library:
+
+* **Core Validation**: 48µs at 1 thread, 556µs at 50 threads, 957µs at 100 threads
+* **Signature validation** dominates at 68µs (88% of pipeline)
+* **Fast-fail on invalid tokens**: 222,300 ops/s (+39%)
+* **Concurrency degradation is JVM-level**: HotSpot shows 11.6x multiplier at 50 threads — not native-image-specific
+
+== Configuration
+
+* **Tool**: JMH 1.37 (Java Microbenchmark Harness)
+* **JVM**: OpenJDK 21.0.7 (Temurin), aarch64 (Apple M4)
+* **Threads**: 100 concurrent
+* **Iterations**: 5 measurement + 3 warmup, 4 seconds each
+* **Mode**: Throughput (ops/s) and Average Time (µs/op)
+
+== Throughput Results
+
+[cols="2,2,2,2", options="header"]
+|===
+|Benchmark
+|Throughput
+|Latency (avg)
+|Configuration
+
+|Core Validation
+|159,100 ops/s
+|657 µs/op
+|100 threads, valid tokens
+
+|Error Load (0% errors)
+|152,200 ops/s
+|N/A
+|100 threads, all valid
+
+|Error Load (50% errors)
+|222,300 ops/s
+|N/A
+|100 threads, 50% invalid
+
+|Concurrent Validation
+|N/A
+|648 µs/op
+|100 threads, concurrent
+|===
+
+Fast-fail on invalid tokens (50% error rate) improves throughput by 39% — invalid tokens fail at signature validation without full claims processing.
+
+== Validation Pipeline Breakdown
+
+Based on a dedicated JMH run (1,024 samples):
+
+[cols="2,2,2,2", options="header"]
+|===
+|Step
+|P50
+|P95
+|P99
+
+|**Complete Validation**
+|**77 µs**
+|**80 µs**
+|**163 µs**
+
+|Signature Validation
+|68 µs
+|69 µs
+|151 µs
+
+|Token Parsing
+|4.3 µs
+|5.1 µs
+|6.7 µs
+
+|Token Building
+|2.8 µs
+|3.5 µs
+|4.1 µs
+
+|Claims Validation
+|1.0 µs
+|1.3 µs
+|1.5 µs
+
+|Cache Lookup
+|0.1 µs
+|0.4 µs
+|0.7 µs
+
+|Cache Store
+|0.1 µs
+|0.5 µs
+|0.7 µs
+
+|Issuer Config Resolution
+|0.0 µs
+|0.2 µs
+|0.3 µs
+
+|Issuer Extraction
+|0.0 µs
+|0.2 µs
+|0.3 µs
+
+|Header Validation
+|0.1 µs
+|0.3 µs
+|0.3 µs
+|===
+
+**Signature validation** (RS256) accounts for 88% of validation time. Non-cryptographic operations add only ~9µs total.
+
+NOTE: The test resource file `jwt-validation-metrics.json` contains data from an earlier run with different values. The numbers above reflect the most recent benchmark run.
+
+== Concurrency Sweep (HotSpot JVM)
+
+JMH `measureAverageTime` at varying thread counts on OpenJDK 21.0.7 (Temurin):
+
+[cols="1,2,2", options="header"]
+|===
+|Threads
+|Avg Latency
+|Multiplier vs 1 thread
+
+|1 |48µs |1.0x
+|10 |89µs |1.9x
+|50 |556µs |11.6x
+|100 |957µs |20.0x
+|===
+
+The scaling pattern matches **CPU saturation**: on 10 cores, 1→10 threads is nearly linear (fits available cores). Beyond 10 threads, latency degrades proportionally to oversubscription (50 threads = 5:1 ratio → 11.6x multiplier). This is a JVM-level RSA characteristic, not native-image-specific. The native integration cost of 1,060µs at 50 connections adds ~2x on top of the JVM baseline (556µs) — consistent with HTTP/TLS/Quarkus overhead.
+
+== Library vs Integration Gap
+
+[cols="2,2,2", options="header"]
+|===
+|Metric
+|Micro (JMH, 100 threads)
+|Integration (WRK, 50 conns)
+
+|Throughput
+|159,100 ops/s
+|25,178 ops/s
+
+|Latency
+|957 µs (avg, 100t)
+|2,300 µs (avg)
+
+|Single-thread
+|48 µs
+|N/A
+|===
+
+The link:Analysis-03.2026-Latency-Decomposition.adoc[ablation study] decomposes the 2.30ms into shared infrastructure (33.9%), JAX-RS routing (17.4%), and JWT validation under concurrency (46.1%).
+
+== Conclusion
+
+The core library is highly optimized at 48µs single-threaded. RSA signature verification (RS256) dominates at 88%. Under concurrency, latency degrades due to CPU saturation — 50 compute-bound threads on 10 cores causes ~11:1 oversubscription (48µs → 556µs). This is a JVM-level characteristic, not a GraalVM or framework issue. No alternative algorithm has been benchmarked.
