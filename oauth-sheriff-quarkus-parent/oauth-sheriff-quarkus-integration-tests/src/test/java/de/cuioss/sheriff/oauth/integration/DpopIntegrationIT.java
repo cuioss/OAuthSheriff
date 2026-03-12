@@ -166,7 +166,7 @@ class DpopIntegrationIT extends BaseIntegrationTest {
         var tokenResponse = dpopRealm.obtainDpopBoundToken(dpopHelper);
         String accessToken = tokenResponse.accessToken();
 
-        String fixedJti = "replay-test-" + System.currentTimeMillis();
+        String fixedJti = "replay-test-" + java.util.UUID.randomUUID();
         String proof = dpopHelper.createResourceProofWithJti(accessToken, fixedJti);
 
         // First request — should succeed
