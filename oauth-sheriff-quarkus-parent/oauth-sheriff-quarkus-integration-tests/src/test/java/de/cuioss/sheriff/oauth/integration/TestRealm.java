@@ -160,6 +160,47 @@ public class TestRealm {
     }
 
     /**
+     * Obtains a DPoP-bound token from Keycloak by sending a DPoP proof header
+     * with the token request. The returned access token will contain a {@code cnf.jkt} claim.
+     *
+     * @param dpopHelper the DPoP proof helper (provides the key pair and proof generation)
+     * @return TokenResponse containing DPoP-bound access, ID, and refresh tokens
+     */
+    public TokenResponse obtainDpopBoundToken(DpopProofHelper dpopHelper) {
+        String tokenUrl = KEYCLOAK_BASE_URL + TOKEN_ENDPOINT_TEMPLATE.formatted(realmIdentifier);
+        String dpopProof = dpopHelper.createTokenEndpointProof(tokenUrl);
+
+        Response tokenResponse = given()
+                .baseUri(KEYCLOAK_BASE_URL)
+                .contentType("application/x-www-form-urlencoded")
+                .header("DPoP", dpopProof)
+                .formParam("client_id", clientId)
+                .formParam("client_secret", clientSecret)
+                .formParam("username", username)
+                .formParam("password", password)
+                .formParam("grant_type", "password")
+                .formParam("scope", "openid profile email")
+                .when()
+                .post(TOKEN_ENDPOINT_TEMPLATE.formatted(realmIdentifier));
+
+        assertEquals(200, tokenResponse.statusCode(),
+                "Should be able to obtain DPoP-bound tokens from " + realmIdentifier
+                        + " realm. Response: " + tokenResponse.body().asString());
+
+        Map<String, Object> tokenData = tokenResponse.jsonPath().getMap("");
+
+        String accessToken = (String) tokenData.get("access_token");
+        String idToken = (String) tokenData.get("id_token");
+        String refreshToken = (String) tokenData.get("refresh_token");
+
+        validateToken(accessToken, "DPoP-bound access token");
+        validateToken(idToken, "ID token");
+        validateToken(refreshToken, "Refresh token");
+
+        return new TokenResponse(accessToken, idToken, refreshToken);
+    }
+
+    /**
      * Checks if the well-known endpoint is healthy/available.
      *
      * @return true if the endpoint is healthy, false otherwise
