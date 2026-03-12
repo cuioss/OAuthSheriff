@@ -41,6 +41,7 @@ echo "=== WRK OUTPUT ==="
 echo ""
 
 # Fetch tokens directly to environment variable (no file I/O)
+FETCH_STDERR_LOG=$(mktemp)
 echo "Fetching $TOKEN_COUNT tokens from Keycloak (in-memory)..."
 TOKEN_DATA=$(bash "$SCRIPT_DIR/fetch_tokens.sh" \
     "$KEYCLOAK_URL" \
@@ -50,12 +51,15 @@ TOKEN_DATA=$(bash "$SCRIPT_DIR/fetch_tokens.sh" \
     "$USERNAME" \
     "$PASSWORD" \
     "$TOKEN_COUNT" \
-    "env" 2>/dev/null)
+    "env" 2> "$FETCH_STDERR_LOG")
 
 if [ -z "$TOKEN_DATA" ]; then
-    echo "ERROR: Failed to fetch tokens from Keycloak"
+    echo "ERROR: Failed to fetch tokens from Keycloak. Stderr:"
+    cat "$FETCH_STDERR_LOG"
+    rm -f "$FETCH_STDERR_LOG"
     exit 1
 fi
+rm -f "$FETCH_STDERR_LOG"
 
 TOKEN_LINE_COUNT=$(echo "$TOKEN_DATA" | wc -l | xargs)
 echo "Successfully loaded $TOKEN_LINE_COUNT tokens in memory"

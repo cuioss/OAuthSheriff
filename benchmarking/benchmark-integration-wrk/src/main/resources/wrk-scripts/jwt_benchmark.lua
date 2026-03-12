@@ -3,7 +3,6 @@
 
 -- Token pool (loaded at module initialization, no file I/O)
 local tokens = {}
-local thread_stats = {}
 
 -- Thread-local variables (initialized in init())
 local thread_id = 0
