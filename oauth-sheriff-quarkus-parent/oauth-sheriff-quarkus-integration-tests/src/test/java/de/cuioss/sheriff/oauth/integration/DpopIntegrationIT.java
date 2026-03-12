@@ -42,6 +42,7 @@ class DpopIntegrationIT extends BaseIntegrationTest {
     private static final String JWT_VALIDATE_PATH = "/jwt/validate";
     private static final String AUTHORIZATION = "Authorization";
 
+    private final TestRealm dpopRealm = TestRealm.createDpopRealm();
     private final TestRealm integrationRealm = TestRealm.createIntegrationRealm();
 
     // === Positive Tests ===
@@ -51,9 +52,9 @@ class DpopIntegrationIT extends BaseIntegrationTest {
     @DisplayName("Should obtain DPoP-bound token from Keycloak")
     void shouldObtainDpopBoundToken() {
         var dpopHelper = new DpopProofHelper();
-        var tokenResponse = integrationRealm.obtainDpopBoundToken(dpopHelper);
+        var tokenResponse = dpopRealm.obtainDpopBoundToken(dpopHelper);
         assertNotNull(tokenResponse.accessToken(), "DPoP-bound access token should not be null");
-        LOGGER.info("Successfully obtained DPoP-bound token from Keycloak integration realm");
+        LOGGER.info("Successfully obtained DPoP-bound token from Keycloak dpop-client");
     }
 
     @Test
@@ -61,7 +62,7 @@ class DpopIntegrationIT extends BaseIntegrationTest {
     @DisplayName("Should validate DPoP-bound token with valid DPoP proof")
     void shouldValidateDpopBoundToken() {
         var dpopHelper = new DpopProofHelper();
-        var tokenResponse = integrationRealm.obtainDpopBoundToken(dpopHelper);
+        var tokenResponse = dpopRealm.obtainDpopBoundToken(dpopHelper);
         String accessToken = tokenResponse.accessToken();
         String resourceProof = dpopHelper.createResourceProof(accessToken);
 
@@ -82,7 +83,7 @@ class DpopIntegrationIT extends BaseIntegrationTest {
     @DisplayName("Should validate multiple requests with fresh DPoP proofs")
     void shouldValidateMultipleRequestsWithFreshProofs() {
         var dpopHelper = new DpopProofHelper();
-        var tokenResponse = integrationRealm.obtainDpopBoundToken(dpopHelper);
+        var tokenResponse = dpopRealm.obtainDpopBoundToken(dpopHelper);
         String accessToken = tokenResponse.accessToken();
 
         for (int i = 0; i < 3; i++) {
@@ -103,7 +104,7 @@ class DpopIntegrationIT extends BaseIntegrationTest {
     @Order(4)
     @DisplayName("Should still accept bearer token without DPoP (dpop.required=false)")
     void shouldStillAcceptBearerTokenWithoutDpop() {
-        // Regular token without DPoP — should work since dpop.required=false
+        // Regular token from integration-client (no DPoP) — works since dpop.required=false
         var tokenResponse = integrationRealm.obtainValidToken();
 
         given()
@@ -123,7 +124,7 @@ class DpopIntegrationIT extends BaseIntegrationTest {
     @DisplayName("Should reject DPoP-bound token without DPoP header")
     void shouldRejectDpopTokenWithoutDpopHeader() {
         var dpopHelper = new DpopProofHelper();
-        var tokenResponse = integrationRealm.obtainDpopBoundToken(dpopHelper);
+        var tokenResponse = dpopRealm.obtainDpopBoundToken(dpopHelper);
 
         // Token has cnf.jkt but no DPoP header — must be rejected
         given()
@@ -140,7 +141,7 @@ class DpopIntegrationIT extends BaseIntegrationTest {
     @DisplayName("Should reject DPoP proof signed with wrong key")
     void shouldRejectDpopTokenWithWrongKey() {
         var dpopHelper = new DpopProofHelper();
-        var tokenResponse = integrationRealm.obtainDpopBoundToken(dpopHelper);
+        var tokenResponse = dpopRealm.obtainDpopBoundToken(dpopHelper);
         String accessToken = tokenResponse.accessToken();
 
         // Create proof with a DIFFERENT key pair — thumbprint won't match cnf.jkt
@@ -162,7 +163,7 @@ class DpopIntegrationIT extends BaseIntegrationTest {
     @DisplayName("Should reject replayed DPoP proof (same jti)")
     void shouldRejectReplayedDpopProof() {
         var dpopHelper = new DpopProofHelper();
-        var tokenResponse = integrationRealm.obtainDpopBoundToken(dpopHelper);
+        var tokenResponse = dpopRealm.obtainDpopBoundToken(dpopHelper);
         String accessToken = tokenResponse.accessToken();
 
         String fixedJti = "replay-test-" + System.currentTimeMillis();
@@ -194,7 +195,7 @@ class DpopIntegrationIT extends BaseIntegrationTest {
     @DisplayName("Should reject stale DPoP proof (iat too old)")
     void shouldRejectStaleDpopProof() {
         var dpopHelper = new DpopProofHelper();
-        var tokenResponse = integrationRealm.obtainDpopBoundToken(dpopHelper);
+        var tokenResponse = dpopRealm.obtainDpopBoundToken(dpopHelper);
         String accessToken = tokenResponse.accessToken();
 
         // Create proof with iat 10 minutes in the past (max age is 300s)
@@ -216,7 +217,7 @@ class DpopIntegrationIT extends BaseIntegrationTest {
     @DisplayName("Should reject DPoP proof with wrong ath (access token hash mismatch)")
     void shouldRejectDpopProofWithWrongAth() {
         var dpopHelper = new DpopProofHelper();
-        var tokenResponse = integrationRealm.obtainDpopBoundToken(dpopHelper);
+        var tokenResponse = dpopRealm.obtainDpopBoundToken(dpopHelper);
         String accessToken = tokenResponse.accessToken();
 
         // Create proof with ath computed from a different token

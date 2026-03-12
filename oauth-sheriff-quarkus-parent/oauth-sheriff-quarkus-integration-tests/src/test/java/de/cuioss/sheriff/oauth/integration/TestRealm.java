@@ -42,6 +42,10 @@ public class TestRealm {
     private static final String INTEGRATION_USERNAME = "integration-user";
     private static final String INTEGRATION_PASSWORD = "integration-password";
 
+    // DPoP client constants (same realm, different client with dpop.bound.access.tokens=true)
+    private static final String DPOP_CLIENT_ID = "dpop-client";
+    private static final String DPOP_CLIENT_SECRET = "dpop-secret";
+
     // Benchmark realm constants
     private static final String BENCHMARK_REALM_ID = "benchmark";
     private static final String BENCHMARK_CLIENT_ID = "benchmark-client";
@@ -82,6 +86,22 @@ public class TestRealm {
                 INTEGRATION_REALM_ID,
                 INTEGRATION_CLIENT_ID,
                 INTEGRATION_CLIENT_SECRET,
+                INTEGRATION_USERNAME,
+                INTEGRATION_PASSWORD
+        );
+    }
+
+    /**
+     * Factory method to create a TestRealm instance for DPoP testing.
+     * Uses the dpop-client in the integration realm which has {@code dpop.bound.access.tokens=true}.
+     *
+     * @return TestRealm configured for DPoP testing
+     */
+    public static TestRealm createDpopRealm() {
+        return new TestRealm(
+                INTEGRATION_REALM_ID,
+                DPOP_CLIENT_ID,
+                DPOP_CLIENT_SECRET,
                 INTEGRATION_USERNAME,
                 INTEGRATION_PASSWORD
         );
