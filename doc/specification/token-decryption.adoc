@@ -43,7 +43,7 @@ Key Material:
   +------------------------+                     |
   | Step 1: CREATE JWS     |                     |
   | Sign claims with AS's  |                     |
-  | private key --> JWS     |                     |
+  | private key --> JWS    |                     |
   | (header.payload.sig)   |                     |
   +------------+-----------+                     |
                |                                 |
@@ -52,8 +52,8 @@ Key Material:
   | Step 2: ENCRYPT JWS --> JWE                       |
   |                                                   |
   | 1. Generate random CEK (Content Encryption Key)   |
-  | 2. Encrypt CEK with RS's public key (RSA-OAEP)   |
-  | 3. Encrypt JWS payload with CEK (AES-GCM)        |
+  | 2. Encrypt CEK with RS's public key (RSA-OAEP)    |
+  | 3. Encrypt JWS payload with CEK (AES-GCM)         |
   | 4. Produce JWE: Header.EncKey.IV.Cipher.AuthTag   |
   +------------------------+--------------------------+
                            |
@@ -174,7 +174,7 @@ KEY EXCHANGE FLOW (OIDC Standard)
 |       ...           |                     |                        |
 |     },              |                     |                        |
 |     {               |    2. AS fetches    |                        |
-|       "use":"enc",  |<--- RS's JWKS------| Filters for            |
+|       "use":"enc",  |<--- RS's JWKS-------| Filters for            |
 |       "kid":"e1",   |    to get enc key   | use: "enc" keys        |
 |       ...           |                     |                        |
 |     }               |                     |                        |
@@ -263,17 +263,17 @@ JWE decryption is transparent — it happens inside `NonValidatingJwtParser` and
 [listing]
 ....
                          +---------------------+
-                         |  Raw Token String    |
+                         |  Raw Token String   |
                          +----------+----------+
                                     |
                          +----------v----------+
-                         | TokenStringValidator |
-                         | (null/blank/size)    |
+                         | TokenStringValidator|
+                         | (null/blank/size)   |
                          +----------+----------+
                                     |
                          +----------v--------------+
-                         | NonValidatingJwtParser   |
-                         | split on '.'             |
+                         | NonValidatingJwtParser  |
+                         | split on '.'            |
                          +----------+--------------+
                                     |
                        +------------+------------+
@@ -295,20 +295,20 @@ JWE decryption is transparent — it happens inside `NonValidatingJwtParser` and
                        |            |             |
                        |            |    +--------v---------+
                        |            |    | Inner JWS string  |
-                       |            |    | --> decode(inner)  |
+                       |            |    | --> decode(inner) |
                        |            |    +--------+---------+
                        |            |             |
                        v            v             v
                  +------------------------------------+
-                 |           DecodedJwt                |
-                 |   (same type for both paths)        |
+                 |           DecodedJwt               |
+                 |   (same type for both paths)       |
                  +-----------------+------------------+
                                    |
              +---------------------v---------------------+
              |   Existing pipeline (UNCHANGED)            |
-             |   IssuerConfigResolver --> HeaderValidator  |
-             |   --> SignatureValidator --> TokenBuilder   |
-             |   --> ClaimValidator --> Cache              |
+             |   IssuerConfigResolver --> HeaderValidator |
+             |   --> SignatureValidator --> TokenBuilder  |
+             |   --> ClaimValidator --> Cache             |
              +--------------------------------------------+
 ....
 
@@ -317,46 +317,46 @@ JWE decryption is transparent — it happens inside `NonValidatingJwtParser` and
 [listing]
 ....
               +--------------------------------------+
-              | JWE Compact Serialization             |
-              | Header.EncKey.IV.Cipher.AuthTag        |
-              | (5 Base64URL parts)                    |
+              | JWE Compact Serialization            |
+              | Header.EncKey.IV.Cipher.AuthTag      |
+              | (5 Base64URL parts)                  |
               +-----------------+--------------------+
                                 |
               +-----------------v--------------------+
-              | 1. Decode Header (part[0])            |
-              |    --> JwtHeader with 'enc' field      |
-              |    --> Validate alg + enc allowed       |
+              | 1. Decode Header (part[0])           |
+              |    --> JwtHeader with 'enc' field    |
+              |    --> Validate alg + enc allowed    |
               +-----------------+--------------------+
                                 |
               +-----------------v--------------------+
-              | 2. Resolve Decryption Key             |
-              |    --> By kid from header              |
-              |    --> Or default key                  |
+              | 2. Resolve Decryption Key            |
+              |    --> By kid from header            |
+              |    --> Or default key                |
               +-----------------+--------------------+
                                 |
               +-----------------v--------------------+
-              | 3. Decrypt CEK                        |
-              |    RSA-OAEP: JDK Cipher OAEP          |
-              |    RSA-OAEP-256: Cipher + OAEPSpec     |
-              |    ECDH-ES: KeyAgreement + KDF         |
+              | 3. Decrypt CEK                       |
+              |    RSA-OAEP: JDK Cipher OAEP         |
+              |    RSA-OAEP-256: Cipher + OAEPSpec   |
+              |    ECDH-ES: KeyAgreement + KDF       |
               +-----------------+--------------------+
                                 |
               +-----------------v--------------------+
-              | 4. Decrypt Content                    |
-              |    A128GCM/A256GCM: AES/GCM           |
-              |    A128CBC-HS256: AES/CBC + HMAC       |
-              |    A256CBC-HS512: AES/CBC + HMAC       |
+              | 4. Decrypt Content                   |
+              |    A128GCM/A256GCM: AES/GCM          |
+              |    A128CBC-HS256: AES/CBC + HMAC     |
+              |    A256CBC-HS512: AES/CBC + HMAC     |
               +-----------------+--------------------+
                                 |
               +-----------------v--------------------+
-              | 5. Decompress (if zip="DEF")          |
-              |    --> Inflate with size limit          |
+              | 5. Decompress (if zip="DEF")         |
+              |    --> Inflate with size limit       |
               +-----------------+--------------------+
                                 |
               +-----------------v--------------------+
-              | 6. Inner JWS string                   |
-              |    --> Pass to decode() recursively     |
-              |    --> Returns DecodedJwt               |
+              | 6. Inner JWS string                  |
+              |    --> Pass to decode() recursively  |
+              |    --> Returns DecodedJwt            |
               +--------------------------------------+
 ....
 
