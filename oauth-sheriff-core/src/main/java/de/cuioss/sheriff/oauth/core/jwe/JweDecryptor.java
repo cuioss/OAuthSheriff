@@ -196,11 +196,23 @@ public class JweDecryptor {
 
         ECPublicKey ephemeralKey = parseEcPublicKeyFromJwk(epkJson);
 
-        // Validate the ephemeral key is on the same curve as our private key
+        // Validate the private key is EC
         if (!(key instanceof ECPrivateKey ecPrivateKey)) {
             throw new TokenValidationException(
                     SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
                     "ECDH-ES requires an EC private key");
+        }
+
+        // Validate ephemeral key curve matches private key curve (Invalid Curve Attack prevention)
+        ECParameterSpec privateParams = ecPrivateKey.getParams();
+        ECParameterSpec ephemeralParams = ephemeralKey.getParams();
+        if (!privateParams.getCurve().equals(ephemeralParams.getCurve())
+                || !privateParams.getGenerator().equals(ephemeralParams.getGenerator())
+                || !privateParams.getOrder().equals(ephemeralParams.getOrder())
+                || privateParams.getCofactor() != ephemeralParams.getCofactor()) {
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
+                    "Ephemeral key curve does not match private key curve");
         }
 
         // Perform ECDH key agreement

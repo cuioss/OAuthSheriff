@@ -327,6 +327,32 @@ class JweDecryptorTest {
         }
 
         @Test
+        @DisplayName("Should reject ECDH-ES with mismatched curve (Invalid Curve Attack)")
+        void shouldRejectMismatchedCurve() {
+            // Recipient key on P-384, but ephemeral key on P-256
+            KeyPair recipientKeyPair = JweTestTokenFactory.generateEcKeyPair("secp384r1");
+            KeyPair ephemeralKeyPair = JweTestTokenFactory.generateEcKeyPair("secp256r1");
+
+            String jwe = JweTestTokenFactory.createEcdhEsJweWrappedAccessToken(
+                    InMemoryKeyMaterialHandler.getDefaultPrivateKey(),
+                    ephemeralKeyPair,
+                    (ECPublicKey) JweTestTokenFactory.generateEcKeyPair("secp256r1").getPublic(),
+                    "A128GCM", "https://test-issuer.example.com");
+
+            String[] parts = jwe.split("\\.");
+            JwtHeader header = parseHeader(parts[0]);
+
+            // Use P-384 private key for decryption — should reject due to curve mismatch
+            JweDecryptionConfig config = JweDecryptionConfig.builder()
+                    .defaultDecryptionKey(recipientKeyPair.getPrivate())
+                    .build();
+
+            TokenValidationException ex = assertThrows(TokenValidationException.class,
+                    () -> decryptor.decrypt(parts, header, config, counter));
+            assertTrue(ex.getMessage().contains("curve does not match"));
+        }
+
+        @Test
         @DisplayName("Should fail ECDH-ES without epk in header")
         void shouldFailEcdhEsWithoutEpk() {
             JweDecryptionConfig config = JweDecryptionConfig.builder()
