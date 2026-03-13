@@ -58,7 +58,6 @@ public class JweDecryptor {
 
     private static final CuiLogger LOGGER = new CuiLogger(JweDecryptor.class);
     private static final int MAX_DECOMPRESSED_SIZE = 256 * 1024; // 256KB limit for compression bomb protection
-    @SuppressWarnings("rawtypes")
     private static final DslJson<Object> DSL_JSON = new DslJson<>(new DslJson.Settings<>());
 
     /**
@@ -104,6 +103,22 @@ public class JweDecryptor {
                             "No decryption key found for kid: %s".formatted(kid));
                 });
 
+        // Validate compression before crypto operations
+        var zipOptional = jweHeader.getZip();
+        if (zipOptional.isPresent()) {
+            String zipAlg = zipOptional.get();
+            if (!"DEF".equals(zipAlg)) {
+                throw new TokenValidationException(
+                        SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
+                        "Unsupported compression algorithm: %s".formatted(zipAlg));
+            }
+            if (!config.isCompressionEnabled()) {
+                throw new TokenValidationException(
+                        SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
+                        "JWE compression is disabled");
+            }
+        }
+
         try {
             // Decode JWE parts
             byte[] encryptedKey = Base64.getUrlDecoder().decode(jweParts[1]);
@@ -121,19 +136,8 @@ public class JweDecryptor {
                 // Decrypt content
                 byte[] plaintext = decryptContent(enc, cek, iv, ciphertext, authTag, aad);
 
-                // Handle compression
-                if (jweHeader.getZip().isPresent()) {
-                    String zipAlg = jweHeader.getZip().get();
-                    if (!"DEF".equals(zipAlg)) {
-                        throw new TokenValidationException(
-                                SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
-                                "Unsupported compression algorithm: %s".formatted(zipAlg));
-                    }
-                    if (!config.isCompressionEnabled()) {
-                        throw new TokenValidationException(
-                                SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
-                                "JWE compression is disabled");
-                    }
+                // Decompress if zip header was present (already validated above)
+                if (zipOptional.isPresent()) {
                     plaintext = decompress(plaintext);
                 }
 
@@ -142,14 +146,12 @@ public class JweDecryptor {
                 // Clear CEK from memory
                 Arrays.fill(cek, (byte) 0);
             }
-        } catch (TokenValidationException e) {
-            throw e;
         } catch (GeneralSecurityException | IllegalArgumentException e) {
             LOGGER.warn(JWTValidationLogMessages.WARN.JWE_DECRYPTION_FAILED, e.getMessage());
             counter.increment(SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED);
             throw new TokenValidationException(
                     SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
-                    "JWE decryption failed: %s".formatted(e.getMessage()),
+                    "JWE decryption failed",
                     e);
         }
     }
@@ -247,6 +249,7 @@ public class JweDecryptor {
         return cipher.doFinal(ciphertextWithTag);
     }
 
+    @SuppressWarnings("java:S5542") // CBC+PKCS5Padding required by RFC 7518 Section 5.2.6; padding oracle mitigated by MAC-then-decrypt
     private byte[] decryptAesCbcHs(byte[] cek, byte[] iv, byte[] ciphertext, byte[] authTag,
             byte[] aad, int macKeyLen, String macAlg) throws GeneralSecurityException {
         // Split CEK into MAC key and encryption key per RFC 7518 Section 5.2
@@ -264,7 +267,8 @@ public class JweDecryptor {
                 throw new SecurityException("Authentication tag verification failed");
             }
 
-            // Decrypt
+            // Decrypt — CBC with PKCS5Padding is required by RFC 7518 Section 5.2.6 for A*CBC-HS*.
+            // Padding oracle is mitigated: MAC is verified above before decryption (verify-then-decrypt).
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(encKey, "AES"), new IvParameterSpec(iv));
             return cipher.doFinal(ciphertext);
@@ -276,7 +280,7 @@ public class JweDecryptor {
 
     private byte[] computeAesCbcHsTag(byte[] macKey, String macAlg, byte[] aad, byte[] iv,
             byte[] ciphertext, int macKeyLen) throws GeneralSecurityException {
-        // HMAC input: AAD || IV || Ciphertext || AAD_length_in_bits (8 bytes big-endian)
+        // HMAC input per RFC 7518 Section 5.2.2.1: AAD, IV, Ciphertext, AAD-length-in-bits (8 bytes big-endian)
         Mac mac = Mac.getInstance(macAlg);
         mac.init(new SecretKeySpec(macKey, macAlg));
         mac.update(aad);
@@ -370,11 +374,12 @@ public class JweDecryptor {
         }
     }
 
-    @SuppressWarnings({"java:S3776", "unchecked"}) // Complexity justified: EC key parsing from JWK requires multiple steps
+    @SuppressWarnings("java:S3776") // Complexity justified: EC key parsing from JWK requires multiple steps
     private static ECPublicKey parseEcPublicKeyFromJwk(String epkJson) {
         try {
             // Use dsl-json for robust EPK parsing
-            var jwkMap = (Map<String, Object>) DSL_JSON.deserialize(
+            @SuppressWarnings("unchecked")
+            Map<String, Object> jwkMap = DSL_JSON.deserialize(
                     Map.class,
                     epkJson.getBytes(StandardCharsets.UTF_8),
                     epkJson.length());
