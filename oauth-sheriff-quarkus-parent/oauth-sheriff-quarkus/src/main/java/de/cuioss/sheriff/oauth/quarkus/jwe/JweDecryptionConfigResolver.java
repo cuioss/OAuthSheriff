@@ -69,8 +69,11 @@ public class JweDecryptionConfigResolver {
         // Check for multi-key configuration
         Map<String, String> multiKeyPaths = discoverMultiKeyPaths();
 
+        LOGGER.info("JWE config check: singleKeyPath=%s, keystorePath=%s, multiKeys=%s",
+                singleKeyPath, keystorePath, multiKeyPaths);
+
         if (singleKeyPath.isEmpty() && keystorePath.isEmpty() && multiKeyPaths.isEmpty()) {
-            LOGGER.debug("No JWE decryption configuration found - JWE support disabled");
+            LOGGER.info("No JWE decryption configuration found - JWE support disabled");
             return null;
         }
 
@@ -151,24 +154,21 @@ public class JweDecryptionConfigResolver {
         Optional<String> defaultKid = config.getOptionalValue(
                 JwtPropertyKeys.JWE.DEFAULT_KEY_ID, String.class);
 
+        Map<String, PrivateKey> loadedKeys = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : keyPaths.entrySet()) {
             String kid = entry.getKey();
             String path = entry.getValue();
             PrivateKey key = DecryptionKeyLoader.loadFromPem(Path.of(path));
             builder.decryptionKey(kid, key);
-
-            if (defaultKid.isPresent() && defaultKid.get().equals(kid)) {
-                builder.defaultDecryptionKey(key);
-            }
+            loadedKeys.put(kid, key);
             LOGGER.debug("Loaded JWE decryption key '%s' from: %s", kid, path);
         }
 
-        // If no default set and we have keys, use the first one
-        if (defaultKid.isEmpty() && !keyPaths.isEmpty()) {
-            String firstKid = keyPaths.keySet().iterator().next();
-            String firstPath = keyPaths.get(firstKid);
-            PrivateKey firstKey = DecryptionKeyLoader.loadFromPem(Path.of(firstPath));
-            builder.defaultDecryptionKey(firstKey);
+        // Set default key: use configured default kid, or fall back to the first loaded key
+        PrivateKey defaultKey = defaultKid.map(loadedKeys::get)
+                .orElseGet(() -> loadedKeys.isEmpty() ? null : loadedKeys.values().iterator().next());
+        if (defaultKey != null) {
+            builder.defaultDecryptionKey(defaultKey);
         }
     }
 
@@ -198,28 +198,13 @@ public class JweDecryptionConfigResolver {
 
         if (keyMgmtAlgs.isPresent() || contentEncAlgs.isPresent()) {
             List<String> keyAlgs = keyMgmtAlgs
-                    .map(s -> Arrays.asList(s.split(",")))
-                    .map(list -> {
-                        list.replaceAll(String::trim);
-                        return list;
-                    })
-                    .orElse(null);
+                    .map(s -> Arrays.stream(s.split(",")).map(String::trim).toList())
+                    .orElseGet(JweAlgorithmPreferences::getDefaultKeyManagementAlgorithms);
             List<String> encAlgs = contentEncAlgs
-                    .map(s -> Arrays.asList(s.split(",")))
-                    .map(list -> {
-                        list.replaceAll(String::trim);
-                        return list;
-                    })
-                    .orElse(null);
+                    .map(s -> Arrays.stream(s.split(",")).map(String::trim).toList())
+                    .orElseGet(JweAlgorithmPreferences::getDefaultContentEncryptionAlgorithms);
 
-            JweAlgorithmPreferences prefs = new JweAlgorithmPreferences();
-            if (keyAlgs != null) {
-                prefs = new JweAlgorithmPreferences(keyAlgs, prefs.getSupportedContentEncryptionAlgorithms());
-            }
-            if (encAlgs != null) {
-                prefs = new JweAlgorithmPreferences(prefs.getSupportedKeyManagementAlgorithms(), encAlgs);
-            }
-            builder.algorithmPreferences(prefs);
+            builder.algorithmPreferences(new JweAlgorithmPreferences(keyAlgs, encAlgs));
         }
     }
 }

@@ -279,6 +279,21 @@
                                     <workingDirectory>${project.basedir}</workingDirectory>
                                 </configuration>
                             </execution>
+                            <!-- Dump application container logs before stopping containers -->
+                            <execution>
+                                <id>dump-app-logs</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>./scripts/dump-app-logs.sh</executable>
+                                    <arguments>
+                                        <argument>target</argument>
+                                    </arguments>
+                                    <workingDirectory>${project.basedir}</workingDirectory>
+                                </configuration>
+                            </execution>
                             <!-- Stop application after integration tests -->
                             <execution>
                                 <id>stop-integration-app</id>
@@ -296,7 +311,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <!-- Profile for JFR profiling with UBI-based images -->
         <profile>
             <id>jfr</id>
@@ -406,6 +421,21 @@
                                 </goals>
                                 <configuration>
                                     <executable>./scripts/dump-keycloak-logs.sh</executable>
+                                    <arguments>
+                                        <argument>target</argument>
+                                    </arguments>
+                                    <workingDirectory>${project.basedir}</workingDirectory>
+                                </configuration>
+                            </execution>
+                            <!-- Dump application container logs before stopping containers -->
+                            <execution>
+                                <id>dump-app-logs</id>
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>./scripts/dump-app-logs.sh</executable>
                                     <arguments>
                                         <argument>target</argument>
                                     </arguments>

@@ -373,7 +373,7 @@ JWE decryption is transparent — it happens inside `NonValidatingJwtParser` and
 |Keycloak default
 
 |RSA-OAEP-256
-|`Cipher("RSA/ECB/OAEPPadding")` + `OAEPParameterSpec(SHA-256, MGF1, SHA256, DEFAULT)`
+|`Cipher("RSA/ECB/OAEPPadding")` + `OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA256, PSource.PSpecified.DEFAULT)`
 |Recommended for Open Finance
 
 |ECDH-ES

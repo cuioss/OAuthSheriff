@@ -196,7 +196,7 @@ String apv
      * @return Optional containing the encryption algorithm, empty if null or blank
      */
     public Optional<String> getEnc() {
-        return Optional.ofNullable(enc).filter(s -> !s.trim().isEmpty());
+        return Optional.ofNullable(enc).filter(s -> !s.isBlank());
     }
 
     /**
