@@ -77,8 +77,8 @@
         "post.logout.redirect.uris": "*",
         "oauth2.device.authorization.grant.enabled": "false",
         "backchannel.logout.revoke.offline.tokens": "false",
-        "id.token.encrypted.idtoken.alg": "RSA-OAEP",
-        "id.token.encrypted.idtoken.enc": "A256GCM",
+        "id.token.encrypted.response.alg": "RSA-OAEP",
+        "id.token.encrypted.response.enc": "A256GCM",
         "use.jwks.url": "false",
         "jwks": "{\"keys\":[{\"kty\":\"RSA\",\"use\":\"enc\",\"kid\":\"jwe-test-key\",\"alg\":\"RSA-OAEP\",\"n\":\"-rclDe00_tkUPEMv4hDlWrpmvqvG8oFvbtp6irUuo6aZNBUWhaR9ITVXLrXuSqidEKh6eR_0t6Jc4pcEnHYzwsy3pDB5Wq9kiOY_0LIEHec4IQyrb9YA7HgtVlrznXsX6C_wt6lAF1dF3tOnSHEix1Be6--TTpp8ejJSZbT9ej1tX2eHfa1FBtLxNWaqCjKCTHJTfnmcA9dmHWJElyZEkHQXfFbnxyxtEb_lWvWMGRTImK7WziUSFiwHPDOCNFkAvZBzBqKJrlV5xtblpAhKw1OPbF77Gd_eZDyiUgCljJxP5DWNlZT9aHdeRjLBFCCPuzoLJWwylMkus3QA4z0P2Q\",\"e\":\"AQAB\"}]}"
       }

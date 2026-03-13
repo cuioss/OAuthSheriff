@@ -28,6 +28,7 @@ import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.ECGenParameterSpec;
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -145,10 +146,10 @@ class DecryptionKeyLoaderTest {
 
     @Test
     @DisplayName("Should parse PEM content directly")
-    void shouldParsePemContent() throws GeneralSecurityException {
+    void shouldParsePemContent() throws Exception {
         KeyPair keyPair = generateRsaKeyPair();
         String pem = "-----BEGIN PRIVATE KEY-----\n"
-                + java.util.Base64.getMimeEncoder(64, "\n".getBytes())
+                + Base64.getMimeEncoder(64, "\n".getBytes())
                 .encodeToString(keyPair.getPrivate().getEncoded())
                 + "\n-----END PRIVATE KEY-----\n";
 
@@ -173,7 +174,7 @@ class DecryptionKeyLoaderTest {
     private Path writePemFile(PrivateKey key, String filename) throws Exception {
         Path pemFile = tempDir.resolve(filename);
         String pem = "-----BEGIN PRIVATE KEY-----\n"
-                + java.util.Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(key.getEncoded())
+                + Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(key.getEncoded())
                 + "\n-----END PRIVATE KEY-----\n";
         Files.writeString(pemFile, pem);
         return pemFile;

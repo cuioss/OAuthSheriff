@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * decrypts the JWE with its local private key, then validates the inner JWS normally.
  * <p>
  * Keycloak encrypts <b>ID tokens</b> (not access tokens) when
- * {@code id.token.encrypted.idtoken.alg/enc} is configured on the client. Access tokens
+ * {@code id.token.encrypted.response.alg/enc} is configured on the client. Access tokens
  * from the same client remain unencrypted (JWS), so both paths are exercised.
  */
 @DisplayName("JWE Decryption Integration Tests (RFC 7516)")
@@ -59,14 +59,14 @@ class JweDecryptionIntegrationIT extends BaseIntegrationTest {
 
         // Verify ID token is JWE (5 parts) — Keycloak encrypts ID tokens
         String idToken = tokenResponse.idToken();
-        int dotCount = idToken.chars().filter(ch -> ch == '.').sum();
+        int dotCount = idToken.split("\\.", -1).length - 1;
         assertEquals(4, dotCount,
                 "ID token from jwe-client should be JWE (5 parts, 4 dots), got " + (dotCount + 1) + " parts");
         LOGGER.info("ID token is JWE format (5 parts) as expected");
 
         // Access token remains JWS (3 parts) — Keycloak doesn't encrypt access tokens
         String accessToken = tokenResponse.accessToken();
-        int accessDotCount = accessToken.chars().filter(ch -> ch == '.').sum();
+        int accessDotCount = accessToken.split("\\.", -1).length - 1;
         assertEquals(2, accessDotCount,
                 "Access token should remain JWS (3 parts), got " + (accessDotCount + 1) + " parts");
     }

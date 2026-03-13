@@ -199,11 +199,17 @@ public class JweDecryptionConfigResolver {
         if (keyMgmtAlgs.isPresent() || contentEncAlgs.isPresent()) {
             List<String> keyAlgs = keyMgmtAlgs
                     .map(s -> Arrays.asList(s.split(",")))
-                    .map(list -> { list.replaceAll(String::trim); return list; })
+                    .map(list -> {
+                        list.replaceAll(String::trim);
+                        return list;
+                    })
                     .orElse(null);
             List<String> encAlgs = contentEncAlgs
                     .map(s -> Arrays.asList(s.split(",")))
-                    .map(list -> { list.replaceAll(String::trim); return list; })
+                    .map(list -> {
+                        list.replaceAll(String::trim);
+                        return list;
+                    })
                     .orElse(null);
 
             JweAlgorithmPreferences prefs = new JweAlgorithmPreferences();

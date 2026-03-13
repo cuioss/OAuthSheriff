@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -138,7 +139,7 @@ class JweDecryptionConfigResolverTest {
 
         Path pemFile = tempDir.resolve(filename);
         String pem = "-----BEGIN PRIVATE KEY-----\n"
-                + java.util.Base64.getMimeEncoder(64, "\n".getBytes())
+                + Base64.getMimeEncoder(64, "\n".getBytes())
                 .encodeToString(keyPair.getPrivate().getEncoded())
                 + "\n-----END PRIVATE KEY-----\n";
         Files.writeString(pemFile, pem);
