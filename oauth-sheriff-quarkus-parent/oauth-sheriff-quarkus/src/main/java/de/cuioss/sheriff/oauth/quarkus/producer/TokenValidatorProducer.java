@@ -20,11 +20,13 @@ import de.cuioss.sheriff.oauth.core.IssuerConfig;
 import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.TokenValidator;
 import de.cuioss.sheriff.oauth.core.cache.AccessTokenCacheConfig;
+import de.cuioss.sheriff.oauth.core.jwe.JweDecryptionConfig;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.sheriff.oauth.quarkus.config.AccessTokenCacheConfigResolver;
 import de.cuioss.sheriff.oauth.quarkus.config.IssuerConfigResolver;
 import de.cuioss.sheriff.oauth.quarkus.config.ParserConfigResolver;
 import de.cuioss.sheriff.oauth.quarkus.config.RetryStrategyConfigResolver;
+import de.cuioss.sheriff.oauth.quarkus.jwe.JweDecryptionConfigResolver;
 import de.cuioss.sheriff.oauth.quarkus.mapper.ClaimMapperRegistry;
 import de.cuioss.tools.logging.CuiLogger;
 import jakarta.annotation.PostConstruct;
@@ -125,10 +127,18 @@ public class TokenValidatorProducer {
         AccessTokenCacheConfigResolver cacheConfigResolver = new AccessTokenCacheConfigResolver(config);
         AccessTokenCacheConfig cacheConfig = cacheConfigResolver.resolveCacheConfig();
 
+        // Resolve optional JWE decryption configuration
+        JweDecryptionConfigResolver jweResolver = new JweDecryptionConfigResolver(config);
+        JweDecryptionConfig jweDecryptionConfig = jweResolver.resolveJweDecryptionConfig();
+
         // Create TokenValidator using builder pattern - it handles internal initialization
         TokenValidator.TokenValidatorBuilder builder = TokenValidator.builder()
                 .parserConfig(parserConfig)
                 .cacheConfig(cacheConfig);
+
+        if (jweDecryptionConfig != null) {
+            builder.jweDecryptionConfig(jweDecryptionConfig);
+        }
 
         // Add each issuer config to the builder
         for (IssuerConfig issuerConfig : issuerConfigs) {

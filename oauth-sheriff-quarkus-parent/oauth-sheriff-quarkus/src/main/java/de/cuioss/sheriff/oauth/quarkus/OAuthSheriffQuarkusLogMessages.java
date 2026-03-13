@@ -190,6 +190,20 @@ public final class OAuthSheriffQuarkusLogMessages {
                 .identifier(64)
                 .build();
 
+        // JWE Configuration Messages (031-040)
+
+        public static final LogRecord JWE_DECRYPTION_CONFIG_RESOLVING = LogRecordModel.builder()
+                .template("Resolving JWE decryption configuration from properties")
+                .prefix(PREFIX)
+                .identifier(31)
+                .build();
+
+        public static final LogRecord JWE_DECRYPTION_CONFIG_RESOLVED = LogRecordModel.builder()
+                .template("JWE decryption configuration resolved with %s key(s)")
+                .prefix(PREFIX)
+                .identifier(32)
+                .build();
+
         // Access Log Filter Messages (065-070)
 
         public static final LogRecord CUSTOM_ACCESS_LOG_FILTER_INITIALIZED = LogRecordModel.builder()
@@ -253,6 +267,14 @@ public final class OAuthSheriffQuarkusLogMessages {
                 .template("Background JWKS initialization encountered issues: %s - on-demand loading will handle this")
                 .prefix(PREFIX)
                 .identifier(135)
+                .build();
+
+        // JWE Warnings (141-145)
+
+        public static final LogRecord JWE_KEYSTORE_MISSING_ALIAS = LogRecordModel.builder()
+                .template("JWE keystore configured at %s but no key-alias specified — skipping keystore key loading")
+                .prefix(PREFIX)
+                .identifier(141)
                 .build();
 
         // Interceptor Warnings (136-145)

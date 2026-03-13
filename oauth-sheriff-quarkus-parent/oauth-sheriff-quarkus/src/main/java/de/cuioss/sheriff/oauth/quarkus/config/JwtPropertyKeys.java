@@ -696,6 +696,93 @@ public final class JwtPropertyKeys {
     }
 
     /**
+     * Properties related to JWE (JSON Web Encryption) decryption configuration.
+     * <p>
+     * These properties configure JWE token decryption at the TokenValidator level
+     * (not per-issuer), because the decryption private key belongs to this Resource Server.
+     * </p>
+     */
+    @UtilityClass
+    public static final class JWE {
+        /**
+         * Base path for JWE configurations.
+         */
+        public static final String BASE = PREFIX + ".jwe";
+
+        /**
+         * Path to a PKCS#8 PEM file containing the decryption private key.
+         * Property: "sheriff.oauth.jwe.decryption-key-path"
+         */
+        public static final String DECRYPTION_KEY_PATH = BASE + ".decryption-key-path";
+
+        /**
+         * Key ID for the single decryption key.
+         * Property: "sheriff.oauth.jwe.decryption-key-id"
+         */
+        public static final String DECRYPTION_KEY_ID = BASE + ".decryption-key-id";
+
+        /**
+         * Path to a keystore (JKS or PKCS#12) containing the decryption key.
+         * Property: "sheriff.oauth.jwe.keystore-path"
+         */
+        public static final String KEYSTORE_PATH = BASE + ".keystore-path";
+
+        /**
+         * Keystore password.
+         * Property: "sheriff.oauth.jwe.keystore-password"
+         */
+        public static final String KEYSTORE_PASSWORD = BASE + ".keystore-password";
+
+        /**
+         * Alias of the key entry in the keystore.
+         * Property: "sheriff.oauth.jwe.key-alias"
+         */
+        public static final String KEY_ALIAS = BASE + ".key-alias";
+
+        /**
+         * Key entry password in the keystore.
+         * Property: "sheriff.oauth.jwe.key-password"
+         */
+        public static final String KEY_PASSWORD = BASE + ".key-password";
+
+        /**
+         * Prefix for multiple decryption keys for rotation support.
+         * Pattern: "sheriff.oauth.jwe.decryption-keys.{kid}.path"
+         */
+        public static final String MULTI_KEY_PREFIX = BASE + ".decryption-keys.";
+
+        /**
+         * Default key ID when multiple keys are configured.
+         * Property: "sheriff.oauth.jwe.default-key-id"
+         */
+        public static final String DEFAULT_KEY_ID = BASE + ".default-key-id";
+
+        /**
+         * Comma-separated list of allowed key management algorithms.
+         * Property: "sheriff.oauth.jwe.key-management-algorithms"
+         * <p>
+         * Default: RSA-OAEP, RSA-OAEP-256, ECDH-ES
+         */
+        public static final String KEY_MANAGEMENT_ALGORITHMS = BASE + ".key-management-algorithms";
+
+        /**
+         * Comma-separated list of allowed content encryption algorithms.
+         * Property: "sheriff.oauth.jwe.content-encryption-algorithms"
+         * <p>
+         * Default: A128GCM, A256GCM, A128CBC-HS256, A256CBC-HS512
+         */
+        public static final String CONTENT_ENCRYPTION_ALGORITHMS = BASE + ".content-encryption-algorithms";
+
+        /**
+         * Maximum size of encrypted JWE tokens in bytes.
+         * Property: "sheriff.oauth.jwe.max-encrypted-token-size"
+         * <p>
+         * Default: 32768 (32 KB)
+         */
+        public static final String MAX_ENCRYPTED_TOKEN_SIZE = BASE + ".max-encrypted-token-size";
+    }
+
+    /**
      * Properties related to HTTP retry configuration.
      */
     @UtilityClass

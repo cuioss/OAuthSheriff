@@ -35,6 +35,9 @@ import de.cuioss.sheriff.oauth.core.pipeline.TokenBuilder;
 import de.cuioss.sheriff.oauth.core.pipeline.validator.TokenClaimValidator;
 import de.cuioss.sheriff.oauth.core.pipeline.validator.TokenHeaderValidator;
 import de.cuioss.sheriff.oauth.core.pipeline.validator.TokenSignatureValidator;
+import de.cuioss.sheriff.oauth.core.jwe.JweAlgorithmPreferences;
+import de.cuioss.sheriff.oauth.core.jwe.JweDecryptionConfig;
+import de.cuioss.sheriff.oauth.core.jwe.JweDecryptor;
 import de.cuioss.sheriff.oauth.core.security.JwkAlgorithmPreferences;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.sheriff.oauth.core.security.SignatureAlgorithmPreferences;
@@ -174,7 +177,11 @@ public class OAuthSheriffProcessor {
                 JwksParser.class,
                 // Security and algorithm classes
                 SignatureAlgorithmPreferences.class,
-                JwkAlgorithmPreferences.class)
+                JwkAlgorithmPreferences.class,
+                // JWE decryption classes
+                JweDecryptor.class,
+                JweDecryptionConfig.class,
+                JweAlgorithmPreferences.class)
                 .methods(false)  // Methods not needed - these are instantiated and called directly
                 .fields(false)   // Fields not needed - no direct field access
                 .constructors(true) // Only constructors needed for instantiation
