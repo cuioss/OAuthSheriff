@@ -25,6 +25,7 @@ import de.cuioss.sheriff.oauth.core.domain.token.RefreshTokenContent;
 import de.cuioss.sheriff.oauth.core.dpop.DpopProofValidator;
 import de.cuioss.sheriff.oauth.core.dpop.DpopReplayProtection;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
+import de.cuioss.sheriff.oauth.core.jwe.JweDecryptionConfig;
 import de.cuioss.sheriff.oauth.core.metrics.*;
 import de.cuioss.sheriff.oauth.core.pipeline.*;
 import de.cuioss.sheriff.oauth.core.pipeline.validator.TokenClaimValidator;
@@ -191,7 +192,8 @@ public class TokenValidator implements Closeable {
             @Nullable ParserConfig parserConfig,
             @Singular List<IssuerConfig> issuerConfigs,
             @Nullable TokenValidatorMonitorConfig monitorConfig,
-            @Nullable AccessTokenCacheConfig cacheConfig) {
+            @Nullable AccessTokenCacheConfig cacheConfig,
+            @Nullable JweDecryptionConfig jweDecryptionConfig) {
 
         if (issuerConfigs.isEmpty()) {
             throw new IllegalArgumentException("At least one issuer configuration must be provided");
@@ -219,6 +221,7 @@ public class TokenValidator implements Closeable {
         NonValidatingJwtParser jwtParser = NonValidatingJwtParser.builder()
                 .config(parserConfig)
                 .securityEventCounter(this.securityEventCounter)
+                .jweDecryptionConfig(jweDecryptionConfig)
                 .build();
 
         // Let the IssuerConfigResolver handle all issuer config processing
@@ -295,8 +298,9 @@ public class TokenValidator implements Closeable {
         }
 
         // Construct TokenStringValidator for pre-pipeline validation
+        // When JWE is configured, use the larger maxEncryptedTokenSize
         this.tokenStringValidator = new TokenStringValidator(
-                parserConfig, this.securityEventCounter);
+                parserConfig, this.securityEventCounter, jweDecryptionConfig);
         LOGGER.debug("TokenStringValidator initialized");
 
         // Construct RefreshTokenValidationPipeline (minimal validation, no cache, no metrics, no security events)
@@ -332,6 +336,10 @@ public class TokenValidator implements Closeable {
                 cacheConfig.getMaxSize(), cacheConfig.getEvictionIntervalSeconds());
 
         LOGGER.info(JWTValidationLogMessages.INFO.TOKEN_FACTORY_INITIALIZED, issuerConfigResolver.toString());
+
+        if (jweDecryptionConfig != null) {
+            LOGGER.info(JWTValidationLogMessages.INFO.JWE_DECRYPTION_ENABLED, jweDecryptionConfig.getKeyCount());
+        }
     }
 
 

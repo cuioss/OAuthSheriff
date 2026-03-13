@@ -18,9 +18,11 @@ package de.cuioss.sheriff.oauth.core.pipeline.validator;
 import de.cuioss.sheriff.oauth.core.JWTValidationLogMessages;
 import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
+import de.cuioss.sheriff.oauth.core.jwe.JweDecryptionConfig;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 
@@ -60,6 +62,22 @@ public class TokenStringValidator {
     public TokenStringValidator(ParserConfig parserConfig,
             SecurityEventCounter securityEventCounter) {
         this.maxTokenSize = parserConfig.getMaxTokenSize();
+        this.securityEventCounter = securityEventCounter;
+    }
+
+    /**
+     * Creates a new TokenStringValidator that uses the JWE max token size when JWE is configured.
+     *
+     * @param parserConfig the parser configuration
+     * @param securityEventCounter the security event counter
+     * @param jweDecryptionConfig optional JWE config — uses its maxEncryptedTokenSize if present
+     */
+    public TokenStringValidator(ParserConfig parserConfig,
+            SecurityEventCounter securityEventCounter,
+            @Nullable JweDecryptionConfig jweDecryptionConfig) {
+        this.maxTokenSize = jweDecryptionConfig != null
+                ? jweDecryptionConfig.getMaxEncryptedTokenSize()
+                : parserConfig.getMaxTokenSize();
         this.securityEventCounter = securityEventCounter;
     }
 

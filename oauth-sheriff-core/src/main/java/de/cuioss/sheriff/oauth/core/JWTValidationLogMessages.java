@@ -190,6 +190,12 @@ public final class JWTValidationLogMessages {
                 .identifier(10)
                 .template("Issuer configuration loaded successfully: %s")
                 .build();
+
+        public static final LogRecord JWE_DECRYPTION_ENABLED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(11)
+                .template("JWE decryption enabled with %s decryption key(s)")
+                .build();
     }
 
     /**
@@ -226,7 +232,7 @@ public final class JWTValidationLogMessages {
         public static final LogRecord INVALID_JWT_FORMAT = LogRecordModel.builder()
                 .prefix(PREFIX)
                 .identifier(104)
-                .template("Invalid JWT Token format: expected 3 parts but got %s")
+                .template("Invalid JWT Token format: expected 3 parts (JWS) or 5 parts (JWE) but got %s")
                 .build();
 
         public static final LogRecord DECODED_PART_SIZE_EXCEEDED = LogRecordModel.builder()
@@ -542,6 +548,43 @@ public final class JWTValidationLogMessages {
                 .prefix(PREFIX)
                 .identifier(156)
                 .template("DPoP is required but access token does not contain cnf.jkt claim")
+                .build();
+
+        // JWE decryption issues (RFC 7516)
+        public static final LogRecord JWE_DECRYPTION_FAILED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(157)
+                .template("Failed to decrypt JWE token: %s")
+                .build();
+
+        public static final LogRecord JWE_UNSUPPORTED_ALGORITHM = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(158)
+                .template("Unsupported JWE algorithm: alg=%s, enc=%s")
+                .build();
+
+        public static final LogRecord JWE_DECRYPTION_NOT_CONFIGURED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(159)
+                .template("Received JWE token but no decryption configuration is available")
+                .build();
+
+        public static final LogRecord JWE_DECRYPTION_KEY_NOT_FOUND = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(160)
+                .template("No decryption key found for key ID: %s")
+                .build();
+
+        public static final LogRecord JWE_COMPRESSION_NOT_SUPPORTED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(161)
+                .template("Unsupported JWE compression algorithm: %s")
+                .build();
+
+        public static final LogRecord JWE_NESTED_NOT_ALLOWED = LogRecordModel.builder()
+                .prefix(PREFIX)
+                .identifier(162)
+                .template("Nested JWE tokens are not allowed")
                 .build();
     }
 

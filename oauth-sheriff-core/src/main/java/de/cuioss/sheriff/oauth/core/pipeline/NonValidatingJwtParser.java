@@ -21,11 +21,14 @@ import de.cuioss.sheriff.oauth.core.ParserConfig;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.json.JwtHeader;
 import de.cuioss.sheriff.oauth.core.json.MapRepresentation;
+import de.cuioss.sheriff.oauth.core.jwe.JweDecryptionConfig;
+import de.cuioss.sheriff.oauth.core.jwe.JweDecryptor;
 import de.cuioss.sheriff.oauth.core.security.SecurityEventCounter;
 import de.cuioss.tools.logging.CuiLogger;
 import de.cuioss.tools.string.MoreStrings;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -130,12 +133,23 @@ public class NonValidatingJwtParser {
     /**
      * Counter for security events that occur during token processing.
      */
-   
     private final SecurityEventCounter securityEventCounter;
 
-    private NonValidatingJwtParser(ParserConfig config, SecurityEventCounter securityEventCounter) {
+    /**
+     * Optional JWE decryption configuration. When present, 5-part JWE tokens
+     * will be decrypted and the inner JWS will be parsed.
+     */
+    @Nullable
+    private final JweDecryptionConfig jweDecryptionConfig;
+
+    private final JweDecryptor jweDecryptor;
+
+    private NonValidatingJwtParser(ParserConfig config, SecurityEventCounter securityEventCounter,
+            @Nullable JweDecryptionConfig jweDecryptionConfig) {
         this.config = config != null ? config : ParserConfig.builder().build();
         this.securityEventCounter = securityEventCounter;
+        this.jweDecryptionConfig = jweDecryptionConfig;
+        this.jweDecryptor = jweDecryptionConfig != null ? new JweDecryptor() : null;
     }
 
     public static NonValidatingJwtParserBuilder builder() {
@@ -145,6 +159,7 @@ public class NonValidatingJwtParser {
     public static class NonValidatingJwtParserBuilder {
         private ParserConfig config = ParserConfig.builder().build();
         private SecurityEventCounter securityEventCounter;
+        private JweDecryptionConfig jweDecryptionConfig;
 
         public NonValidatingJwtParserBuilder config(ParserConfig config) {
             this.config = config;
@@ -156,8 +171,13 @@ public class NonValidatingJwtParser {
             return this;
         }
 
+        public NonValidatingJwtParserBuilder jweDecryptionConfig(JweDecryptionConfig jweDecryptionConfig) {
+            this.jweDecryptionConfig = jweDecryptionConfig;
+            return this;
+        }
+
         public NonValidatingJwtParser build() {
-            return new NonValidatingJwtParser(config, securityEventCounter);
+            return new NonValidatingJwtParser(config, securityEventCounter, jweDecryptionConfig);
         }
     }
 
@@ -267,6 +287,12 @@ public class NonValidatingJwtParser {
 
         // Split token and validate format
         String[] parts = token.split("\\.");
+
+        if (parts.length == 5) {
+            // JWE token (5 parts: header.encryptedKey.iv.ciphertext.authTag)
+            return handleJweToken(parts, token, logWarnings, trackSecurityEvents);
+        }
+
         if (parts.length != 3) {
             if (logWarnings) {
                 LOGGER.warn(JWTValidationLogMessages.WARN.INVALID_JWT_FORMAT, parts.length);
@@ -295,6 +321,83 @@ public class NonValidatingJwtParser {
                     "Failed to decode JWT: %s".formatted(e.getMessage()),
                     e
             );
+        }
+    }
+
+    /**
+     * Handles a 5-part JWE token by decrypting it and parsing the inner JWS.
+     */
+    private DecodedJwt handleJweToken(String[] parts, String originalToken,
+            boolean logWarnings, boolean trackSecurityEvents) {
+        // Check if JWE decryption is configured
+        if (jweDecryptionConfig == null || jweDecryptor == null) {
+            if (logWarnings) {
+                LOGGER.warn(JWTValidationLogMessages.WARN.JWE_DECRYPTION_NOT_CONFIGURED);
+            }
+            if (trackSecurityEvents) {
+                securityEventCounter.increment(SecurityEventCounter.EventType.JWE_DECRYPTION_NOT_CONFIGURED);
+            }
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.JWE_DECRYPTION_NOT_CONFIGURED,
+                    "Received JWE token but no decryption configuration is available");
+        }
+
+        try {
+            // Decode JWE header only (first part)
+            JwtHeader jweHeader = decodeJwtHeader(parts[0]);
+
+            // Verify this is actually a JWE (has 'enc' field)
+            if (!jweHeader.isJwe()) {
+                throw new TokenValidationException(
+                        SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
+                        "5-part token does not have 'enc' header field — not a valid JWE");
+            }
+
+            // Decrypt to get inner JWS string
+            String innerJws = jweDecryptor.decrypt(parts, jweHeader, jweDecryptionConfig, securityEventCounter);
+
+            // Check inner JWS size
+            if (innerJws.getBytes(StandardCharsets.UTF_8).length > config.getMaxTokenSize()) {
+                throw new TokenValidationException(
+                        SecurityEventCounter.EventType.TOKEN_SIZE_EXCEEDED,
+                        "Inner JWS from JWE exceeds maximum token size");
+            }
+
+            // Check for nested JWE (not allowed)
+            String[] innerParts = innerJws.split("\\.");
+            if (innerParts.length == 5) {
+                if (logWarnings) {
+                    LOGGER.warn(JWTValidationLogMessages.WARN.JWE_NESTED_NOT_ALLOWED);
+                }
+                throw new TokenValidationException(
+                        SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
+                        "Nested JWE tokens are not allowed");
+            }
+
+            if (innerParts.length != 3) {
+                throw new TokenValidationException(
+                        SecurityEventCounter.EventType.INVALID_JWT_FORMAT,
+                        "Inner JWS from JWE has invalid format: expected 3 parts but got %d".formatted(innerParts.length));
+            }
+
+            // Parse the inner JWS and return DecodedJwt with original JWE as rawToken
+            DecodedJwt innerDecoded = decodeTokenParts(innerParts, innerJws, logWarnings, trackSecurityEvents);
+            // Return with original JWE token as rawToken (for caching/logging)
+            return new DecodedJwt(innerDecoded.header(), innerDecoded.body(),
+                    innerDecoded.signature(), innerDecoded.parts(), originalToken);
+
+        } catch (TokenValidationException e) {
+            throw e;
+        } catch (IOException e) {
+            if (logWarnings) {
+                LOGGER.warn(e, JWTValidationLogMessages.WARN.FAILED_TO_DECODE_JWT);
+            }
+            if (trackSecurityEvents) {
+                securityEventCounter.increment(SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT);
+            }
+            throw new TokenValidationException(
+                    SecurityEventCounter.EventType.FAILED_TO_DECODE_JWT,
+                    "Failed to decode JWE header: " + e.getMessage(), e);
         }
     }
 

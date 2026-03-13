@@ -199,7 +199,16 @@ public enum MeasurementType {
      * exponential backoff algorithm including jitter. This helps analyze
      * retry timing patterns and backoff effectiveness.
      */
-    RETRY_DELAY("14. HTTP retry delay time");
+    RETRY_DELAY("14. HTTP retry delay time"),
+
+    /**
+     * 15. JWE decryption operation (cross-cutting).
+     * <p>
+     * Measures time to decrypt a JWE token including key resolution,
+     * CEK decryption, content decryption, and optional decompression.
+     * This step occurs within TOKEN_PARSING when a 5-part JWE token is detected.
+     */
+    JWE_DECRYPTION("15. JWE decryption");
 
     /**
      * Human-readable description of this measurement type for logging and monitoring.

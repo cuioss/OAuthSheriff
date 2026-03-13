@@ -69,7 +69,7 @@ String rawToken
      * @return the JwtHeader, never null (minimal header with empty algorithm if not present)
      */
     public JwtHeader getHeader() {
-        return header != null ? header : new JwtHeader("", null, null, null, null, null, null, null, null, null, null);
+        return header != null ? header : new JwtHeader("", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     /**

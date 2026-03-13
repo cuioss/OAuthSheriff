@@ -68,7 +68,9 @@ public class JwkAlgorithmPreferences {
         LOGGER.debug("Getting default supported JWK algorithms");
 
         // Algorithms that can be parsed and loaded from JWK objects
-        return List.of("RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512");
+        // Includes both signature algorithms and JWE key management algorithms
+        return List.of("RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA", "PS256", "PS384", "PS512",
+                "RSA-OAEP", "RSA-OAEP-256", "ECDH-ES");
     }
 
     /**

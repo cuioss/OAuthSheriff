@@ -220,7 +220,8 @@ class TokenHeaderValidatorTest {
                     null,     // x5t
                     null,     // x5tS256
                     null,     // cty
-                    null      // crit
+                    null,     // crit
+                    null, null, null, null, null // JWE fields
             );
 
             // Create a DecodedJwt without kid
@@ -271,7 +272,8 @@ class TokenHeaderValidatorTest {
                     null,     // x5t
                     null,     // x5tS256
                     null,     // cty
-                    null      // crit
+                    null,     // crit
+                    null, null, null, null, null // JWE fields
             );
 
             // Create a DecodedJwt
@@ -313,7 +315,8 @@ class TokenHeaderValidatorTest {
                     null,     // x5t
                     null,     // x5tS256
                     null,     // cty
-                    null      // crit
+                    null,     // crit
+                    null, null, null, null, null // JWE fields
             );
 
             // Create a DecodedJwt
@@ -376,7 +379,8 @@ class TokenHeaderValidatorTest {
                     null,     // x5t
                     null,     // x5tS256
                     null,     // cty
-                    null      // crit
+                    null,     // crit
+                    null, null, null, null, null // JWE fields
             );
 
             // Create a DecodedJwt with the header containing embedded JWK
@@ -428,7 +432,8 @@ class TokenHeaderValidatorTest {
                     null,     // x5t
                     null,     // x5tS256
                     null,     // cty
-                    null      // crit
+                    null,     // crit
+                    null, null, null, null, null // JWE fields
             );
 
             // Create a DecodedJwt without embedded JWK
@@ -462,7 +467,8 @@ class TokenHeaderValidatorTest {
             // And a token with typ: JWT
             var header = new JwtHeader(
                     "RS256", "JWT", "key-1",
-                    null, null, null, null, null, null, null, null
+                    null, null, null, null, null, null, null, null,
+                    null, null, null, null, null
             );
             DecodedJwt decodedJwt = new DecodedJwt(
                     header, MapRepresentation.empty(), "fake-signature",
@@ -487,7 +493,8 @@ class TokenHeaderValidatorTest {
             // And a token with typ: at+jwt
             var header = new JwtHeader(
                     "RS256", "at+jwt", "key-1",
-                    null, null, null, null, null, null, null, null
+                    null, null, null, null, null, null, null, null,
+                    null, null, null, null, null
             );
             DecodedJwt decodedJwt = new DecodedJwt(
                     header, MapRepresentation.empty(), "fake-signature",
@@ -512,7 +519,8 @@ class TokenHeaderValidatorTest {
             // And a token with typ: AT+JWT (uppercase)
             var header = new JwtHeader(
                     "RS256", "AT+JWT", "key-1",
-                    null, null, null, null, null, null, null, null
+                    null, null, null, null, null, null, null, null,
+                    null, null, null, null, null
             );
             DecodedJwt decodedJwt = new DecodedJwt(
                     header, MapRepresentation.empty(), "fake-signature",
@@ -540,7 +548,8 @@ class TokenHeaderValidatorTest {
             // And a token with typ: JWT (mismatched)
             var header = new JwtHeader(
                     "RS256", "JWT", "key-1",
-                    null, null, null, null, null, null, null, null
+                    null, null, null, null, null, null, null, null,
+                    null, null, null, null, null
             );
             DecodedJwt decodedJwt = new DecodedJwt(
                     header, MapRepresentation.empty(), "fake-signature",
@@ -581,7 +590,8 @@ class TokenHeaderValidatorTest {
             // And a token with no typ header
             var header = new JwtHeader(
                     "RS256", null, "key-1",
-                    null, null, null, null, null, null, null, null
+                    null, null, null, null, null, null, null, null,
+                    null, null, null, null, null
             );
             DecodedJwt decodedJwt = new DecodedJwt(
                     header, MapRepresentation.empty(), "fake-signature",

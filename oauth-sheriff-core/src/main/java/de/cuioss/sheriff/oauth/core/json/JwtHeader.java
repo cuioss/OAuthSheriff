@@ -22,52 +22,52 @@ import java.util.Optional;
 /**
  * JWT Header representation for DSL-JSON deserialization.
  * <p>
- * This record represents the JWT header structure as defined in RFC 7515 (JWS)
- * and RFC 7519 (JWT), providing type-safe access to header parameters.
+ * This record represents the JWT header structure as defined in RFC 7515 (JWS),
+ * RFC 7516 (JWE), and RFC 7519 (JWT), providing type-safe access to header parameters.
  * <p>
  * The header contains cryptographic metadata needed for JWT validation:
  * <ul>
- *   <li>Algorithm specification for signature verification</li>
+ *   <li>Algorithm specification for signature verification (JWS) or key management (JWE)</li>
  *   <li>Key identification for key lookup</li>
  *   <li>Content type information</li>
  *   <li>Key discovery metadata</li>
+ *   <li>JWE-specific fields: content encryption algorithm, compression, ephemeral keys</li>
  * </ul>
  * <p>
- * This implementation follows the specification requirements:
- * <ul>
- *   <li>Uses Optional for all optional parameters per RFC specifications</li>
- *   <li>Provides null-safe access to header values</li>
- *   <li>Enables compile-time JSON processing with DSL-JSON</li>
- * </ul>
+ * A JWE header is distinguished from a JWS header by the presence of the {@code enc}
+ * (content encryption algorithm) field. When {@code enc} is present and non-blank,
+ * the header belongs to a JWE token (RFC 7516).
  * <p>
  * For more details on JWT header structure, see:
  * <ul>
  *   <li><a href="https://datatracker.ietf.org/doc/html/rfc7515#section-4">RFC 7515 - 4. JWS Header</a></li>
+ *   <li><a href="https://datatracker.ietf.org/doc/html/rfc7516#section-4">RFC 7516 - 4. JWE Header</a></li>
  *   <li><a href="https://datatracker.ietf.org/doc/html/rfc7519#section-5">RFC 7519 - 5. JWT Header</a></li>
  * </ul>
  *
- * @param alg The "alg" (algorithm) Header Parameter identifies the cryptographic algorithm used to secure the JWS.
- *            REQUIRED by RFC 7515 for all JWS/JWT tokens.
- * @param typ The "typ" (type) Header Parameter is used to declare the media type of the complete JWS.
- *            OPTIONAL by RFC 7515. When present, it is RECOMMENDED to use "JWT".
- * @param kid The "kid" (key ID) Header Parameter is a hint indicating which key was used to secure the JWS.
- *            OPTIONAL by RFC 7515. Used for key lookup in multi-key scenarios.
- * @param jku The "jku" (JWK Set URL) Header Parameter is a URI that refers to a resource for a set of JSON-encoded public keys.
- *            OPTIONAL by RFC 7515. Used for key discovery.
- * @param jwk The "jwk" (JSON Web Key) Header Parameter is the public key that corresponds to the key used to digitally sign the JWS.
- *            OPTIONAL by RFC 7515. Contains the actual key material as a JWK. Stored as String for DSL-JSON compatibility.
- * @param x5u The "x5u" (X.509 URL) Header Parameter is a URI that refers to a resource for the X.509 public key certificate.
- *            OPTIONAL by RFC 7515. Used for X.509-based key discovery.
- * @param x5c The "x5c" (X.509 Certificate Chain) Header Parameter contains the X.509 public key certificate.
- *            OPTIONAL by RFC 7515. Contains the actual certificate chain. Stored as String for DSL-JSON compatibility.
- * @param x5t The "x5t" (X.509 Certificate SHA-1 Thumbprint) Header Parameter is a base64url encoded SHA-1 thumbprint.
- *            OPTIONAL by RFC 7515. Used for certificate identification.
- * @param x5tS256 The "x5t#S256" (X.509 Certificate SHA-256 Thumbprint) Header Parameter is a base64url encoded SHA-256 thumbprint.
- *               OPTIONAL by RFC 7515. Preferred over x5t due to SHA-256 being more secure than SHA-1.
- * @param cty The "cty" (content type) Header Parameter is used to declare the media type of the secured content (the payload).
- *            OPTIONAL by RFC 7515. Only needed when the payload is another JWT/JWS.
- * @param crit The "crit" (critical) Header Parameter indicates the extensions that MUST be understood and processed.
- *             OPTIONAL by RFC 7515. Contains a list of header parameter names that are critical. Stored as String for DSL-JSON compatibility.
+ * @param alg The "alg" (algorithm) Header Parameter. For JWS: signature algorithm.
+ *            For JWE: key management algorithm (e.g., "RSA-OAEP", "ECDH-ES").
+ * @param typ The "typ" (type) Header Parameter is used to declare the media type.
+ * @param kid The "kid" (key ID) Header Parameter is a hint indicating which key was used.
+ * @param jku The "jku" (JWK Set URL) Header Parameter.
+ * @param jwk The "jwk" (JSON Web Key) Header Parameter.
+ * @param x5u The "x5u" (X.509 URL) Header Parameter.
+ * @param x5c The "x5c" (X.509 Certificate Chain) Header Parameter.
+ * @param x5t The "x5t" (X.509 Certificate SHA-1 Thumbprint) Header Parameter.
+ * @param x5tS256 The "x5t#S256" (X.509 Certificate SHA-256 Thumbprint) Header Parameter.
+ * @param cty The "cty" (content type) Header Parameter.
+ * @param crit The "crit" (critical) Header Parameter.
+ * @param enc The "enc" (encryption algorithm) Header Parameter (JWE only, RFC 7516).
+ *            Identifies the content encryption algorithm (e.g., "A256GCM", "A128CBC-HS256").
+ *            Presence of this field distinguishes JWE from JWS headers.
+ * @param zip The "zip" (compression algorithm) Header Parameter (JWE only, RFC 7516).
+ *            If present, the plaintext was compressed before encryption (e.g., "DEF" for DEFLATE).
+ * @param epk The "epk" (ephemeral public key) Header Parameter (JWE only, RFC 7518 Section 4.6.1.1).
+ *            Used with ECDH-ES key agreement. Stored as String for DSL-JSON compatibility.
+ * @param apu The "apu" (Agreement PartyUInfo) Header Parameter (JWE only, RFC 7518 Section 4.6.1.2).
+ *            Base64URL-encoded value for key derivation.
+ * @param apv The "apv" (Agreement PartyVInfo) Header Parameter (JWE only, RFC 7518 Section 4.6.1.3).
+ *            Base64URL-encoded value for key derivation.
  *
  * @author Oliver Wolff
  */
@@ -83,7 +83,12 @@ String x5c,
 String x5t,
 String x5tS256,
 String cty,
-String crit
+String crit,
+String enc,
+String zip,
+String epk,
+String apu,
+String apv
 ) {
 
     /**
@@ -183,5 +188,62 @@ String crit
      */
     public Optional<String> getCrit() {
         return Optional.ofNullable(crit);
+    }
+
+    /**
+     * Gets the content encryption algorithm parameter as Optional (JWE only).
+     *
+     * @return Optional containing the encryption algorithm, empty if null or blank
+     */
+    public Optional<String> getEnc() {
+        return Optional.ofNullable(enc).filter(s -> !s.trim().isEmpty());
+    }
+
+    /**
+     * Gets the compression algorithm parameter as Optional (JWE only).
+     *
+     * @return Optional containing the compression algorithm, empty if null
+     */
+    public Optional<String> getZip() {
+        return Optional.ofNullable(zip);
+    }
+
+    /**
+     * Gets the ephemeral public key parameter as Optional (JWE ECDH-ES only).
+     *
+     * @return Optional containing the ephemeral public key JSON, empty if null
+     */
+    public Optional<String> getEpk() {
+        return Optional.ofNullable(epk);
+    }
+
+    /**
+     * Gets the Agreement PartyUInfo parameter as Optional (JWE ECDH-ES only).
+     *
+     * @return Optional containing the apu value, empty if null
+     */
+    public Optional<String> getApu() {
+        return Optional.ofNullable(apu);
+    }
+
+    /**
+     * Gets the Agreement PartyVInfo parameter as Optional (JWE ECDH-ES only).
+     *
+     * @return Optional containing the apv value, empty if null
+     */
+    public Optional<String> getApv() {
+        return Optional.ofNullable(apv);
+    }
+
+    /**
+     * Determines whether this header represents a JWE (JSON Web Encryption) token.
+     * <p>
+     * A header is considered JWE when the {@code enc} (content encryption algorithm)
+     * field is present and non-blank, as defined by RFC 7516.
+     *
+     * @return {@code true} if this is a JWE header, {@code false} if JWS
+     */
+    public boolean isJwe() {
+        return enc != null && !enc.isBlank();
     }
 }
