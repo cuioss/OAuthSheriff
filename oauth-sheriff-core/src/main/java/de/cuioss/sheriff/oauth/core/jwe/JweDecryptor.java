@@ -15,6 +15,7 @@
  */
 package de.cuioss.sheriff.oauth.core.jwe;
 
+import com.dslplatform.json.DslJson;
 import de.cuioss.sheriff.oauth.core.JWTValidationLogMessages;
 import de.cuioss.sheriff.oauth.core.exception.TokenValidationException;
 import de.cuioss.sheriff.oauth.core.json.JwtHeader;
@@ -24,12 +25,9 @@ import de.cuioss.tools.logging.CuiLogger;
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
 import javax.crypto.Mac;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.OAEPParameterSpec;
-import javax.crypto.spec.PSource;
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.spec.*;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -38,6 +36,7 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Map;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -59,6 +58,8 @@ public class JweDecryptor {
 
     private static final CuiLogger LOGGER = new CuiLogger(JweDecryptor.class);
     private static final int MAX_DECOMPRESSED_SIZE = 256 * 1024; // 256KB limit for compression bomb protection
+    @SuppressWarnings("rawtypes")
+    private static final DslJson<Object> DSL_JSON = new DslJson<>(new DslJson.Settings<>());
 
     /**
      * Decrypts a JWE token and returns the inner plaintext (typically a JWS string).
@@ -143,7 +144,7 @@ public class JweDecryptor {
             }
         } catch (TokenValidationException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (GeneralSecurityException | IllegalArgumentException e) {
             LOGGER.warn(JWTValidationLogMessages.WARN.JWE_DECRYPTION_FAILED, e.getMessage());
             counter.increment(SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED);
             throw new TokenValidationException(
@@ -334,7 +335,7 @@ public class JweDecryptor {
             throw new TokenValidationException(
                     SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
                     "Failed to decompress JWE payload: %s".formatted(e.getMessage()), e);
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw new TokenValidationException(
                     SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
                     "IO error during decompression: %s".formatted(e.getMessage()), e);
@@ -369,13 +370,26 @@ public class JweDecryptor {
         }
     }
 
-    @SuppressWarnings("java:S3776") // Complexity justified: EC key parsing from JWK requires multiple steps
+    @SuppressWarnings({"java:S3776", "unchecked"}) // Complexity justified: EC key parsing from JWK requires multiple steps
     private static ECPublicKey parseEcPublicKeyFromJwk(String epkJson) {
         try {
-            // Simple JSON parsing for epk - expected format: {"kty":"EC","crv":"...","x":"...","y":"..."}
-            String crv = extractJsonField(epkJson, "crv");
-            String xB64 = extractJsonField(epkJson, "x");
-            String yB64 = extractJsonField(epkJson, "y");
+            // Use dsl-json for robust EPK parsing
+            var jwkMap = (Map<String, Object>) DSL_JSON.deserialize(
+                    Map.class,
+                    epkJson.getBytes(StandardCharsets.UTF_8),
+                    epkJson.length());
+
+            if (jwkMap == null) {
+                throw new IllegalArgumentException("EPK JSON parsed to null");
+            }
+
+            String crv = (String) jwkMap.get("crv");
+            String xB64 = (String) jwkMap.get("x");
+            String yB64 = (String) jwkMap.get("y");
+
+            if (crv == null || xB64 == null || yB64 == null) {
+                throw new IllegalArgumentException("EPK JWK is missing required fields: crv, x, or y");
+            }
 
             byte[] x = Base64.getUrlDecoder().decode(xB64);
             byte[] y = Base64.getUrlDecoder().decode(yB64);
@@ -385,7 +399,7 @@ public class JweDecryptor {
                 case "P-256" -> "secp256r1";
                 case "P-384" -> "secp384r1";
                 case "P-521" -> "secp521r1";
-                default -> throw new IllegalArgumentException("Unsupported EC curve: " + crv);
+                default -> throw new IllegalArgumentException("Unsupported EC curve: %s".formatted(crv));
             };
 
             ECParameterSpec params = getEcParameterSpec(stdName);
@@ -393,7 +407,7 @@ public class JweDecryptor {
             ECPublicKeySpec keySpec = new ECPublicKeySpec(point, params);
             KeyFactory keyFactory = KeyFactory.getInstance("EC");
             return (ECPublicKey) keyFactory.generatePublic(keySpec);
-        } catch (GeneralSecurityException e) {
+        } catch (GeneralSecurityException | IOException | ClassCastException e) {
             throw new TokenValidationException(
                     SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED,
                     "Failed to parse ephemeral EC public key: %s".formatted(e.getMessage()), e);
@@ -404,27 +418,5 @@ public class JweDecryptor {
         AlgorithmParameters params = AlgorithmParameters.getInstance("EC");
         params.init(new ECGenParameterSpec(stdName));
         return params.getParameterSpec(ECParameterSpec.class);
-    }
-
-    private static String extractJsonField(String json, String field) {
-        // Simple JSON field extraction — sufficient for the well-defined epk structure
-        String searchKey = "\"" + field + "\"";
-        int keyIdx = json.indexOf(searchKey);
-        if (keyIdx < 0) {
-            throw new IllegalArgumentException("Missing field '%s' in EPK JSON".formatted(field));
-        }
-        int colonIdx = json.indexOf(':', keyIdx + searchKey.length());
-        if (colonIdx < 0) {
-            throw new IllegalArgumentException("Malformed EPK JSON for field '%s'".formatted(field));
-        }
-        int valueStart = json.indexOf('"', colonIdx + 1);
-        if (valueStart < 0) {
-            throw new IllegalArgumentException("Missing value for field '%s' in EPK JSON".formatted(field));
-        }
-        int valueEnd = json.indexOf('"', valueStart + 1);
-        if (valueEnd < 0) {
-            throw new IllegalArgumentException("Unterminated value for field '%s' in EPK JSON".formatted(field));
-        }
-        return json.substring(valueStart + 1, valueEnd);
     }
 }
