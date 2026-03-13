@@ -18,6 +18,8 @@ package de.cuioss.sheriff.oauth.integration;
 import de.cuioss.tools.logging.CuiLogger;
 import org.junit.jupiter.api.*;
 
+import java.util.Map;
+
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
@@ -79,7 +81,7 @@ class JweDecryptionIntegrationIT extends BaseIntegrationTest {
 
         given()
                 .contentType("application/json")
-                .header(AUTHORIZATION, BEARER_PREFIX + tokenResponse.idToken())
+                .body(Map.of("token", tokenResponse.idToken()))
                 .when()
                 .post(ID_TOKEN_VALIDATE_PATH)
                 .then()
@@ -131,7 +133,7 @@ class JweDecryptionIntegrationIT extends BaseIntegrationTest {
         for (int i = 0; i < 3; i++) {
             given()
                     .contentType("application/json")
-                    .header(AUTHORIZATION, BEARER_PREFIX + tokenResponse.idToken())
+                    .body(Map.of("token", tokenResponse.idToken()))
                     .when()
                     .post(ID_TOKEN_VALIDATE_PATH)
                     .then()
@@ -160,7 +162,7 @@ class JweDecryptionIntegrationIT extends BaseIntegrationTest {
 
         given()
                 .contentType("application/json")
-                .header(AUTHORIZATION, BEARER_PREFIX + tamperedToken)
+                .body(Map.of("token", tamperedToken))
                 .when()
                 .post(ID_TOKEN_VALIDATE_PATH)
                 .then()
