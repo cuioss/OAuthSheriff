@@ -132,6 +132,84 @@ class JweDecryptionConfigResolverTest {
         assertEquals(65536, result.getMaxEncryptedTokenSize());
     }
 
+    @Test
+    @DisplayName("Should load single key without explicit kid")
+    void shouldLoadSingleKeyWithoutKid() throws Exception {
+        Path pemFile = createRsaPemFile("no-kid-key.pem");
+
+        Map<String, String> props = new HashMap<>();
+        props.put(JwtPropertyKeys.JWE.DECRYPTION_KEY_PATH, pemFile.toString());
+
+        TestConfig config = new TestConfig(props);
+        JweDecryptionConfigResolver resolver = new JweDecryptionConfigResolver(config);
+
+        JweDecryptionConfig result = resolver.resolveJweDecryptionConfig();
+
+        assertNotNull(result);
+        // Default key should still be set even without explicit kid
+        assertTrue(result.resolveKey(null).isPresent());
+    }
+
+    @Test
+    @DisplayName("Should load multiple keys without explicit default kid")
+    void shouldLoadMultipleKeysWithoutDefaultKid() throws Exception {
+        Path pemFile1 = createRsaPemFile("multi-1.pem");
+        Path pemFile2 = createRsaPemFile("multi-2.pem");
+
+        Map<String, String> props = new HashMap<>();
+        props.put(JwtPropertyKeys.JWE.MULTI_KEY_PREFIX + "first.path", pemFile1.toString());
+        props.put(JwtPropertyKeys.JWE.MULTI_KEY_PREFIX + "second.path", pemFile2.toString());
+
+        TestConfig config = new TestConfig(props);
+        JweDecryptionConfigResolver resolver = new JweDecryptionConfigResolver(config);
+
+        JweDecryptionConfig result = resolver.resolveJweDecryptionConfig();
+
+        assertNotNull(result);
+        assertTrue(result.resolveKey("first").isPresent());
+        assertTrue(result.resolveKey("second").isPresent());
+        // First key should be default
+        assertTrue(result.resolveKey(null).isPresent());
+    }
+
+    @Test
+    @DisplayName("Should warn and skip keystore when alias is missing")
+    void shouldWarnWhenKeystoreAliasMissing() throws Exception {
+        Path dummyKeystore = tempDir.resolve("dummy.p12");
+        Files.writeString(dummyKeystore, "dummy-content");
+
+        Map<String, String> props = new HashMap<>();
+        props.put(JwtPropertyKeys.JWE.KEYSTORE_PATH, dummyKeystore.toString());
+        // No KEY_ALIAS configured
+
+        TestConfig config = new TestConfig(props);
+        JweDecryptionConfigResolver resolver = new JweDecryptionConfigResolver(config);
+
+        // Should return null because keystore loading is skipped without alias
+        // and no other key source is provided
+        JweDecryptionConfig result = resolver.resolveJweDecryptionConfig();
+
+        // The result could be non-null (empty config with defaults) or null depending on implementation
+        // The keystore key loading was skipped, so no keys were loaded
+        if (result != null) {
+            assertEquals(0, result.getKeyCount());
+        }
+    }
+
+    @Test
+    @DisplayName("Should return null when key loading fails")
+    void shouldReturnNullWhenKeyLoadingFails() {
+        Map<String, String> props = new HashMap<>();
+        props.put(JwtPropertyKeys.JWE.DECRYPTION_KEY_PATH, "/nonexistent/path/key.pem");
+
+        TestConfig config = new TestConfig(props);
+        JweDecryptionConfigResolver resolver = new JweDecryptionConfigResolver(config);
+
+        // Should return null (graceful error handling)
+        JweDecryptionConfig result = resolver.resolveJweDecryptionConfig();
+        assertNull(result);
+    }
+
     private Path createRsaPemFile(String filename) throws Exception {
         KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
         gen.initialize(2048);

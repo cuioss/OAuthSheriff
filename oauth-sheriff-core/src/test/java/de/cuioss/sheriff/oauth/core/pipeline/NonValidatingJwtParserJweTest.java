@@ -25,7 +25,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -174,6 +176,69 @@ class NonValidatingJwtParserJweTest {
 
             assertThrows(TokenValidationException.class,
                     () -> parser.decode("a.b.c.d.e.f"));
+        }
+
+        @Test
+        @DisplayName("Should reject 5-part token without enc field")
+        void shouldReject5PartTokenWithoutEnc() {
+            // Create a 5-part token with a header that has no 'enc' field
+            String headerJson = "{\"alg\":\"RS256\",\"typ\":\"JWT\"}";
+            String encodedHeader = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(headerJson.getBytes(StandardCharsets.UTF_8));
+            String fakeToken = encodedHeader + ".b.c.d.e";
+
+            JweDecryptionConfig config = JweDecryptionConfig.builder()
+                    .defaultDecryptionKey(rsaEncryptionKeyPair.getPrivate())
+                    .build();
+
+            NonValidatingJwtParser parser = NonValidatingJwtParser.builder()
+                    .securityEventCounter(counter)
+                    .jweDecryptionConfig(config)
+                    .build();
+
+            TokenValidationException ex = assertThrows(TokenValidationException.class,
+                    () -> parser.decode(fakeToken));
+            assertTrue(ex.getMessage().contains("enc"));
+        }
+
+        @Test
+        @DisplayName("Should decrypt JWE with compression (zip=DEF)")
+        void shouldDecryptJweWithCompression() {
+            String jwe = JweTestTokenFactory.createCompressedJwe(
+                    InMemoryKeyMaterialHandler.getDefaultPrivateKey(),
+                    rsaEncryptionKeyPair.getPublic(),
+                    "RSA-OAEP", "A256GCM", ISSUER);
+
+            JweDecryptionConfig config = JweDecryptionConfig.builder()
+                    .defaultDecryptionKey(rsaEncryptionKeyPair.getPrivate())
+                    .build();
+
+            NonValidatingJwtParser parser = NonValidatingJwtParser.builder()
+                    .securityEventCounter(counter)
+                    .jweDecryptionConfig(config)
+                    .build();
+
+            DecodedJwt decoded = parser.decode(jwe);
+            assertNotNull(decoded);
+            assertEquals("RS256", decoded.header().alg());
+            assertTrue(decoded.getIssuer().isPresent());
+            assertEquals(ISSUER, decoded.getIssuer().get());
+        }
+
+        @Test
+        @DisplayName("Should track security events for JWE without config")
+        void shouldTrackSecurityEventsForJweWithoutConfig() {
+            String jwe = JweTestTokenFactory.createJweWrappedAccessToken(
+                    InMemoryKeyMaterialHandler.getDefaultPrivateKey(),
+                    rsaEncryptionKeyPair.getPublic(),
+                    "RS256", "RSA-OAEP", "A256GCM", ISSUER, null);
+
+            NonValidatingJwtParser parser = NonValidatingJwtParser.builder()
+                    .securityEventCounter(counter)
+                    .build();
+
+            assertThrows(TokenValidationException.class, () -> parser.decode(jwe));
+            assertEquals(1, counter.getCount(SecurityEventCounter.EventType.JWE_DECRYPTION_NOT_CONFIGURED));
         }
     }
 }

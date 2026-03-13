@@ -29,6 +29,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
+import java.security.interfaces.ECPublicKey;
 import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -264,6 +265,149 @@ class JweDecryptorTest {
         }
     }
 
+    @Nested
+    @DisplayName("ECDH-ES Algorithm Tests")
+    class EcdhEsTests {
+
+        @ParameterizedTest
+        @CsvSource({
+                "secp256r1, A128GCM",
+                "secp256r1, A256GCM",
+                "secp384r1, A128GCM",
+                "secp384r1, A256GCM"
+        })
+        @DisplayName("Should decrypt JWE with ECDH-ES")
+        void shouldDecryptEcdhEs(String curve, String enc) {
+            KeyPair recipientKeyPair = JweTestTokenFactory.generateEcKeyPair(curve);
+            KeyPair ephemeralKeyPair = JweTestTokenFactory.generateEcKeyPair(curve);
+
+            String jwe = JweTestTokenFactory.createEcdhEsJweWrappedAccessToken(
+                    InMemoryKeyMaterialHandler.getDefaultPrivateKey(),
+                    ephemeralKeyPair,
+                    (ECPublicKey) recipientKeyPair.getPublic(),
+                    enc, "https://test-issuer.example.com");
+
+            String[] parts = jwe.split("\\.");
+            assertEquals(5, parts.length);
+
+            JweDecryptionConfig config = JweDecryptionConfig.builder()
+                    .defaultDecryptionKey(recipientKeyPair.getPrivate())
+                    .build();
+
+            JwtHeader header = parseHeader(parts[0]);
+
+            String innerJws = decryptor.decrypt(parts, header, config, counter);
+            assertNotNull(innerJws);
+            assertEquals(3, innerJws.split("\\.").length);
+            assertEquals(0, counter.getCount(SecurityEventCounter.EventType.JWE_DECRYPTION_FAILED));
+        }
+
+        @Test
+        @DisplayName("Should fail ECDH-ES with RSA key")
+        void shouldFailEcdhEsWithRsaKey() {
+            KeyPair ecKeyPair = JweTestTokenFactory.generateEcKeyPair("secp256r1");
+            KeyPair ephemeralKeyPair = JweTestTokenFactory.generateEcKeyPair("secp256r1");
+
+            String jwe = JweTestTokenFactory.createEcdhEsJweWrappedAccessToken(
+                    InMemoryKeyMaterialHandler.getDefaultPrivateKey(),
+                    ephemeralKeyPair,
+                    (ECPublicKey) ecKeyPair.getPublic(),
+                    "A128GCM", "https://test-issuer.example.com");
+
+            String[] parts = jwe.split("\\.");
+            JwtHeader header = parseHeader(parts[0]);
+
+            // Use RSA key for ECDH-ES — should fail
+            JweDecryptionConfig config = JweDecryptionConfig.builder()
+                    .defaultDecryptionKey(rsaEncryptionKeyPair.getPrivate())
+                    .build();
+
+            assertThrows(TokenValidationException.class,
+                    () -> decryptor.decrypt(parts, header, config, counter));
+        }
+
+        @Test
+        @DisplayName("Should fail ECDH-ES without epk in header")
+        void shouldFailEcdhEsWithoutEpk() {
+            JweDecryptionConfig config = JweDecryptionConfig.builder()
+                    .defaultDecryptionKey(JweTestTokenFactory.generateEcKeyPair("secp256r1").getPrivate())
+                    .build();
+
+            // Header with ECDH-ES but no epk
+            JwtHeader header = new JwtHeader("ECDH-ES", null, null, null, null, null, null, null, null, null, null,
+                    "A128GCM", null, null, null, null);
+
+            String[] parts = {"header", "", "iv", "ciphertext", "authTag"};
+
+            assertThrows(TokenValidationException.class,
+                    () -> decryptor.decrypt(parts, header, config, counter));
+        }
+    }
+
+    @Nested
+    @DisplayName("Compression Tests")
+    class CompressionTests {
+
+        @Test
+        @DisplayName("Should decrypt JWE with DEFLATE compression")
+        void shouldDecryptWithDeflateCompression() {
+            String jwe = JweTestTokenFactory.createCompressedJwe(
+                    InMemoryKeyMaterialHandler.getDefaultPrivateKey(),
+                    rsaEncryptionKeyPair.getPublic(),
+                    "RSA-OAEP", "A256GCM", "https://test-issuer.example.com");
+
+            String[] parts = jwe.split("\\.");
+            assertEquals(5, parts.length);
+
+            JweDecryptionConfig config = JweDecryptionConfig.builder()
+                    .defaultDecryptionKey(rsaEncryptionKeyPair.getPrivate())
+                    .build();
+
+            JwtHeader header = parseHeader(parts[0]);
+            assertTrue(header.getZip().isPresent());
+            assertEquals("DEF", header.getZip().get());
+
+            String innerJws = decryptor.decrypt(parts, header, config, counter);
+            assertNotNull(innerJws);
+            assertEquals(3, innerJws.split("\\.").length);
+        }
+
+        @Test
+        @DisplayName("Should reject unsupported compression algorithm")
+        void shouldRejectUnsupportedCompression() {
+            JweDecryptionConfig config = JweDecryptionConfig.builder()
+                    .defaultDecryptionKey(rsaEncryptionKeyPair.getPrivate())
+                    .build();
+
+            JwtHeader header = new JwtHeader("RSA-OAEP", null, null, null, null, null, null, null, null, null, null,
+                    "A256GCM", "GZIP", null, null, null);
+
+            String[] parts = {"header", "encKey", "iv", "ciphertext", "authTag"};
+
+            TokenValidationException ex = assertThrows(TokenValidationException.class,
+                    () -> decryptor.decrypt(parts, header, config, counter));
+            assertTrue(ex.getMessage().contains("Unsupported compression"));
+        }
+
+        @Test
+        @DisplayName("Should reject compression when disabled")
+        void shouldRejectCompressionWhenDisabled() {
+            JweDecryptionConfig config = JweDecryptionConfig.builder()
+                    .defaultDecryptionKey(rsaEncryptionKeyPair.getPrivate())
+                    .compressionEnabled(false)
+                    .build();
+
+            JwtHeader header = new JwtHeader("RSA-OAEP", null, null, null, null, null, null, null, null, null, null,
+                    "A256GCM", "DEF", null, null, null);
+
+            String[] parts = {"header", "encKey", "iv", "ciphertext", "authTag"};
+
+            TokenValidationException ex = assertThrows(TokenValidationException.class,
+                    () -> decryptor.decrypt(parts, header, config, counter));
+            assertTrue(ex.getMessage().contains("compression is disabled"));
+        }
+    }
+
     private static JwtHeader parseHeader(String encodedHeader) {
         String json = new String(Base64.getUrlDecoder().decode(encodedHeader), StandardCharsets.UTF_8);
         // Simple extraction for test purposes
@@ -271,8 +415,9 @@ class JweDecryptorTest {
         String enc = extractField(json, "enc");
         String kid = extractField(json, "kid");
         String zip = extractField(json, "zip");
+        String epk = extractEpkObject(json);
         return new JwtHeader(alg, null, kid, null, null, null, null, null, null, null, null,
-                enc, zip, null, null, null);
+                enc, zip, epk, null, null);
     }
 
     private static String extractField(String json, String field) {
@@ -282,5 +427,22 @@ class JweDecryptorTest {
         int start = idx + key.length();
         int end = json.indexOf('"', start);
         return end > start ? json.substring(start, end) : null;
+    }
+
+    private static String extractEpkObject(String json) {
+        String key = "\"epk\":";
+        int idx = json.indexOf(key);
+        if (idx < 0) return null;
+        int start = idx + key.length();
+        // Find matching closing brace
+        int depth = 0;
+        for (int i = start; i < json.length(); i++) {
+            if (json.charAt(i) == '{') depth++;
+            else if (json.charAt(i) == '}') {
+                depth--;
+                if (depth == 0) return json.substring(start, i + 1);
+            }
+        }
+        return null;
     }
 }

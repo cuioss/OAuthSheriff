@@ -19,14 +19,19 @@ import io.jsonwebtoken.Jwts;
 import lombok.experimental.UtilityClass;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyAgreement;
 import javax.crypto.Mac;
 import javax.crypto.spec.*;
+import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.MGF1ParameterSpec;
 import java.time.Instant;
 import java.util.*;
+import java.util.zip.Deflater;
 
 /**
  * Factory for creating JWE test tokens using JJWT for JWS creation and JDK crypto for JWE wrapping.
@@ -196,6 +201,195 @@ public class JweTestTokenFactory {
         ciphertext[0] ^= 0xFF;
         parts[3] = base64Url(ciphertext);
         return String.join(".", parts);
+    }
+
+    /**
+     * Creates a JWE token wrapping a signed JWS access token using ECDH-ES key agreement.
+     */
+    public static String createEcdhEsJweWrappedAccessToken(PrivateKey signingKey, KeyPair ephemeralKeyPair,
+            ECPublicKey recipientPublicKey, String enc, String issuer) {
+        try {
+            String innerJws = createSignedJws(signingKey, "RS256", issuer);
+            return encryptAsEcdhEsJwe(innerJws, ephemeralKeyPair, recipientPublicKey, enc);
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("Failed to create ECDH-ES JWE", e);
+        }
+    }
+
+    /**
+     * Creates a JWE with DEFLATE compression (zip=DEF).
+     */
+    public static String createCompressedJwe(PrivateKey signingKey, PublicKey encryptionKey,
+            String alg, String enc, String issuer) {
+        try {
+            String innerJws = createSignedJws(signingKey, "RS256", issuer);
+            byte[] plaintextBytes = innerJws.getBytes(StandardCharsets.UTF_8);
+
+            // Compress
+            byte[] compressed = deflateCompress(plaintextBytes);
+
+            // Build header with zip
+            Map<String, String> headerMap = new LinkedHashMap<>();
+            headerMap.put("alg", alg);
+            headerMap.put("enc", enc);
+            headerMap.put("zip", "DEF");
+            String headerJson = buildJson(headerMap);
+            String encodedHeader = base64Url(headerJson.getBytes(StandardCharsets.UTF_8));
+
+            // Generate CEK and encrypt
+            int cekBits = getCekBits(enc);
+            byte[] cek = new byte[cekBits / 8];
+            SecureRandom random = new SecureRandom();
+            random.nextBytes(cek);
+
+            byte[] encryptedKey = encryptCek(cek, encryptionKey, alg);
+
+            int ivLen = enc.contains("GCM") ? 12 : 16;
+            byte[] iv = new byte[ivLen];
+            random.nextBytes(iv);
+
+            byte[] aad = encodedHeader.getBytes(StandardCharsets.US_ASCII);
+
+            byte[] ciphertext;
+            byte[] authTag;
+
+            if (enc.contains("GCM")) {
+                byte[] result = encryptAesGcm(cek, iv, compressed, aad);
+                ciphertext = Arrays.copyOfRange(result, 0, result.length - 16);
+                authTag = Arrays.copyOfRange(result, result.length - 16, result.length);
+            } else {
+                int macKeyLen = cek.length / 2;
+                byte[] macKey = Arrays.copyOfRange(cek, 0, macKeyLen);
+                byte[] encKey = Arrays.copyOfRange(cek, macKeyLen, cek.length);
+                ciphertext = encryptAesCbc(encKey, iv, compressed);
+                authTag = computeAesCbcHsTag(macKey, getMacAlg(enc), aad, iv, ciphertext, macKeyLen);
+            }
+
+            return encodedHeader + "." +
+                    base64Url(encryptedKey) + "." +
+                    base64Url(iv) + "." +
+                    base64Url(ciphertext) + "." +
+                    base64Url(authTag);
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("Failed to create compressed JWE", e);
+        }
+    }
+
+    private static String encryptAsEcdhEsJwe(String plaintext, KeyPair ephemeralKeyPair,
+            ECPublicKey recipientPublicKey, String enc) throws GeneralSecurityException {
+        ECPublicKey ephemeralPublicKey = (ECPublicKey) ephemeralKeyPair.getPublic();
+
+        // ECDH key agreement
+        KeyAgreement ka = KeyAgreement.getInstance("ECDH");
+        ka.init(ephemeralKeyPair.getPrivate());
+        ka.doPhase(recipientPublicKey, true);
+        byte[] sharedSecret = ka.generateSecret();
+
+        // Derive CEK via ConcatKDF
+        int keyLengthBits = getCekBits(enc);
+        byte[] cek = ConcatKdf.derive(sharedSecret, keyLengthBits, enc, new byte[0], new byte[0]);
+
+        // Build header with epk
+        String epkJson = buildEpkJson(ephemeralPublicKey);
+        Map<String, String> headerMap = new LinkedHashMap<>();
+        headerMap.put("alg", "ECDH-ES");
+        headerMap.put("enc", enc);
+        // EPK needs special handling since it's a nested object
+        String headerJson = "{\"alg\":\"ECDH-ES\",\"enc\":\"" + enc + "\",\"epk\":" + epkJson + "}";
+        String encodedHeader = base64Url(headerJson.getBytes(StandardCharsets.UTF_8));
+
+        // ECDH-ES direct key agreement: encrypted key is empty
+        byte[] encryptedKey = new byte[0];
+
+        SecureRandom random = new SecureRandom();
+        int ivLen = enc.contains("GCM") ? 12 : 16;
+        byte[] iv = new byte[ivLen];
+        random.nextBytes(iv);
+
+        byte[] aad = encodedHeader.getBytes(StandardCharsets.US_ASCII);
+        byte[] plaintextBytes = plaintext.getBytes(StandardCharsets.UTF_8);
+
+        byte[] ciphertext;
+        byte[] authTag;
+
+        if (enc.contains("GCM")) {
+            byte[] result = encryptAesGcm(cek, iv, plaintextBytes, aad);
+            ciphertext = Arrays.copyOfRange(result, 0, result.length - 16);
+            authTag = Arrays.copyOfRange(result, result.length - 16, result.length);
+        } else {
+            int macKeyLen = cek.length / 2;
+            byte[] macKey = Arrays.copyOfRange(cek, 0, macKeyLen);
+            byte[] encKey = Arrays.copyOfRange(cek, macKeyLen, cek.length);
+            ciphertext = encryptAesCbc(encKey, iv, plaintextBytes);
+            authTag = computeAesCbcHsTag(macKey, getMacAlg(enc), aad, iv, ciphertext, macKeyLen);
+        }
+
+        return encodedHeader + "." +
+                base64Url(encryptedKey) + "." +
+                base64Url(iv) + "." +
+                base64Url(ciphertext) + "." +
+                base64Url(authTag);
+    }
+
+    private static String buildEpkJson(ECPublicKey publicKey) {
+        String crv = switch (publicKey.getParams().getCurve().getField().getFieldSize()) {
+            case 256 -> "P-256";
+            case 384 -> "P-384";
+            case 521 -> "P-521";
+            default -> throw new IllegalArgumentException("Unsupported curve");
+        };
+        byte[] x = unsignedBytes(publicKey.getW().getAffineX(), getCoordinateLength(crv));
+        byte[] y = unsignedBytes(publicKey.getW().getAffineY(), getCoordinateLength(crv));
+        return "{\"kty\":\"EC\",\"crv\":\"" + crv + "\",\"x\":\"" +
+                base64Url(x) + "\",\"y\":\"" + base64Url(y) + "\"}";
+    }
+
+    private static int getCoordinateLength(String crv) {
+        return switch (crv) {
+            case "P-256" -> 32;
+            case "P-384" -> 48;
+            case "P-521" -> 66;
+            default -> throw new IllegalArgumentException("Unsupported curve: " + crv);
+        };
+    }
+
+    private static byte[] unsignedBytes(BigInteger value, int length) {
+        byte[] bytes = value.toByteArray();
+        if (bytes.length == length) return bytes;
+        if (bytes.length == length + 1 && bytes[0] == 0) {
+            return Arrays.copyOfRange(bytes, 1, bytes.length);
+        }
+        if (bytes.length < length) {
+            byte[] padded = new byte[length];
+            System.arraycopy(bytes, 0, padded, length - bytes.length, bytes.length);
+            return padded;
+        }
+        return bytes;
+    }
+
+    private static byte[] deflateCompress(byte[] data) {
+        Deflater deflater = new Deflater(Deflater.DEFAULT_COMPRESSION, true); // nowrap=true for raw DEFLATE
+        deflater.setInput(data);
+        deflater.finish();
+        ByteArrayOutputStream out = new ByteArrayOutputStream(data.length);
+        byte[] buffer = new byte[4096];
+        while (!deflater.finished()) {
+            int count = deflater.deflate(buffer);
+            out.write(buffer, 0, count);
+        }
+        deflater.end();
+        return out.toByteArray();
+    }
+
+    /**
+     * Imports ConcatKdf for ECDH-ES test token creation.
+     */
+    private static final class ConcatKdf {
+        static byte[] derive(byte[] sharedSecret, int keyLengthBits, String algorithmId,
+                byte[] apu, byte[] apv) {
+            return de.cuioss.sheriff.oauth.core.jwe.ConcatKdf.derive(
+                    sharedSecret, keyLengthBits, algorithmId, apu, apv);
+        }
     }
 
     private static byte[] encryptCek(byte[] cek, PublicKey key, String alg) throws GeneralSecurityException {
