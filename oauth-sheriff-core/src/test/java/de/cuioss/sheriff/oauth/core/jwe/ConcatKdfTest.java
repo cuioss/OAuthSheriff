@@ -18,6 +18,8 @@ package de.cuioss.sheriff.oauth.core.jwe;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("ConcatKdf Tests")
@@ -56,7 +58,7 @@ class ConcatKdfTest {
         byte[] key1 = ConcatKdf.derive(sharedSecret, 128, "A128GCM", new byte[0], new byte[0]);
         byte[] key2 = ConcatKdf.derive(sharedSecret, 128, "A256GCM", new byte[0], new byte[0]);
 
-        assertFalse(java.util.Arrays.equals(key1, key2));
+        assertFalse(Arrays.equals(key1, key2));
     }
 
     @Test
@@ -68,7 +70,7 @@ class ConcatKdfTest {
         byte[] key1 = ConcatKdf.derive(sharedSecret, 128, "A128GCM", new byte[]{1, 2, 3}, new byte[0]);
         byte[] key2 = ConcatKdf.derive(sharedSecret, 128, "A128GCM", new byte[]{4, 5, 6}, new byte[0]);
 
-        assertFalse(java.util.Arrays.equals(key1, key2));
+        assertFalse(Arrays.equals(key1, key2));
     }
 
     @Test

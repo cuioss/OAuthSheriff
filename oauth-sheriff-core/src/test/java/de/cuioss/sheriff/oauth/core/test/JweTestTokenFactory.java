@@ -19,13 +19,8 @@ import io.jsonwebtoken.Jwts;
 import lombok.experimental.UtilityClass;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.OAEPParameterSpec;
-import javax.crypto.spec.PSource;
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.spec.*;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
@@ -142,7 +137,7 @@ public class JweTestTokenFactory {
                     base64Url(iv) + "." +
                     base64Url(ciphertext) + "." +
                     base64Url(authTag);
-        } catch (Exception e) {
+        } catch (GeneralSecurityException e) {
             throw new IllegalStateException("Failed to create JWE test token", e);
         }
     }

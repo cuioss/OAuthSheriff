@@ -21,9 +21,7 @@ import lombok.ToString;
 import org.jspecify.annotations.Nullable;
 
 import java.security.PrivateKey;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Configuration for JWE (JSON Web Encryption) token decryption per RFC 7516.
@@ -65,7 +63,7 @@ public class JweDecryptionConfig {
     /**
      * Set of key IDs used for equals/hashCode (avoids comparing key material).
      */
-    private final java.util.Set<String> decryptionKeyIds;
+    private final Set<String> decryptionKeyIds;
 
     private JweDecryptionConfig(Map<String, PrivateKey> decryptionKeys,
             @Nullable PrivateKey defaultDecryptionKey,
@@ -116,7 +114,7 @@ public class JweDecryptionConfig {
      * Builder for {@link JweDecryptionConfig}.
      */
     public static class JweDecryptionConfigBuilder {
-        private final java.util.HashMap<String, PrivateKey> decryptionKeys = new java.util.HashMap<>();
+        private final HashMap<String, PrivateKey> decryptionKeys = new HashMap<>();
         private PrivateKey defaultDecryptionKey;
         private JweAlgorithmPreferences algorithmPreferences = new JweAlgorithmPreferences();
         private int maxEncryptedTokenSize = DEFAULT_MAX_ENCRYPTED_TOKEN_SIZE;
