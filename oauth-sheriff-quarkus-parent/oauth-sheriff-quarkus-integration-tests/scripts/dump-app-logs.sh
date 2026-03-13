@@ -45,6 +45,12 @@ if docker logs "$APP_CONTAINER_NAME" > "$APP_LOG_FILE_PATH" 2>&1; then
     FILE_SIZE=$(du -h "$APP_LOG_FILE_PATH" | cut -f1)
     echo "✅ Successfully dumped $LOG_SIZE lines ($FILE_SIZE)"
     echo "📍 Full path: $APP_LOG_FILE_PATH"
+
+    # Echo JWE-related diagnostic lines to stdout for CI visibility
+    echo ""
+    echo "📋 JWE diagnostic lines from app container:"
+    grep -i "jwe\|decryption" "$APP_LOG_FILE_PATH" || echo "  (no JWE-related log lines found)"
+    echo ""
 else
     echo "⚠️  Failed to dump logs from container: $APP_CONTAINER_NAME"
     exit 0

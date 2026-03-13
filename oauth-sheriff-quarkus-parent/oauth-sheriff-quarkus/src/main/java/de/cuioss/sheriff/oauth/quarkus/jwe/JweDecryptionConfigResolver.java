@@ -69,43 +69,47 @@ public class JweDecryptionConfigResolver {
         // Check for multi-key configuration
         Map<String, String> multiKeyPaths = discoverMultiKeyPaths();
 
-        LOGGER.info("JWE config check: singleKeyPath=%s, keystorePath=%s, multiKeys=%s",
-                singleKeyPath, keystorePath, multiKeyPaths);
+        LOGGER.info(INFO.JWE_CONFIG_CHECK, singleKeyPath, keystorePath, multiKeyPaths);
 
         if (singleKeyPath.isEmpty() && keystorePath.isEmpty() && multiKeyPaths.isEmpty()) {
-            LOGGER.info("No JWE decryption configuration found - JWE support disabled");
+            LOGGER.info(INFO.JWE_DECRYPTION_NOT_CONFIGURED);
             return null;
         }
 
         LOGGER.info(INFO.JWE_DECRYPTION_CONFIG_RESOLVING);
 
-        JweDecryptionConfig.JweDecryptionConfigBuilder builder = JweDecryptionConfig.builder();
+        try {
+            JweDecryptionConfig.JweDecryptionConfigBuilder builder = JweDecryptionConfig.builder();
 
-        // Load keys from configured source(s)
-        if (singleKeyPath.isPresent()) {
-            loadSingleKey(builder, singleKeyPath.get());
+            // Load keys from configured source(s)
+            if (singleKeyPath.isPresent()) {
+                loadSingleKey(builder, singleKeyPath.get());
+            }
+            if (keystorePath.isPresent()) {
+                loadKeystoreKey(builder, keystorePath.get());
+            }
+            if (!multiKeyPaths.isEmpty()) {
+                loadMultipleKeys(builder, multiKeyPaths);
+            }
+
+            // Configure default key ID
+            config.getOptionalValue(JwtPropertyKeys.JWE.DEFAULT_KEY_ID, String.class)
+                    .ifPresent(defaultKid -> LOGGER.debug("Default JWE key ID: %s", defaultKid));
+
+            // Configure algorithm preferences
+            configureAlgorithmPreferences(builder);
+
+            // Configure max encrypted token size
+            config.getOptionalValue(JwtPropertyKeys.JWE.MAX_ENCRYPTED_TOKEN_SIZE, Integer.class)
+                    .ifPresent(builder::maxEncryptedTokenSize);
+
+            JweDecryptionConfig jweConfig = builder.build();
+            LOGGER.info(INFO.JWE_DECRYPTION_CONFIG_RESOLVED, jweConfig.getKeyCount());
+            return jweConfig;
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            LOGGER.warn(WARN.JWE_KEY_LOADING_FAILED, e.getMessage());
+            return null;
         }
-        if (keystorePath.isPresent()) {
-            loadKeystoreKey(builder, keystorePath.get());
-        }
-        if (!multiKeyPaths.isEmpty()) {
-            loadMultipleKeys(builder, multiKeyPaths);
-        }
-
-        // Configure default key ID
-        config.getOptionalValue(JwtPropertyKeys.JWE.DEFAULT_KEY_ID, String.class)
-                .ifPresent(defaultKid -> LOGGER.debug("Default JWE key ID: %s", defaultKid));
-
-        // Configure algorithm preferences
-        configureAlgorithmPreferences(builder);
-
-        // Configure max encrypted token size
-        config.getOptionalValue(JwtPropertyKeys.JWE.MAX_ENCRYPTED_TOKEN_SIZE, Integer.class)
-                .ifPresent(builder::maxEncryptedTokenSize);
-
-        JweDecryptionConfig jweConfig = builder.build();
-        LOGGER.info(INFO.JWE_DECRYPTION_CONFIG_RESOLVED, jweConfig.getKeyCount());
-        return jweConfig;
     }
 
     private void loadSingleKey(JweDecryptionConfig.JweDecryptionConfigBuilder builder, String keyPath) {
