@@ -8,7 +8,7 @@
 xref:../architecture.adoc[Back to Architecture Reference]
 
 == Overview
-_See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-1.4[OAUTH-SHERIFF-1.4: Token Decryption (Optional - Future Version)]_
+_See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-1.4[OAUTH-SHERIFF-1.4: Token Decryption]_
 
 === Document Navigation
 
@@ -19,140 +19,473 @@ _See Requirement xref:../Requirements.adoc#OAUTH-SHERIFF-1.4[OAUTH-SHERIFF-1.4: 
 * xref:../LogMessages.adoc[Log Messages] - Reference for all log messages
 * xref:../security/security-reference.adoc[Security Reference] - Security measures
 
-==== Status: NOT IMPLEMENTED
+==== Status: IMPLEMENTED
 
-This document provides detailed specifications for the token decryption support in the JWT Token Validation library. Token decryption support is marked as optional for a future version in the requirements.
+This document describes the JWE (JSON Web Encryption, https://datatracker.ietf.org/doc/html/rfc7516[RFC 7516]) decryption support in the JWT Token Validation library. JWE decryption is transparent — encrypted tokens are decrypted and then validated through the existing pipeline unchanged.
 
-== JWE Token Structure
+== OAuth JWE End-to-End Flow
 
-The current implementation supports JWS (JSON Web Signature) tokens but lacks support for JWE (JSON Web Encryption) tokens. JWE tokens have a different structure than JWS tokens, consisting of five parts instead of three:
+The Authorization Server signs a JWT with its private key, then encrypts it using the Resource Server's public key. The Resource Server decrypts with its private key, then validates the inner JWS through the existing pipeline.
 
-1. JOSE Header (Base64URL-encoded)
-2. JWE Encrypted Key (Base64URL-encoded)
-3. JWE Initialization Vector (Base64URL-encoded)
-4. JWE Ciphertext (Base64URL-encoded)
-5. JWE Authentication Tag (Base64URL-encoded)
+....
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │                    AUTHORIZATION SERVER (e.g., Keycloak)                    │
+ │                                                                             │
+ │  Key Material:                                                              │
+ │  ┌─────────────────────────┐  ┌──────────────────────────────────┐         │
+ │  │ AS Signing Private Key  │  │ Resource Server's Public Key     │         │
+ │  │ (RSA/EC private key)    │  │ (RSA/EC public key, from JWKS    │         │
+ │  │ Used to SIGN the JWT    │  │  or pre-configured)              │         │
+ │  └────────────┬────────────┘  │ Used to ENCRYPT the signed JWT   │         │
+ │               │               └───────────────┬──────────────────┘         │
+ │               │                               │                            │
+ │               ▼                               │                            │
+ │  ┌────────────────────────┐                   │                            │
+ │  │ Step 1: CREATE JWS     │                   │                            │
+ │  │                        │                   │                            │
+ │  │ Sign claims with AS's  │                   │                            │
+ │  │ private key → JWS      │                   │                            │
+ │  │ (header.payload.sig)   │                   │                            │
+ │  └────────────┬───────────┘                   │                            │
+ │               │                               │                            │
+ │               ▼                               ▼                            │
+ │  ┌──────────────────────────────────────────────────┐                      │
+ │  │ Step 2: ENCRYPT JWS → JWE                        │                      │
+ │  │                                                  │                      │
+ │  │ 1. Generate random CEK (Content Encryption Key)  │                      │
+ │  │ 2. Encrypt CEK with RS's public key (RSA-OAEP)   │                      │
+ │  │ 3. Encrypt JWS payload with CEK (AES-GCM)       │                      │
+ │  │ 4. Produce JWE: Header.EncKey.IV.Cipher.AuthTag  │                      │
+ │  └────────────────────────┬─────────────────────────┘                      │
+ │                           │                                                │
+ └───────────────────────────┼────────────────────────────────────────────────┘
+                             │
+                             │  JWE token sent via HTTP
+                             │  (e.g., Authorization: Bearer <JWE>)
+                             │
+                             ▼
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │                    RESOURCE SERVER (OAuthSheriff library)                    │
+ │                                                                             │
+ │  Key Material:                                                              │
+ │  ┌──────────────────────────────┐  ┌─────────────────────────────────┐     │
+ │  │ RS Decryption Private Key    │  │ AS Signing Public Key           │     │
+ │  │ (RSA/EC private key)         │  │ (from AS's JWKS endpoint)       │     │
+ │  │ LOCAL to Resource Server     │  │ Loaded by JwksLoader            │     │
+ │  │ Configured in                │  │ Used to VERIFY JWS signature    │     │
+ │  │ JweDecryptionConfig          │  │                                 │     │
+ │  │ Used to DECRYPT the JWE      │  │                                 │     │
+ │  └──────────────┬───────────────┘  └───────────────┬─────────────────┘     │
+ │                 │                                   │                       │
+ │                 ▼                                   │                       │
+ │  ┌───────────────────────────────────┐              │                       │
+ │  │ Step 3: DETECT & DECRYPT JWE      │              │                       │
+ │  │                                   │              │                       │
+ │  │ 1. Split token → 5 parts = JWE   │              │                       │
+ │  │ 2. Decode JWE header (alg, enc)   │              │                       │
+ │  │ 3. Decrypt CEK with RS's private  │              │                       │
+ │  │    key (RSA-OAEP)                 │              │                       │
+ │  │ 4. Decrypt ciphertext with CEK    │              │                       │
+ │  │    (AES-GCM) → inner JWS string  │              │                       │
+ │  └──────────────┬────────────────────┘              │                       │
+ │                 │                                   │                       │
+ │                 ▼                                   ▼                       │
+ │  ┌─────────────────────────────────────────────────────────┐               │
+ │  │ Step 4: VALIDATE inner JWS (existing pipeline)          │               │
+ │  │                                                         │               │
+ │  │ 1. Parse inner JWS → DecodedJwt                         │               │
+ │  │ 2. Resolve issuer config                                │               │
+ │  │ 3. Validate header (alg, kid)                           │               │
+ │  │ 4. Verify signature with AS's public key from JWKS     │               │
+ │  │ 5. Build token content (AccessTokenContent)             │               │
+ │  │ 6. Validate claims (exp, aud, iss, ...)                │               │
+ │  └─────────────────────────────────────────────────────────┘               │
+ └─────────────────────────────────────────────────────────────────────────────┘
+....
 
-== Implementation Requirements
+== Key Material Locations
 
-=== Parser Modifications
+[cols="1,1,2", options="header"]
+|===
+|Key |Held By |Purpose
 
-==== NonValidatingJwtParser Extensions
+|AS Signing Private Key
+|Authorization Server
+|Sign JWS tokens (RS256, ES256, etc.)
 
-The `NonValidatingJwtParser` class needs to be extended to recognize and handle JWE tokens:
+|AS Signing Public Key
+|Resource Server (via JWKS)
+|Verify JWS signature, loaded by JwksLoader
 
-* Add detection logic to identify JWE vs JWS tokens (based on number of parts and header content)
-* Implement JWE token parsing without decryption for inspection purposes
-* Update size validation to account for JWE token structure
+|RS Encryption Public Key
+|Authorization Server
+|Encrypt CEK in JWE (RSA-OAEP, ECDH-ES)
 
-==== JweParser Interface
+|RS Decryption Private Key
+|Resource Server (LOCAL config)
+|Decrypt CEK from JWE, configured in `JweDecryptionConfig`
 
-A new `JweParser` interface and implementation should be created for decrypting JWE tokens:
+|Content Encryption Key (CEK)
+|Ephemeral (per-token)
+|Encrypt/decrypt JWS payload (A256GCM, A128CBC-HS256). Generated by AS, encrypted in JWE encrypted key part
+|===
 
-* Support required JWE content encryption algorithms (A128CBC-HS256, A256CBC-HS512, A128GCM, A256GCM, etc.)
-* Support required key management algorithms:
-  ** RSA-OAEP (RSAES OAEP using default parameters - SHA-1)
-  ** RSA-OAEP-256 (RSAES OAEP using SHA-256 and MGF1 with SHA-256)
-  ** ECDH-ES (Elliptic Curve Diffie-Hellman Ephemeral Static)
-  ** Other algorithms as defined in RFC 7518
+=== Why Decryption Keys Are at TokenValidator Level (Not Per-Issuer)
 
-* Implement content encryption key (CEK) decryption
-* Implement payload decryption and authentication
+The decryption private key belongs to *this* Resource Server — it is the same key regardless of which Authorization Server encrypted the token. Multiple issuers may encrypt with different `kid` values referencing different public keys, but the corresponding private keys are all local to the Resource Server. This is fundamentally different from signing keys (which are per-issuer, loaded from each issuer's JWKS endpoint).
 
-NOTE: It's important to distinguish between:
+....
+ Per-Issuer (from JWKS):          Global (local to RS):
+ ┌──────────────────────┐         ┌──────────────────────────┐
+ │ Issuer A             │         │ JweDecryptionConfig      │
+ │ ├─ JwksLoader → PubA │         │ ├─ kid-1 → PrivateKey-1  │
+ │ └─ SignaturePrefs     │         │ ├─ kid-2 → PrivateKey-2  │
+ ├──────────────────────┤         │ └─ default → PrivateKey-1 │
+ │ Issuer B             │         └──────────────────────────┘
+ │ ├─ JwksLoader → PubB │         Set once on TokenValidator
+ │ └─ SignaturePrefs     │         Shared across all issuers
+ └──────────────────────┘
+....
 
-* **Key Management Algorithms** (e.g., RSA-OAEP): Used to encrypt/decrypt the Content Encryption Key (CEK)
-* **Content Encryption Algorithms** (e.g., A256GCM): Used to encrypt/decrypt the actual JWT payload
-* **Signature Algorithms** (e.g., RS256): Used for JWS tokens, not JWE tokens
+== OIDC Key Exchange
 
-=== Data Model Extensions
+In a production OIDC deployment, the Resource Server publishes its encryption public key via a JWKS endpoint (with `use: "enc"`). The Authorization Server fetches this key and uses it to encrypt tokens.
 
-==== DecodedJwt Extensions
+....
+ ┌─────────────────────────────────────────────────────────────────────────┐
+ │                   KEY EXCHANGE FLOW (OIDC Standard)                     │
+ │                                                                         │
+ │  ┌─────────────────────┐                    ┌────────────────────────┐  │
+ │  │  Resource Server /  │   1. Register       │  Authorization Server │  │
+ │  │  Relying Party      │──────────────────►  │  (e.g., Keycloak)     │  │
+ │  │                     │   with jwks_uri     │                       │  │
+ │  │  Publishes JWKS at: │   or inline jwks    │  Stores client config:│  │
+ │  │  https://rs.example │                     │  - jwks_uri           │  │
+ │  │  /.well-known/jwks  │                     │  - id_token_encrypted │  │
+ │  │                     │                     │    _response_alg      │  │
+ │  │  Contains:          │                     │  - id_token_encrypted │  │
+ │  │  {                  │                     │    _response_enc      │  │
+ │  │    "keys": [        │                     │                       │  │
+ │  │      {              │                     │                       │  │
+ │  │        "use":"sig", │                     │                       │  │
+ │  │        "kid":"s1",  │◄──── signing key    │                       │  │
+ │  │        ...          │                     │                       │  │
+ │  │      },             │                     │                       │  │
+ │  │      {              │  2. AS fetches       │                       │  │
+ │  │        "use":"enc", │◄───── RS's JWKS ────│  Filters for          │  │
+ │  │        "kid":"e1",  │   to get enc key    │  use: "enc" keys      │  │
+ │  │        ...          │                     │                       │  │
+ │  │      }              │                     │                       │  │
+ │  │    ]                │                     │                       │  │
+ │  │  }                  │                     │                       │  │
+ │  └─────────────────────┘                     └───────────┬───────────┘  │
+ │                                                          │              │
+ │                                               3. AS encrypts token      │
+ │                                                  with RS's enc key      │
+ │                                                          │              │
+ │                                                          ▼              │
+ │                                               ┌──────────────────────┐  │
+ │                                               │ JWE(JWS(claims))     │  │
+ │                                               │ Signed with AS key   │  │
+ │                                               │ Encrypted with RS key│  │
+ │                                               └──────────────────────┘  │
+ └─────────────────────────────────────────────────────────────────────────┘
+....
 
-The `DecodedJwt` record needs to be extended to support JWE structure:
+=== Key Discovery Mechanisms
 
-* Add fields for JWE-specific parts (encrypted key, initialization vector, ciphertext, authentication tag)
-* Update constructors and methods to handle JWE tokens
-* Add methods to access JWE-specific information
+[cols="1,2,1", options="header"]
+|===
+|Mechanism |Description |Key Rotation?
 
-==== DecryptedJwt Class
+|`jwks_uri` on client registration
+|RS publishes JWKS endpoint, AS fetches it
+|Yes (AS re-fetches)
 
-A new `DecryptedJwt` class should be created to represent a decrypted JWE token:
+|`jwks` inline in client config
+|JWK Set stored directly in AS
+|No (manual update)
 
-* Include methods to access the decrypted payload
-* Maintain the original encrypted parts for reference
+|Manual upload
+|Certificate/key uploaded via Admin Console
+|No (manual update)
+|===
 
-=== Key Management Extensions
+No new JWKS fetching is needed for decryption keys — the library only needs the local private key. This is fundamentally different from JWS verification where we fetch the AS's public keys from their JWKS endpoint.
 
-==== JwksLoader Extensions
+== Core vs Quarkus Responsibility Split
 
-The `JwksLoader` interface needs to be extended to support encryption keys:
+....
+ ┌─────────────────────────────────────────────────────────────────────────┐
+ │                    RESPONSIBILITY SPLIT                                  │
+ │                                                                         │
+ │  oauth-sheriff-core (library)           oauth-sheriff-quarkus (runtime) │
+ │  ─────────────────────────────          ─────────────────────────────── │
+ │                                                                         │
+ │  ┌───────────────────────────┐          ┌────────────────────────────┐  │
+ │  │ JweDecryptionConfig       │          │ DecryptionKeyLoader        │  │
+ │  │                           │          │ - Load from PEM file       │  │
+ │  │ Minimal interface:        │◄─────────│ - Load from KeyStore/P12   │  │
+ │  │ - Map<kid, PrivateKey>    │  passes  │ - Clear passwords after    │  │
+ │  │ - default PrivateKey      │  loaded  │ - Validate key types       │  │
+ │  │ - JweAlgorithmPreferences │  keys    │                            │  │
+ │  └───────────────────────────┘          └────────────────────────────┘  │
+ │                                                                         │
+ │  ┌───────────────────────────┐          ┌────────────────────────────┐  │
+ │  │ JweDecryptor              │          │ JWKS Endpoint (enc keys)   │  │
+ │  │ - Pure JDK crypto         │          │ - Publish RS's public key  │  │
+ │  │ - Decrypt CEK             │          │   with use: "enc"          │  │
+ │  │ - Decrypt content         │          │ - Serve at /jwks or        │  │
+ │  │ - Memory clearing of CEK  │          │   /.well-known/jwks.json   │  │
+ │  └───────────────────────────┘          └────────────────────────────┘  │
+ │                                                                         │
+ │  ┌───────────────────────────┐          ┌────────────────────────────┐  │
+ │  │ NonValidatingJwtParser    │          │ Key Rotation Manager       │  │
+ │  │ - Detect 5-part JWE       │          │ - Grace period for old keys│  │
+ │  │ - Delegate to JweDecryptor│          │ - Rebuild config on change │  │
+ │  │ - Return inner JWS        │          │ - Config properties        │  │
+ │  └───────────────────────────┘          └────────────────────────────┘  │
+ │                                                                         │
+ │  Does NOT know about:                   Handles:                        │
+ │  - File paths                           - PEM / KeyStore / PKCS#12      │
+ │  - Keystores or passwords               - Config property mapping       │
+ │  - Key loading mechanisms               - JWKS endpoint for enc keys    │
+ │  - JWKS endpoints                       - Key rotation lifecycle        │
+ │  - Key rotation scheduling              - Password management           │
+ └─────────────────────────────────────────────────────────────────────────┘
+....
 
-* Add support for loading encryption keys from JWKS endpoints
-* Implement key identification for encryption keys
-* Add methods to retrieve appropriate keys for decryption
+== Internal Pipeline Architecture
 
-==== Key Resolution for Decryption
+JWE decryption is transparent — it happens inside `NonValidatingJwtParser` and produces a standard `DecodedJwt`. All downstream validators work on the inner JWS unchanged.
 
-Implement key resolution for decryption:
+....
+                            ┌─────────────────────┐
+                            │   Raw Token String   │
+                            └──────────┬──────────┘
+                                       │
+                            ┌──────────▼──────────┐
+                            │ TokenStringValidator │
+                            │ (null/blank/size)    │
+                            └──────────┬──────────┘
+                                       │
+                            ┌──────────▼──────────────┐
+                            │ NonValidatingJwtParser   │
+                            │ split on '.'             │
+                            └──────────┬──────────────┘
+                                       │
+                          ┌────────────┼────────────┐
+                          │ 3 parts    │            │ 5 parts
+                          │ (JWS)      │            │ (JWE)
+                          ▼            │            ▼
+                    ┌──────────┐       │    ┌──────────────────┐
+                    │ Existing │       │    │ Decode JWE Header│
+                    │ JWS path │       │    │ (check 'enc')    │
+                    └────┬─────┘       │    └────────┬─────────┘
+                         │             │             │
+                         │             │    ┌────────▼─────────┐
+                         │             │    │ JweDecryptor     │
+                         │             │    │ - Resolve key    │
+                         │             │    │ - Decrypt CEK    │
+                         │             │    │ - Decrypt payload│
+                         │             │    │ - Decompress     │
+                         │             │    └────────┬─────────┘
+                         │             │             │
+                         │             │    ┌────────▼─────────┐
+                         │             │    │ Inner JWS string │
+                         │             │    │ → decode(inner)  │
+                         │             │    └────────┬─────────┘
+                         │             │             │
+                         ▼             ▼             ▼
+                    ┌────────────────────────────────────┐
+                    │          DecodedJwt                 │
+                    │  (same type for both paths)        │
+                    └──────────────┬─────────────────────┘
+                                   │
+              ┌────────────────────▼────────────────────┐
+              │   Existing pipeline (UNCHANGED)          │
+              │   IssuerConfigResolver → HeaderValidator │
+              │   → SignatureValidator → TokenBuilder    │
+              │   → ClaimValidator → Cache               │
+              └──────────────────────────────────────────┘
+....
 
-* Support "kid" header parameter for key identification
-* Support "alg" header parameter for algorithm selection
-* Support "enc" header parameter for content encryption algorithm
+== Detailed JWE Decryption Flow
 
-==== RSA-OAEP Algorithm Support
+....
+                    ┌──────────────────────────────────┐
+                    │  JWE Compact Serialization        │
+                    │  Header.EncKey.IV.Cipher.AuthTag  │
+                    │  (5 Base64URL parts)              │
+                    └──────────────┬───────────────────┘
+                                   │
+                    ┌──────────────▼───────────────────┐
+                    │  1. Decode Header (part[0])       │
+                    │     → JwtHeader with 'enc' field  │
+                    │     → Validate alg + enc allowed  │
+                    └──────────────┬───────────────────┘
+                                   │
+                    ┌──────────────▼───────────────────┐
+                    │  2. Resolve Decryption Key        │
+                    │     → By kid from header          │
+                    │     → Or default key              │
+                    └──────────────┬───────────────────┘
+                                   │
+                    ┌──────────────▼───────────────────┐
+                    │  3. Decrypt CEK                   │
+                    │     RSA-OAEP: JDK Cipher OAEP     │
+                    │     RSA-OAEP-256: Cipher+OAEPSpec │
+                    │     ECDH-ES: KeyAgreement+KDF     │
+                    └──────────────┬───────────────────┘
+                                   │
+                    ┌──────────────▼───────────────────┐
+                    │  4. Decrypt Content               │
+                    │     A128GCM/A256GCM: AES/GCM      │
+                    │     A128CBC-HS256: AES/CBC + HMAC  │
+                    │     A256CBC-HS512: AES/CBC + HMAC  │
+                    └──────────────┬───────────────────┘
+                                   │
+                    ┌──────────────▼───────────────────┐
+                    │  5. Decompress (if zip="DEF")     │
+                    │     → Inflate with size limit     │
+                    └──────────────┬───────────────────┘
+                                   │
+                    ┌──────────────▼───────────────────┐
+                    │  6. Inner JWS string              │
+                    │     → Pass to decode() recursively│
+                    │     → Returns DecodedJwt          │
+                    └──────────────────────────────────┘
+....
 
-Based on analysis of Keycloak integration, RSA-OAEP is a standard encryption algorithm that needs to be supported:
+== Supported Algorithms
 
-* **RSA-OAEP** is used for key encryption in JWE (JSON Web Encryption), not for signing
-* It is the default key encryption algorithm in Keycloak when using RSA public keys
-* RSA-OAEP (using SHA-1) and RSA-OAEP-256 (using SHA-256) are both defined in RFC 7518
-* These are distinct from signature algorithms (RS256, RS384, RS512) which are used for JWS
+=== Key Management Algorithms (alg header)
 
-Current limitations:
+[cols="1,2,1", options="header"]
+|===
+|Algorithm |JDK Crypto |Notes
 
-* The `JwkAlgorithmPreferences` class only supports signature algorithms
-* When encountering RSA-OAEP keys in JWKS, the system logs a warning: "Invalid or unsupported algorithm: RSA-OAEP"
-* This is expected behavior since JWE decryption is not yet implemented
+|RSA-OAEP
+|`Cipher("RSA/ECB/OAEPWithSHA-1AndMGF1Padding")`
+|Keycloak default
 
-Future implementation should:
+|RSA-OAEP-256
+|`Cipher("RSA/ECB/OAEPPadding")` + `OAEPParameterSpec(SHA-256, MGF1, SHA256, DEFAULT)`
+|Recommended for Open Finance
 
-* Separate encryption algorithm preferences from signature algorithm preferences
-* Support both RSA-OAEP and RSA-OAEP-256 for key encryption
-* Follow RFC 7518 specifications for JWE key management algorithms
+|ECDH-ES
+|`KeyAgreement("ECDH")` + ConcatKDF (NIST SP 800-56A)
+|Direct key agreement
+|===
 
-=== Security Considerations
+=== Content Encryption Algorithms (enc header)
 
-==== Secure Handling of Decryption Keys
+[cols="1,2,1", options="header"]
+|===
+|Algorithm |JDK Crypto |Key Size
 
-Implement secure handling of decryption keys:
+|A128GCM
+|`Cipher("AES/GCM/NoPadding")` + `GCMParameterSpec(128, iv)`
+|128-bit CEK
 
-* Ensure private keys are properly protected
-* Implement key rotation support for decryption keys
+|A256GCM
+|`Cipher("AES/GCM/NoPadding")` + `GCMParameterSpec(128, iv)`
+|256-bit CEK
 
-==== JWE-specific Security Requirements
+|A128CBC-HS256
+|`Cipher("AES/CBC/PKCS5Padding")` + `Mac("HmacSHA256")`
+|256-bit CEK (split)
 
-Add validation for JWE-specific security requirements:
+|A256CBC-HS512
+|`Cipher("AES/CBC/PKCS5Padding")` + `Mac("HmacSHA512")`
+|512-bit CEK (split)
+|===
 
-* Validate encryption algorithms against allowed list
-* Implement proper authentication tag validation
-* Add protection against padding oracle attacks
+=== Rejected Algorithms
 
-=== Testing Requirements
+[cols="1,2", options="header"]
+|===
+|Algorithm |Reason
 
-==== JWE Functionality Tests
+|RSA1_5
+|Vulnerable to Bleichenbacher's padding oracle attack (CVE-2012-5081)
+|===
 
-Create comprehensive tests for JWE functionality:
+== Configuration
 
-* Test parsing of JWE tokens
-* Test decryption of JWE tokens with various algorithms
-* Test handling of malformed JWE tokens
-* Test error cases and edge conditions
+`JweDecryptionConfig` accepts only `java.security.PrivateKey` objects. Key loading is the Quarkus module's responsibility.
 
-==== JWE Security Tests
+[source,java]
+----
+JweDecryptionConfig config = JweDecryptionConfig.builder()
+    .decryptionKey("kid-1", privateKey1)     // kid → PrivateKey
+    .decryptionKey("kid-2", privateKey2)     // supports rotation
+    .defaultDecryptionKey(privateKey1)        // fallback when no kid
+    .build();
 
-Add security tests specific to JWE:
+TokenValidator validator = TokenValidator.builder()
+    .issuerConfig(issuerConfig)
+    .jweDecryptionConfig(config)             // optional
+    .build();
+----
 
-* Test against known vulnerabilities in JWE implementations
-* Test algorithm downgrade protection
-* Test key confusion attack prevention
+== Security Considerations
+
+=== RSA1_5 Rejection
+
+The RSA1_5 (RSAES-PKCS1-v1_5) key management algorithm is explicitly rejected due to the Bleichenbacher padding oracle attack. `JweAlgorithmPreferences.REJECTED_KEY_ALGORITHMS` is checked before any cryptographic operation.
+
+=== Compression Bomb Protection
+
+When `zip="DEF"` (DEFLATE compression), decompressed content is limited to 256 KB to prevent compression bomb attacks.
+
+=== Constant-Time MAC Comparison
+
+AES-CBC-HS authentication tag validation uses `MessageDigest.isEqual()` for constant-time comparison, preventing timing side-channel attacks.
+
+=== Memory Clearing
+
+CEK and derived key material is cleared (`Arrays.fill(cek, (byte) 0)`) after use to minimize exposure window in memory.
+
+=== Nested JWE Rejection
+
+After decryption, if the result is another 5-part JWE token, the library throws an exception. Only JWE(JWS) nesting is allowed — not JWE(JWE).
+
+=== Private Key Protection in Logging
+
+All `PrivateKey` fields in `JweDecryptionConfig` are annotated with `@ToString.Exclude` to prevent accidental exposure in logs.
+
+== Industry Comparison
+
+[cols="1,1,1,1,1", options="header"]
+|===
+|Feature |JJWT (0.12+) |Nimbus JOSE+JWT |Spring Security |jose4j
+
+|JWE Support
+|Full
+|Full
+|No (JWS only)
+|Full
+
+|Nested JWE(JWS)
+|Native
+|Native
+|Manual (Nimbus)
+|Native
+
+|Key Rotation
+|Via key locator
+|Via JWKSet source
+|N/A
+|Via key resolver
+|===
+
+Spring Security's `NimbusJwtDecoder` is JWS-only. JWE requires manual Nimbus `DefaultJWTProcessor` configuration (open since 2017).
+
+== References
+
+* https://datatracker.ietf.org/doc/html/rfc7516[RFC 7516 - JSON Web Encryption (JWE)]
+* https://datatracker.ietf.org/doc/html/rfc7518[RFC 7518 - JSON Web Algorithms (JWA)]
+* https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Ar3.pdf[NIST SP 800-56A - Recommendation for Pair-Wise Key-Establishment Schemes]
+* xref:../architecture.adoc[Architecture Reference]
+* xref:../Requirements.adoc[Requirements]

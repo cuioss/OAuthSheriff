@@ -35,7 +35,7 @@ The log messages can be used for troubleshooting issues with the JWT Token Valid
 
 For more details about security events related to these log messages, see the SecurityEventCounter implementation in xref:architecture.adoc#securityeventcounter[Architecture].
 
-== INFO Level (001-010)
+== INFO Level (001-011)
 
 [cols="1,1,2,2", options="header"]
 |===
@@ -50,9 +50,10 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-008 |RETRY |Retry operation '%s' completed successfully after %s attempts in %sms |Logged when a retry operation completes successfully with timing information
 |JWTValidation-009 |JWKS |JWKS loaded successfully for issuer: %s |Logged when JWKS is successfully loaded for a specific issuer
 |JWTValidation-010 |ISSUER |Issuer configuration loaded successfully: %s |Logged when an issuer configuration is successfully loaded
+|JWTValidation-011 |JWE |JWE decryption enabled with %s decryption key(s) |Logged when JWE decryption is configured on TokenValidator with the number of available decryption keys
 |===
 
-== WARN Level (100-156)
+== WARN Level (100-162)
 
 [cols="1,1,2,2", options="header"]
 |===
@@ -61,7 +62,7 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-101 |TOKEN |The given validation was empty, request will be rejected |Logged when an empty or null token is provided
 |JWTValidation-102 |TOKEN |No key found with ID: %s |Logged when a key with the specified ID cannot be found in the JWKS
 |JWTValidation-103 |TOKEN |Failed to decode JWT Token |Logged when the JWT token cannot be decoded
-|JWTValidation-104 |TOKEN |Invalid JWT Token format: expected 3 parts but got %s |Logged when the JWT token format is invalid
+|JWTValidation-104 |TOKEN |Invalid JWT Token format: expected 3 parts (JWS) or 5 parts (JWE) but got %s |Logged when the JWT token format is invalid
 |JWTValidation-105 |TOKEN |Decoded part exceeds maximum size limit of %s bytes |Logged when a decoded part of the token exceeds the maximum size limit
 |JWTValidation-106 |TOKEN |Unsupported algorithm: %s |Logged when an unsupported algorithm is encountered
 |JWTValidation-107 |TOKEN |Token has a 'not before' claim that is more than 60 seconds in the future |Logged when a token has a 'not before' claim that is too far in the future
@@ -114,6 +115,12 @@ For more details about security events related to these log messages, see the Se
 |JWTValidation-154 |DPOP |DPoP proof is missing required claim: %s |Logged when the DPoP proof JWT body is missing a required claim (jti, iat, or ath)
 |JWTValidation-155 |DPOP |DPoP proof ath claim does not match access token hash |Logged when the DPoP proof ath claim (SHA-256 hash of the access token) does not match the actual access token
 |JWTValidation-156 |DPOP |DPoP is required but access token does not contain cnf.jkt claim |Logged when DPoP validation is required or a DPoP proof is provided but the access token lacks the cnf.jkt claim
+|JWTValidation-157 |JWE |Failed to decrypt JWE token: %s |Logged when JWE decryption fails due to cryptographic errors (wrong key, tampered content, etc.)
+|JWTValidation-158 |JWE |Unsupported JWE algorithm: alg=%s, enc=%s |Logged when a JWE token uses an unsupported or rejected algorithm combination
+|JWTValidation-159 |JWE |Received JWE token but no decryption configuration is available |Logged when a 5-part JWE token is received but no JweDecryptionConfig was configured on TokenValidator
+|JWTValidation-160 |JWE |No decryption key found for key ID: %s |Logged when the JWE header references a kid that has no matching decryption key and no default key is configured
+|JWTValidation-161 |JWE |Unsupported JWE compression algorithm: %s |Logged when a JWE token uses an unsupported compression algorithm (only DEF/DEFLATE is supported)
+|JWTValidation-162 |JWE |Nested JWE tokens are not allowed |Logged when decrypting a JWE token reveals another JWE (5-part) token instead of the expected inner JWS
 |===
 
 == ERROR Level (200-211)
