@@ -118,9 +118,11 @@ Additional security considerations:
 _See specifications: xref:architecture.adoc#token-validation-pipeline[Token Validation Pipeline] and xref:security/security-reference.adoc#signature-validation[Signature Validation]_
 
 [#OAUTH-SHERIFF-1.4]
-==== OAUTH-SHERIFF-1.4: Token Decryption (Optional - Future Version)
+==== OAUTH-SHERIFF-1.4: Token Decryption
 
-The library should support decryption of encrypted JWT tokens (JWE) as defined in https://datatracker.ietf.org/doc/html/rfc7516[RFC 7516 - JSON Web Encryption (JWE)] (May 2015) in a future version.
+The library supports decryption of encrypted JWT tokens (JWE) as defined in https://datatracker.ietf.org/doc/html/rfc7516[RFC 7516 - JSON Web Encryption (JWE)] (May 2015). JWE decryption is transparent — the pipeline detects 5-part JWE tokens, decrypts them using locally-configured private keys, and validates the inner JWS through the existing pipeline unchanged.
+
+Supported key management algorithms: RSA-OAEP, RSA-OAEP-256, ECDH-ES. Supported content encryption algorithms: A128GCM, A256GCM, A128CBC-HS256, A256CBC-HS512. RSA1_5 is explicitly rejected due to Bleichenbacher's padding oracle attack.
 
 _See specification: xref:specification/token-decryption.adoc[Token Decryption]_
 

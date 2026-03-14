@@ -72,9 +72,9 @@ class MeasurementTypeTest {
     }
 
     @Test
-    @DisplayName("Should have all 15 enum values")
-    void shouldHaveAll15EnumValues() {
-        assertEquals(15, MeasurementType.values().length);
+    @DisplayName("Should have all 16 enum values")
+    void shouldHaveAll16EnumValues() {
+        assertEquals(16, MeasurementType.values().length);
     }
 
     @Test

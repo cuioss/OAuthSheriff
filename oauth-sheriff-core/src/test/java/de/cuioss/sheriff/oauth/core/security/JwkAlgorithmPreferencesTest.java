@@ -74,8 +74,13 @@ class JwkAlgorithmPreferencesTest {
 
         assertTrue(defaultAlgorithms.contains("EdDSA"));
 
+        // JWE key management algorithms
+        assertTrue(defaultAlgorithms.contains("RSA-OAEP"));
+        assertTrue(defaultAlgorithms.contains("RSA-OAEP-256"));
+        assertTrue(defaultAlgorithms.contains("ECDH-ES"));
+
         // Verify total count
-        assertEquals(10, defaultAlgorithms.size());
+        assertEquals(13, defaultAlgorithms.size());
     }
 
     @Test

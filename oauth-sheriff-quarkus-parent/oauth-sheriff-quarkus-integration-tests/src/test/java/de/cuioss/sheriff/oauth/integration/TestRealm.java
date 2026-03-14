@@ -46,6 +46,10 @@ public class TestRealm {
     private static final String DPOP_CLIENT_ID = "dpop-client";
     private static final String DPOP_CLIENT_SECRET = "dpop-secret";
 
+    // JWE client constants (same realm, client with id_token_encrypted_response_alg/enc)
+    private static final String JWE_CLIENT_ID = "jwe-client";
+    private static final String JWE_CLIENT_SECRET = "jwe-secret";
+
     // Benchmark realm constants
     private static final String BENCHMARK_REALM_ID = "benchmark";
     private static final String BENCHMARK_CLIENT_ID = "benchmark-client";
@@ -102,6 +106,22 @@ public class TestRealm {
                 INTEGRATION_REALM_ID,
                 DPOP_CLIENT_ID,
                 DPOP_CLIENT_SECRET,
+                INTEGRATION_USERNAME,
+                INTEGRATION_PASSWORD
+        );
+    }
+
+    /**
+     * Factory method to create a TestRealm instance for JWE testing.
+     * Uses the jwe-client in the integration realm which has encrypted ID token response configured.
+     *
+     * @return TestRealm configured for JWE testing
+     */
+    public static TestRealm createJweRealm() {
+        return new TestRealm(
+                INTEGRATION_REALM_ID,
+                JWE_CLIENT_ID,
+                JWE_CLIENT_SECRET,
                 INTEGRATION_USERNAME,
                 INTEGRATION_PASSWORD
         );
