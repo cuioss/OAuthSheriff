@@ -22,10 +22,12 @@ repository are not the effective configuration. The authoritative resolution com
 ./mvnw help:effective-pom
 ```
 
-That bare form resolves only the invoked (root) project, and only under the profiles active for
-that invocation. It shows neither the per-module effective model nor configuration that lives in a
-profile which is currently inactive (for example `pre-commit`). Resolve the module and the profiles
-the claim is actually about:
+That bare form is recursive: it walks the whole reactor and emits one effective POM per module,
+wrapped in a single `<projects>` element. `.mvn/maven.config` pins only `-T1C`, which sets build
+parallelism and does not change that recursion — pass `-N` to restrict the output to the invoked
+(root) project. What the resolution does not show is configuration that lives in a profile which is
+currently inactive (for example `pre-commit`): it reflects only the profiles active for that
+invocation. Activate the profiles, and narrow to the module, the claim is actually about:
 
 ```bash
 ./mvnw -Ppre-commit help:effective-pom -pl <module>
