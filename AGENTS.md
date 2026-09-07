@@ -27,7 +27,7 @@ wrapped in a single `<projects>` element. `.mvn/maven.config` pins only `-T1C`, 
 parallelism and does not change that recursion — pass `-N` to restrict the output to the invoked
 (root) project. What the resolution does not show is configuration that lives in a profile which is
 currently inactive (for example `pre-commit`): it reflects only the profiles active for that
-invocation. Activate the profiles, and narrow to the module, the claim is actually about:
+invocation. Activate the profiles and narrow to the module that the claim is actually about:
 
 ```bash
 ./mvnw -Ppre-commit help:effective-pom -pl <module>
